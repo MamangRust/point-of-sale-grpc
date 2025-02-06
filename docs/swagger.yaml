@@ -1,0 +1,1107 @@
+definitions:
+  pb.ApiResponseGetMe:
+    properties:
+      data:
+        $ref: '#/definitions/pb.UserResponse'
+      message:
+        type: string
+      status:
+        type: string
+    type: object
+  pb.ApiResponseLogin:
+    properties:
+      data:
+        $ref: '#/definitions/pb.TokenResponse'
+      message:
+        type: string
+      status:
+        type: string
+    type: object
+  pb.ApiResponsePaginationRole:
+    properties:
+      data:
+        items:
+          $ref: '#/definitions/pb.RoleResponse'
+        type: array
+      message:
+        type: string
+      pagination:
+        $ref: '#/definitions/pb.PaginationMeta'
+      status:
+        type: string
+    type: object
+  pb.ApiResponsePaginationRoleDeleteAt:
+    properties:
+      data:
+        items:
+          $ref: '#/definitions/pb.RoleResponseDeleteAt'
+        type: array
+      message:
+        type: string
+      pagination:
+        $ref: '#/definitions/pb.PaginationMeta'
+      status:
+        type: string
+    type: object
+  pb.ApiResponsePaginationUser:
+    properties:
+      data:
+        items:
+          $ref: '#/definitions/pb.UserResponse'
+        type: array
+      message:
+        type: string
+      pagination:
+        $ref: '#/definitions/pb.PaginationMeta'
+      status:
+        type: string
+    type: object
+  pb.ApiResponseRefreshToken:
+    properties:
+      data:
+        $ref: '#/definitions/pb.TokenResponse'
+      message:
+        type: string
+      status:
+        type: string
+    type: object
+  pb.ApiResponseRegister:
+    properties:
+      data:
+        $ref: '#/definitions/pb.UserResponse'
+      message:
+        type: string
+      status:
+        type: string
+    type: object
+  pb.ApiResponseRole:
+    properties:
+      data:
+        $ref: '#/definitions/pb.RoleResponse'
+      message:
+        type: string
+      status:
+        type: string
+    type: object
+  pb.ApiResponseRoleAll:
+    properties:
+      message:
+        type: string
+      status:
+        type: string
+    type: object
+  pb.ApiResponseUser:
+    properties:
+      data:
+        $ref: '#/definitions/pb.UserResponse'
+      message:
+        type: string
+      status:
+        type: string
+    type: object
+  pb.ApiResponseUserAll:
+    properties:
+      message:
+        type: string
+      status:
+        type: string
+    type: object
+  pb.ApiResponseUserDelete:
+    properties:
+      message:
+        type: string
+      status:
+        type: string
+    type: object
+  pb.ApiResponsesUser:
+    properties:
+      data:
+        items:
+          $ref: '#/definitions/pb.UserResponse'
+        type: array
+      message:
+        type: string
+      status:
+        type: string
+    type: object
+  pb.CreateRoleRequest:
+    properties:
+      name:
+        type: string
+    type: object
+  pb.PaginationMeta:
+    properties:
+      current_page:
+        type: integer
+      page_size:
+        type: integer
+      total_pages:
+        type: integer
+      total_records:
+        type: integer
+    type: object
+  pb.RoleResponse:
+    properties:
+      created_at:
+        type: string
+      id:
+        type: integer
+      name:
+        type: string
+      updated_at:
+        type: string
+    type: object
+  pb.RoleResponseDeleteAt:
+    properties:
+      created_at:
+        type: string
+      deleted_at:
+        type: string
+      id:
+        type: integer
+      name:
+        type: string
+      updated_at:
+        type: string
+    type: object
+  pb.TokenResponse:
+    properties:
+      access_token:
+        type: string
+      refresh_token:
+        type: string
+    type: object
+  pb.UpdateRoleRequest:
+    properties:
+      id:
+        type: integer
+      name:
+        type: string
+    type: object
+  pb.UserResponse:
+    properties:
+      created_at:
+        type: string
+      email:
+        type: string
+      firstname:
+        type: string
+      id:
+        type: integer
+      lastname:
+        type: string
+      updated_at:
+        type: string
+    type: object
+  requests.AuthRequest:
+    properties:
+      email:
+        type: string
+      password:
+        minLength: 6
+        type: string
+    required:
+    - email
+    - password
+    type: object
+  requests.CreateUserRequest:
+    properties:
+      confirm_password:
+        type: string
+      email:
+        type: string
+      firstname:
+        type: string
+      lastname:
+        type: string
+      password:
+        minLength: 6
+        type: string
+    required:
+    - confirm_password
+    - email
+    - firstname
+    - lastname
+    - password
+    type: object
+  requests.RefreshTokenRequest:
+    properties:
+      refresh_token:
+        minLength: 1
+        type: string
+    required:
+    - refresh_token
+    type: object
+  requests.UpdateUserRequest:
+    properties:
+      confirm_password:
+        type: string
+      email:
+        type: string
+      firstname:
+        type: string
+      lastname:
+        type: string
+      password:
+        minLength: 6
+        type: string
+      user_id:
+        minimum: 1
+        type: integer
+    required:
+    - confirm_password
+    - email
+    - firstname
+    - lastname
+    - password
+    - user_id
+    type: object
+  response.ErrorResponse:
+    properties:
+      message:
+        type: string
+      status:
+        type: string
+    type: object
+info:
+  contact: {}
+paths:
+  /api/auth/login:
+    post:
+      consumes:
+      - application/json
+      description: Authenticates a user using the provided email and password.
+      parameters:
+      - description: User login credentials
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/requests.AuthRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Success
+          schema:
+            $ref: '#/definitions/pb.ApiResponseLogin'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      summary: Authenticate a user
+      tags:
+      - Auth
+  /api/auth/me:
+    get:
+      description: Retrieves the current user's information using a valid access token
+        from the Authorization header.
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Success
+          schema:
+            $ref: '#/definitions/pb.ApiResponseGetMe'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      security:
+      - Bearer: []
+      - BearerToken: []
+      summary: Get current user information
+      tags:
+      - Auth
+  /api/auth/refresh-token:
+    post:
+      consumes:
+      - application/json
+      description: Refreshes the access token using a valid refresh token.
+      parameters:
+      - description: Refresh token data
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/requests.RefreshTokenRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Success
+          schema:
+            $ref: '#/definitions/pb.ApiResponseRefreshToken'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      security:
+      - Bearer: []
+      summary: Refresh access token
+      tags:
+      - Auth
+  /api/auth/register:
+    post:
+      consumes:
+      - application/json
+      description: Registers a new user with the provided details.
+      parameters:
+      - description: User registration data
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/requests.CreateUserRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Success
+          schema:
+            $ref: '#/definitions/pb.ApiResponseRegister'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      summary: Register a new user
+      tags:
+      - Auth
+  /api/role:
+    get:
+      consumes:
+      - application/json
+      description: Retrieve a paginated list of roles with optional search and pagination
+        parameters.
+      parameters:
+      - description: 'Page number (default: 1)'
+        in: query
+        name: page
+        type: integer
+      - description: 'Number of items per page (default: 10)'
+        in: query
+        name: page_size
+        type: integer
+      - description: Search keyword
+        in: query
+        name: search
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: List of roles
+          schema:
+            $ref: '#/definitions/pb.ApiResponsePaginationRole'
+        "400":
+          description: Invalid query parameters
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "500":
+          description: Failed to fetch roles
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      security:
+      - Bearer: []
+      summary: Get all roles
+      tags:
+      - Role
+    post:
+      consumes:
+      - application/json
+      description: Create a new role with the provided details.
+      parameters:
+      - description: Role data
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/pb.CreateRoleRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Created role data
+          schema:
+            $ref: '#/definitions/pb.ApiResponseRole'
+        "400":
+          description: Invalid request body
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "500":
+          description: Failed to create role
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      security:
+      - Bearer: []
+      summary: Create a new role
+      tags:
+      - Role
+  /api/role/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: Soft-delete a role by its ID.
+      parameters:
+      - description: Role ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Soft-deleted role data
+          schema:
+            $ref: '#/definitions/pb.ApiResponseRole'
+        "400":
+          description: Invalid role ID
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "500":
+          description: Failed to soft-delete role
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      security:
+      - Bearer: []
+      summary: Soft-delete a role
+      tags:
+      - Role
+    get:
+      consumes:
+      - application/json
+      description: Retrieve a role by its ID.
+      parameters:
+      - description: Role ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Role data
+          schema:
+            $ref: '#/definitions/pb.ApiResponseRole'
+        "400":
+          description: Invalid role ID
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "500":
+          description: Failed to fetch role
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      security:
+      - Bearer: []
+      summary: Get a role by ID
+      tags:
+      - Role
+    post:
+      consumes:
+      - application/json
+      description: Update an existing role with the provided details.
+      parameters:
+      - description: Role ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Role data
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/pb.UpdateRoleRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Updated role data
+          schema:
+            $ref: '#/definitions/pb.ApiResponseRole'
+        "400":
+          description: Invalid role ID or request body
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "500":
+          description: Failed to update role
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      security:
+      - Bearer: []
+      summary: Update a role
+      tags:
+      - Role
+  /api/role/active:
+    get:
+      consumes:
+      - application/json
+      description: Retrieve a paginated list of active roles with optional search
+        and pagination parameters.
+      parameters:
+      - description: 'Page number (default: 1)'
+        in: query
+        name: page
+        type: integer
+      - description: 'Number of items per page (default: 10)'
+        in: query
+        name: page_size
+        type: integer
+      - description: Search keyword
+        in: query
+        name: search
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: List of active roles
+          schema:
+            $ref: '#/definitions/pb.ApiResponsePaginationRoleDeleteAt'
+        "400":
+          description: Invalid query parameters
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "500":
+          description: Failed to fetch active roles
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      security:
+      - Bearer: []
+      summary: Get active roles
+      tags:
+      - Role
+  /api/role/permanent-all:
+    delete:
+      consumes:
+      - application/json
+      description: Permanently delete all roles.
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Permanently deleted roles data
+          schema:
+            $ref: '#/definitions/pb.ApiResponseRoleAll'
+        "500":
+          description: Failed to delete all roles permanently
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      security:
+      - Bearer: []
+      summary: Permanently delete all roles
+      tags:
+      - Role
+  /api/role/permanent/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: Permanently delete a role by its ID.
+      parameters:
+      - description: Role ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Permanently deleted role data
+          schema:
+            $ref: '#/definitions/pb.ApiResponseRole'
+        "400":
+          description: Invalid role ID
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "500":
+          description: Failed to delete role permanently
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      security:
+      - Bearer: []
+      summary: Permanently delete a role
+      tags:
+      - Role
+  /api/role/restore-all:
+    put:
+      consumes:
+      - application/json
+      description: Restore all soft-deleted roles.
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Restored roles data
+          schema:
+            $ref: '#/definitions/pb.ApiResponseRoleAll'
+        "500":
+          description: Failed to restore all roles
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      security:
+      - Bearer: []
+      summary: Restore all soft-deleted roles
+      tags:
+      - Role
+  /api/role/restore/{id}:
+    put:
+      consumes:
+      - application/json
+      description: Restore a soft-deleted role by its ID.
+      parameters:
+      - description: Role ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Restored role data
+          schema:
+            $ref: '#/definitions/pb.ApiResponseRole'
+        "400":
+          description: Invalid role ID
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "500":
+          description: Failed to restore role
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      security:
+      - Bearer: []
+      summary: Restore a soft-deleted role
+      tags:
+      - Role
+  /api/role/trashed:
+    get:
+      consumes:
+      - application/json
+      description: Retrieve a paginated list of trashed roles with optional search
+        and pagination parameters.
+      parameters:
+      - description: 'Page number (default: 1)'
+        in: query
+        name: page
+        type: integer
+      - description: 'Number of items per page (default: 10)'
+        in: query
+        name: page_size
+        type: integer
+      - description: Search keyword
+        in: query
+        name: search
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: List of trashed roles
+          schema:
+            $ref: '#/definitions/pb.ApiResponsePaginationRoleDeleteAt'
+        "400":
+          description: Invalid query parameters
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "500":
+          description: Failed to fetch trashed roles
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      security:
+      - Bearer: []
+      summary: Get trashed roles
+      tags:
+      - Role
+  /api/role/user/{user_id}:
+    get:
+      consumes:
+      - application/json
+      description: Retrieve a role by the associated user ID.
+      parameters:
+      - description: User ID
+        in: path
+        name: user_id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Role data
+          schema:
+            $ref: '#/definitions/pb.ApiResponseRole'
+        "400":
+          description: Invalid user ID
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "500":
+          description: Failed to fetch role by user ID
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      security:
+      - Bearer: []
+      summary: Get role by user ID
+      tags:
+      - Role
+  /api/user:
+    get:
+      consumes:
+      - application/json
+      description: Retrieve a list of all users
+      parameters:
+      - default: 1
+        description: Page number
+        in: query
+        name: page
+        type: integer
+      - default: 10
+        description: Number of items per page
+        in: query
+        name: page_size
+        type: integer
+      - description: Search query
+        in: query
+        name: search
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: List of users
+          schema:
+            $ref: '#/definitions/pb.ApiResponsePaginationUser'
+        "500":
+          description: Failed to retrieve user data
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      security:
+      - Bearer: []
+      summary: Find all users
+      tags:
+      - User
+  /api/user/{id}:
+    get:
+      consumes:
+      - application/json
+      description: Retrieve a user by ID
+      parameters:
+      - description: User ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: User data
+          schema:
+            $ref: '#/definitions/pb.ApiResponseUser'
+        "400":
+          description: Invalid user ID
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "500":
+          description: Failed to retrieve user data
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      security:
+      - Bearer: []
+      summary: Find user by ID
+      tags:
+      - User
+  /api/user/active:
+    get:
+      consumes:
+      - application/json
+      description: Retrieve a list of active users
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: List of active users
+          schema:
+            $ref: '#/definitions/pb.ApiResponsesUser'
+        "500":
+          description: Failed to retrieve user data
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      security:
+      - Bearer: []
+      summary: Retrieve active users
+      tags:
+      - User
+  /api/user/create:
+    post:
+      consumes:
+      - application/json
+      description: Create a new user with the provided details
+      parameters:
+      - description: Create user request
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/requests.CreateUserRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successfully created user
+          schema:
+            $ref: '#/definitions/pb.ApiResponseUser'
+        "400":
+          description: Invalid request body or validation error
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "500":
+          description: Failed to create user
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      security:
+      - Bearer: []
+      summary: Create a new user
+      tags:
+      - User
+  /api/user/delete/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: Permanently delete a user record by its ID.
+      parameters:
+      - description: User ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successfully deleted user record permanently
+          schema:
+            $ref: '#/definitions/pb.ApiResponseUserDelete'
+        "400":
+          description: 'Bad Request: Invalid ID'
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "500":
+          description: 'Failed to delete user:'
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      security:
+      - Bearer: []
+      summary: Permanently delete a user
+      tags:
+      - User
+  /api/user/delete/all:
+    post:
+      consumes:
+      - application/json
+      description: Permanently delete a user record by its ID.
+      parameters:
+      - description: User ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successfully deleted user record permanently
+          schema:
+            $ref: '#/definitions/pb.ApiResponseUserDelete'
+        "400":
+          description: 'Bad Request: Invalid ID'
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "500":
+          description: 'Failed to delete user:'
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      security:
+      - Bearer: []
+      summary: Permanently delete a user
+      tags:
+      - User
+  /api/user/restore/{id}:
+    post:
+      consumes:
+      - application/json
+      description: Restore a trashed user record by its ID.
+      parameters:
+      - description: User ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successfully restored user
+          schema:
+            $ref: '#/definitions/pb.ApiResponseUser'
+        "400":
+          description: Invalid user ID
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "500":
+          description: Failed to restore user
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      security:
+      - Bearer: []
+      summary: Restore a trashed user
+      tags:
+      - User
+  /api/user/restore/all:
+    post:
+      consumes:
+      - application/json
+      description: Restore a trashed user record by its ID.
+      parameters:
+      - description: User ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successfully restored user all
+          schema:
+            $ref: '#/definitions/pb.ApiResponseUserAll'
+        "400":
+          description: Invalid user ID
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "500":
+          description: Failed to restore user
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      security:
+      - Bearer: []
+      summary: Restore a trashed user
+      tags:
+      - User
+  /api/user/trashed:
+    get:
+      consumes:
+      - application/json
+      description: Retrieve a list of trashed user records
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: List of trashed user data
+          schema:
+            $ref: '#/definitions/pb.ApiResponsesUser'
+        "500":
+          description: Failed to retrieve user data
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      security:
+      - Bearer: []
+      summary: Retrieve trashed users
+      tags:
+      - User
+  /api/user/trashed/{id}:
+    get:
+      consumes:
+      - application/json
+      description: Retrieve a trashed user record by its ID.
+      parameters:
+      - description: User ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successfully retrieved trashed user
+          schema:
+            $ref: '#/definitions/pb.ApiResponseUser'
+        "400":
+          description: Invalid request body or validation error
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "500":
+          description: Failed to retrieve trashed user
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      security:
+      - Bearer: []
+      summary: Retrieve a trashed user
+      tags:
+      - User
+  /api/user/update/{id}:
+    post:
+      consumes:
+      - application/json
+      description: Update an existing user record with the provided details
+      parameters:
+      - description: Update user request
+        in: body
+        name: UpdateUserRequest
+        required: true
+        schema:
+          $ref: '#/definitions/requests.UpdateUserRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successfully updated user
+          schema:
+            $ref: '#/definitions/pb.ApiResponseUser'
+        "400":
+          description: Invalid request body or validation error
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "500":
+          description: Failed to update user
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      security:
+      - Bearer: []
+      summary: Update an existing user
+      tags:
+      - User
+  /auth/hello:
+    get:
+      description: Returns a simple "Hello" message for testing purposes.
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Hello
+          schema:
+            type: string
+      summary: Returns a "Hello" message
+      tags:
+      - Auth
+swagger: "2.0"
