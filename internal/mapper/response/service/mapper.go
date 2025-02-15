@@ -4,6 +4,13 @@ type ResponseServiceMapper struct {
 	RoleResponseMapper         RoleResponseMapper
 	RefreshTokenResponseMapper RefreshTokenResponseMapper
 	UserResponseMapper         UserResponseMapper
+	CategoryResponseMapper     CategoryResponseMapper
+	CashierResponseMapper      CashierResponseMapper
+	MerchantResponseMapper     MerchantResponseMapper
+	OrderResponseMapper        OrderResponseMapper
+	OrderItemResponseMapper    OrderItemResponseMapper
+	ProductResponseMapper      ProductResponseMapper
+	TransactionResponseMapper  TransactionResponseMapper
 }
 
 func NewResponseServiceMapper() *ResponseServiceMapper {
@@ -11,5 +18,12 @@ func NewResponseServiceMapper() *ResponseServiceMapper {
 		UserResponseMapper:         NewUserResponseMapper(),
 		RefreshTokenResponseMapper: NewRefreshTokenResponseMapper(),
 		RoleResponseMapper:         NewRoleResponseMapper(),
+		CategoryResponseMapper:     NewCategoryResponseMapper(),
+		CashierResponseMapper:      NewCashierResponseMapper(),
+		MerchantResponseMapper:     NewMerchantResponseMapper(),
+		OrderResponseMapper:        NewOrderResponseMapper(),
+		OrderItemResponseMapper:    NewOrderItemResponseMapper(),
+		ProductResponseMapper:      NewProductResponseMapper(),
+		TransactionResponseMapper:  NewTransactionResponseMapper(),
 	}
 }

@@ -5,7 +5,6 @@ import (
 	"pointofsale/internal/pb"
 )
 
-
 type userResponseMapper struct {
 }
 
@@ -34,7 +33,7 @@ func (u *userResponseMapper) ToResponsesUser(users []*pb.UserResponse) []*respon
 	return mappedUsers
 }
 
-func (u *userResponseMapper) ToResponseUserDelete(user *pb.UserResponseWithDeleteAt) *response.UserResponseDeleteAt {
+func (u *userResponseMapper) ToResponseUserDeleteAt(user *pb.UserResponseDeleteAt) *response.UserResponseDeleteAt {
 	return &response.UserResponseDeleteAt{
 		ID:        int(user.Id),
 		FirstName: user.Firstname,
@@ -46,11 +45,11 @@ func (u *userResponseMapper) ToResponseUserDelete(user *pb.UserResponseWithDelet
 	}
 }
 
-func (u *userResponseMapper) ToResponsesUserDeleteAt(users []*pb.UserResponseWithDeleteAt) []*response.UserResponseDeleteAt {
+func (u *userResponseMapper) ToResponsesUserDeleteAt(users []*pb.UserResponseDeleteAt) []*response.UserResponseDeleteAt {
 	var mappedUsers []*response.UserResponseDeleteAt
 
 	for _, user := range users {
-		mappedUsers = append(mappedUsers, u.ToResponseUserDelete(user))
+		mappedUsers = append(mappedUsers, u.ToResponseUserDeleteAt(user))
 	}
 
 	return mappedUsers
@@ -61,6 +60,14 @@ func (u *userResponseMapper) ToApiResponseUser(pbResponse *pb.ApiResponseUser) *
 		Status:  pbResponse.Status,
 		Message: pbResponse.Message,
 		Data:    u.ToResponseUser(pbResponse.Data),
+	}
+}
+
+func (u *userResponseMapper) ToApiResponseUserDeleteAt(pbResponse *pb.ApiResponseUserDeleteAt) *response.ApiResponseUserDeleteAt {
+	return &response.ApiResponseUserDeleteAt{
+		Status:  pbResponse.Status,
+		Message: pbResponse.Message,
+		Data:    u.ToResponseUserDeleteAt(pbResponse.Data),
 	}
 }
 

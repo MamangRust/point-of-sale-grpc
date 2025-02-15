@@ -9,6 +9,81 @@ import (
 	"time"
 )
 
+type Cashier struct {
+	CashierID  int32        `json:"cashier_id"`
+	MerchantID int32        `json:"merchant_id"`
+	UserID     int32        `json:"user_id"`
+	Name       string       `json:"name"`
+	CreatedAt  sql.NullTime `json:"created_at"`
+	UpdatedAt  sql.NullTime `json:"updated_at"`
+	DeletedAt  sql.NullTime `json:"deleted_at"`
+}
+
+type Category struct {
+	CategoryID    int32          `json:"category_id"`
+	Name          string         `json:"name"`
+	Description   sql.NullString `json:"description"`
+	SlugCategory  sql.NullString `json:"slug_category"`
+	ImageCategory sql.NullString `json:"image_category"`
+	CreatedAt     sql.NullTime   `json:"created_at"`
+	UpdatedAt     sql.NullTime   `json:"updated_at"`
+	DeletedAt     sql.NullTime   `json:"deleted_at"`
+}
+
+type Merchant struct {
+	MerchantID   int32          `json:"merchant_id"`
+	UserID       int32          `json:"user_id"`
+	Name         string         `json:"name"`
+	Description  sql.NullString `json:"description"`
+	Address      sql.NullString `json:"address"`
+	ContactEmail sql.NullString `json:"contact_email"`
+	ContactPhone sql.NullString `json:"contact_phone"`
+	Status       string         `json:"status"`
+	CreatedAt    sql.NullTime   `json:"created_at"`
+	UpdatedAt    sql.NullTime   `json:"updated_at"`
+	DeletedAt    sql.NullTime   `json:"deleted_at"`
+}
+
+type Order struct {
+	OrderID    int32        `json:"order_id"`
+	MerchantID int32        `json:"merchant_id"`
+	CashierID  int32        `json:"cashier_id"`
+	TotalPrice int32        `json:"total_price"`
+	CreatedAt  sql.NullTime `json:"created_at"`
+	UpdatedAt  sql.NullTime `json:"updated_at"`
+	DeletedAt  sql.NullTime `json:"deleted_at"`
+}
+
+type OrderItem struct {
+	OrderItemID int32        `json:"order_item_id"`
+	OrderID     int32        `json:"order_id"`
+	ProductID   int32        `json:"product_id"`
+	Quantity    int32        `json:"quantity"`
+	Price       int32        `json:"price"`
+	CreatedAt   sql.NullTime `json:"created_at"`
+	UpdatedAt   sql.NullTime `json:"updated_at"`
+	DeletedAt   sql.NullTime `json:"deleted_at"`
+}
+
+type Product struct {
+	ProductID    int32           `json:"product_id"`
+	MerchantID   int32           `json:"merchant_id"`
+	CategoryID   int32           `json:"category_id"`
+	Name         string          `json:"name"`
+	Description  sql.NullString  `json:"description"`
+	Price        int32           `json:"price"`
+	CountInStock int32           `json:"count_in_stock"`
+	Brand        sql.NullString  `json:"brand"`
+	Weight       sql.NullInt32   `json:"weight"`
+	Rating       sql.NullFloat64 `json:"rating"`
+	SlugProduct  sql.NullString  `json:"slug_product"`
+	ImageProduct sql.NullString  `json:"image_product"`
+	Barcode      sql.NullString  `json:"barcode"`
+	CreatedAt    sql.NullTime    `json:"created_at"`
+	UpdatedAt    sql.NullTime    `json:"updated_at"`
+	DeletedAt    sql.NullTime    `json:"deleted_at"`
+}
+
 type RefreshToken struct {
 	RefreshTokenID int32        `json:"refresh_token_id"`
 	UserID         int32        `json:"user_id"`
@@ -25,6 +100,19 @@ type Role struct {
 	CreatedAt sql.NullTime `json:"created_at"`
 	UpdatedAt sql.NullTime `json:"updated_at"`
 	DeletedAt sql.NullTime `json:"deleted_at"`
+}
+
+type Transaction struct {
+	TransactionID int32         `json:"transaction_id"`
+	OrderID       int32         `json:"order_id"`
+	MerchantID    int32         `json:"merchant_id"`
+	PaymentMethod string        `json:"payment_method"`
+	Amount        int32         `json:"amount"`
+	ChangeAmount  sql.NullInt32 `json:"change_amount"`
+	PaymentStatus string        `json:"payment_status"`
+	CreatedAt     sql.NullTime  `json:"created_at"`
+	UpdatedAt     sql.NullTime  `json:"updated_at"`
+	DeletedAt     sql.NullTime  `json:"deleted_at"`
 }
 
 type User struct {

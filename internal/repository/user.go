@@ -50,7 +50,6 @@ func (r *userRepository) FindAllUsers(search string, page, pageSize int) ([]*rec
 }
 
 func (r *userRepository) FindById(user_id int) (*record.UserRecord, error) {
-	fmt.Printf("Searching for user with ID: %d\n", user_id)
 	res, err := r.db.GetUserByID(r.ctx, int32(user_id))
 
 	if err != nil {
@@ -148,51 +147,33 @@ func (r *userRepository) UpdateUser(request *requests.UpdateUserRequest) (*recor
 		Password:  request.Password,
 	}
 
-	err := r.db.UpdateUser(r.ctx, req)
+	res, err := r.db.UpdateUser(r.ctx, req)
 
 	if err != nil {
 		return nil, fmt.Errorf("failed to update user: %w", err)
-	}
-
-	res, err := r.db.GetUserByID(r.ctx, int32(request.UserID))
-
-	if err != nil {
-		return nil, fmt.Errorf("failed to find user: %w", err)
 	}
 
 	return r.mapping.ToUserRecord(res), nil
 }
 
 func (r *userRepository) TrashedUser(user_id int) (*record.UserRecord, error) {
-	err := r.db.TrashUser(r.ctx, int32(user_id))
+	res, err := r.db.TrashUser(r.ctx, int32(user_id))
 
 	if err != nil {
 		return nil, fmt.Errorf("failed to trash user: %w", err)
 	}
 
-	merchant, err := r.db.GetTrashedUserByID(r.ctx, int32(user_id))
-
-	if err != nil {
-		return nil, fmt.Errorf("failed to find trashed by id user: %w", err)
-	}
-
-	return r.mapping.ToUserRecord(merchant), nil
+	return r.mapping.ToUserRecord(res), nil
 }
 
 func (r *userRepository) RestoreUser(user_id int) (*record.UserRecord, error) {
-	err := r.db.RestoreUser(r.ctx, int32(user_id))
+	res, err := r.db.RestoreUser(r.ctx, int32(user_id))
 
 	if err != nil {
 		return nil, fmt.Errorf("failed to restore topup: %w", err)
 	}
 
-	user, err := r.db.GetUserByID(r.ctx, int32(user_id))
-
-	if err != nil {
-		return nil, fmt.Errorf("failed not found user :%w", err)
-	}
-
-	return r.mapping.ToUserRecord(user), nil
+	return r.mapping.ToUserRecord(res), nil
 }
 
 func (r *userRepository) DeleteUserPermanent(user_id int) (bool, error) {

@@ -217,7 +217,7 @@ func (s *userHandleGrpc) Update(ctx context.Context, request *pb.UpdateUserReque
 	return so, nil
 }
 
-func (s *userHandleGrpc) TrashedUser(ctx context.Context, request *pb.FindByIdUserRequest) (*pb.ApiResponseUser, error) {
+func (s *userHandleGrpc) TrashedUser(ctx context.Context, request *pb.FindByIdUserRequest) (*pb.ApiResponseUserDeleteAt, error) {
 	if request.GetId() == 0 {
 		return nil, status.Errorf(codes.InvalidArgument, "%v", &pb.ErrorResponse{
 			Status:  "error",
@@ -234,12 +234,12 @@ func (s *userHandleGrpc) TrashedUser(ctx context.Context, request *pb.FindByIdUs
 		})
 	}
 
-	so := s.mapping.ToProtoResponseUser("success", "Successfully trashed user", user)
+	so := s.mapping.ToProtoResponseUserDeleteAt("success", "Successfully trashed user", user)
 
 	return so, nil
 }
 
-func (s *userHandleGrpc) RestoreUser(ctx context.Context, request *pb.FindByIdUserRequest) (*pb.ApiResponseUser, error) {
+func (s *userHandleGrpc) RestoreUser(ctx context.Context, request *pb.FindByIdUserRequest) (*pb.ApiResponseUserDeleteAt, error) {
 	if request.GetId() == 0 {
 		return nil, status.Errorf(codes.InvalidArgument, "%v", &pb.ErrorResponse{
 			Status:  "error",
@@ -256,7 +256,7 @@ func (s *userHandleGrpc) RestoreUser(ctx context.Context, request *pb.FindByIdUs
 		})
 	}
 
-	so := s.mapping.ToProtoResponseUser("success", "Successfully restored user", user)
+	so := s.mapping.ToProtoResponseUserDeleteAt("success", "Successfully restored user", user)
 
 	return so, nil
 }

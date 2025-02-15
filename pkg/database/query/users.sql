@@ -10,26 +10,6 @@ ORDER BY created_at DESC
 LIMIT $2 OFFSET $3;
 
 
--- Get User by ID
--- name: GetUserByID :one
-SELECT * FROM users WHERE user_id = $1 AND deleted_at IS NULL;
-
-
--- Get User by Email
--- name: GetUserByEmail :one
-SELECT * FROM users WHERE email = $1 AND deleted_at IS NULL;
-
-
-
--- Get Trashed By User ID
--- name: GetTrashedUserByID :one
-SELECT *
-FROM users
-WHERE
-    user_id = $1
-    AND deleted_at IS NOT NULL;
-
-
 -- Get Active Users with Pagination and Total Count
 -- name: GetUsersActive :many
 SELECT
@@ -56,6 +36,19 @@ LIMIT $2 OFFSET $3;
 
 
 
+-- Get User by ID
+-- name: GetUserByID :one
+SELECT * FROM users WHERE user_id = $1 AND deleted_at IS NULL;
+
+
+-- Get User by Email
+-- name: GetUserByEmail :one
+SELECT * FROM users WHERE email = $1 AND deleted_at IS NULL;
+
+
+
+
+
 -- Create User
 -- name: CreateUser :one
 INSERT INTO
@@ -76,10 +69,8 @@ VALUES (
         current_timestamp
     ) RETURNING *;
 
-
-
 -- Update User
--- name: UpdateUser :exec
+-- name: UpdateUser :one
 UPDATE users
 SET
     firstname = $2,
@@ -89,27 +80,30 @@ SET
     updated_at = current_timestamp
 WHERE
     user_id = $1
-    AND deleted_at IS NULL;
+    AND deleted_at IS NULL
+    RETURNING *;
 
 
 
 -- Trash User
--- name: TrashUser :exec
+-- name: TrashUser :one
 UPDATE users
 SET
     deleted_at = current_timestamp
 WHERE
     user_id = $1
-    AND deleted_at IS NULL;
+    AND deleted_at IS NULL
+    RETURNING *;
 
 -- Restore Trashed User
--- name: RestoreUser :exec
+-- name: RestoreUser :one
 UPDATE users
 SET
     deleted_at = NULL
 WHERE
     user_id = $1
-    AND deleted_at IS NOT NULL;
+    AND deleted_at IS NOT NULL
+    RETURNING *;
 
 
 -- Delete User Permanently

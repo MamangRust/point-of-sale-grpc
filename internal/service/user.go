@@ -273,7 +273,7 @@ func (s *userService) UpdateUser(request *requests.UpdateUserRequest) (*response
 	return so, nil
 }
 
-func (s *userService) TrashedUser(user_id int) (*response.UserResponse, *response.ErrorResponse) {
+func (s *userService) TrashedUser(user_id int) (*response.UserResponseDeleteAt, *response.ErrorResponse) {
 	s.logger.Debug("Trashing user", zap.Int("user_id", user_id))
 
 	res, err := s.userRepository.TrashedUser(user_id)
@@ -286,14 +286,14 @@ func (s *userService) TrashedUser(user_id int) (*response.UserResponse, *respons
 		}
 	}
 
-	so := s.mapping.ToUserResponse(res)
+	so := s.mapping.ToUserResponseDeleteAt(res)
 
 	s.logger.Debug("Successfully trashed user", zap.Int("user_id", user_id))
 
 	return so, nil
 }
 
-func (s *userService) RestoreUser(user_id int) (*response.UserResponse, *response.ErrorResponse) {
+func (s *userService) RestoreUser(user_id int) (*response.UserResponseDeleteAt, *response.ErrorResponse) {
 	s.logger.Debug("Restoring user", zap.Int("user_id", user_id))
 
 	res, err := s.userRepository.RestoreUser(user_id)
@@ -307,7 +307,7 @@ func (s *userService) RestoreUser(user_id int) (*response.UserResponse, *respons
 		}
 	}
 
-	so := s.mapping.ToUserResponse(res)
+	so := s.mapping.ToUserResponseDeleteAt(res)
 
 	s.logger.Debug("Successfully restored user", zap.Int("user_id", user_id))
 

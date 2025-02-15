@@ -19,7 +19,7 @@ type authHandleApi struct {
 	mapping response_api.AuthResponseMapper
 }
 
-func NewHandlerAuth(client pb.AuthServiceClient, router *echo.Echo, logger logger.LoggerInterface, mapper response_api.AuthResponseMapper) *authHandleApi {
+func NewHandlerAuth(router *echo.Echo, client pb.AuthServiceClient, logger logger.LoggerInterface, mapper response_api.AuthResponseMapper) *authHandleApi {
 	authHandler := &authHandleApi{
 		client:  client,
 		logger:  logger,

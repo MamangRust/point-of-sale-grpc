@@ -17,16 +17,28 @@ type Deps struct {
 }
 
 type Seeder struct {
-	User     *userSeeder
-	Role     *roleSeeder
-	UserRole *userRoleSeeder
+	User        *userSeeder
+	Role        *roleSeeder
+	UserRole    *userRoleSeeder
+	Cashier     *cashierSeeder
+	Category    *categorySeeder
+	Product     *productSeeder
+	Merchant    *merchantSeeder
+	Order       *orderSeeder
+	Transaction *transactionSeeder
 }
 
 func NewSeeder(deps Deps) *Seeder {
 	return &Seeder{
-		User:     NewUserSeeder(deps.Db, deps.Hash, deps.Ctx, deps.Logger),
-		Role:     NewRoleSeeder(deps.Db, deps.Ctx, deps.Logger),
-		UserRole: NewUserRoleSeeder(deps.Db, deps.Ctx, deps.Logger),
+		User:        NewUserSeeder(deps.Db, deps.Hash, deps.Ctx, deps.Logger),
+		Role:        NewRoleSeeder(deps.Db, deps.Ctx, deps.Logger),
+		UserRole:    NewUserRoleSeeder(deps.Db, deps.Ctx, deps.Logger),
+		Merchant:    NewMerchantSeeder(deps.Db, deps.Ctx, deps.Logger),
+		Cashier:     NewCashierSeeder(deps.Db, deps.Ctx, deps.Logger),
+		Category:    NewCategorySeeder(deps.Db, deps.Ctx, deps.Logger),
+		Product:     NewProductSeeder(deps.Db, deps.Ctx, deps.Logger),
+		Order:       NewOrderSeeder(deps.Db, deps.Ctx, deps.Logger),
+		Transaction: NewTransactionSeeder(deps.Db, deps.Ctx, deps.Logger),
 	}
 }
 
@@ -39,7 +51,31 @@ func (s *Seeder) Run() error {
 		return err
 	}
 
-	if err := s.seedWithDelay("user_role", s.UserRole.Seed); err != nil {
+	if err := s.seedWithDelay("user_roles", s.UserRole.Seed); err != nil {
+		return err
+	}
+
+	if err := s.seedWithDelay("merchant", s.Merchant.Seed); err != nil {
+		return nil
+	}
+
+	if err := s.seedWithDelay("cashier", s.Cashier.Seed); err != nil {
+		return nil
+	}
+
+	if err := s.seedWithDelay("category", s.Category.Seed); err != nil {
+		return nil
+	}
+
+	if err := s.seedWithDelay("product", s.Product.Seed); err != nil {
+		return nil
+	}
+
+	if err := s.seedWithDelay("order", s.Order.Seed); err != nil {
+		return nil
+	}
+
+	if err := s.seedWithDelay("transaction", s.Transaction.Seed); err != nil {
 		return nil
 	}
 

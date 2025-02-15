@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	_ "pointofsale/docs"
 	"pointofsale/internal/handler/api"
 	response_api "pointofsale/internal/mapper/response/api"
 	"pointofsale/internal/middlewares"
@@ -27,9 +28,9 @@ var (
 	addr = flag.String("addr", "localhost:50051", "the address to connect to")
 )
 
-// @title PaymentGateway gRPC
+// @title PointOfsale gRPC
 // @version 1.0
-// @description gRPC based Payment Gateway service
+// @description gRPC based Point Of Sale service
 
 // @host localhost:5000
 // @BasePath /api/

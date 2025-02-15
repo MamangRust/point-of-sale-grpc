@@ -20,7 +20,7 @@ type roleHandleApi struct {
 	mapping response_api.RoleResponseMapper
 }
 
-func NewHandlerRole(role pb.RoleServiceClient, router *echo.Echo, logger logger.LoggerInterface, mapping response_api.RoleResponseMapper) *roleHandleApi {
+func NewHandlerRole(router *echo.Echo, role pb.RoleServiceClient, logger logger.LoggerInterface, mapping response_api.RoleResponseMapper) *roleHandleApi {
 	roleHandler := &roleHandleApi{
 		role:    role,
 		logger:  logger,

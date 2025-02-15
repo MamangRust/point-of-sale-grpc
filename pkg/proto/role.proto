@@ -39,8 +39,6 @@ message RoleResponse {
 }
 
 
-
-
 message RoleResponseDeleteAt {
   int32 id = 1;
   string name = 2;

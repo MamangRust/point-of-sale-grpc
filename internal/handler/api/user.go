@@ -20,7 +20,7 @@ type userHandleApi struct {
 	mapping response_api.UserResponseMapper
 }
 
-func NewHandlerUser(client pb.UserServiceClient, router *echo.Echo, logger logger.LoggerInterface, mapping response_api.UserResponseMapper) *userHandleApi {
+func NewHandlerUser(router *echo.Echo, client pb.UserServiceClient, logger logger.LoggerInterface, mapping response_api.UserResponseMapper) *userHandleApi {
 	userHandler := &userHandleApi{
 		client:  client,
 		logger:  logger,
@@ -55,7 +55,7 @@ func NewHandlerUser(client pb.UserServiceClient, router *echo.Echo, logger logge
 // @Param page query int false "Page number" default(1)
 // @Param page_size query int false "Number of items per page" default(10)
 // @Param search query string false "Search query"
-// @Success 200 {object} pb.ApiResponsePaginationUser "List of users"
+// @Success 200 {object} response.ApiResponsePaginationUser "List of users"
 // @Failure 500 {object} response.ErrorResponse "Failed to retrieve user data"
 // @Router /api/user [get]
 func (h *userHandleApi) FindAllUser(c echo.Context) error {
@@ -89,7 +89,9 @@ func (h *userHandleApi) FindAllUser(c echo.Context) error {
 		})
 	}
 
-	return c.JSON(http.StatusOK, res)
+	so := h.mapping.ToApiResponsePaginationUser(res)
+
+	return c.JSON(http.StatusOK, so)
 }
 
 // @Security Bearer
@@ -130,7 +132,9 @@ func (h *userHandleApi) FindById(c echo.Context) error {
 		})
 	}
 
-	return c.JSON(http.StatusOK, user)
+	so := h.mapping.ToApiResponseUser(user)
+
+	return c.JSON(http.StatusOK, so)
 }
 
 // @Security Bearer
@@ -139,7 +143,7 @@ func (h *userHandleApi) FindById(c echo.Context) error {
 // @Description Retrieve a list of active users
 // @Accept json
 // @Produce json
-// @Success 200 {object} pb.ApiResponsesUser "List of active users"
+// @Success 200 {object} response.ApiResponsePaginationUserDeleteAt "List of active users"
 // @Failure 500 {object} response.ErrorResponse "Failed to retrieve user data"
 // @Router /api/user/active [get]
 func (h *userHandleApi) FindByActive(c echo.Context) error {
@@ -172,7 +176,10 @@ func (h *userHandleApi) FindByActive(c echo.Context) error {
 			Message: "Failed to retrieve user data: ",
 		})
 	}
-	return c.JSON(http.StatusOK, res)
+
+	so := h.mapping.ToApiResponsePaginationUserDeleteAt(res)
+
+	return c.JSON(http.StatusOK, so)
 }
 
 // @Security Bearer
@@ -182,7 +189,7 @@ func (h *userHandleApi) FindByActive(c echo.Context) error {
 // @Description Retrieve a list of trashed user records
 // @Accept json
 // @Produce json
-// @Success 200 {object} pb.ApiResponsesUser "List of trashed user data"
+// @Success 200 {object} response.ApiResponsePaginationUserDeleteAt "List of trashed user data"
 // @Failure 500 {object} response.ErrorResponse "Failed to retrieve user data"
 // @Router /api/user/trashed [get]
 func (h *userHandleApi) FindByTrashed(c echo.Context) error {
@@ -215,7 +222,10 @@ func (h *userHandleApi) FindByTrashed(c echo.Context) error {
 			Message: "Failed to retrieve user data: ",
 		})
 	}
-	return c.JSON(http.StatusOK, res)
+
+	so := h.mapping.ToApiResponsePaginationUserDeleteAt(res)
+
+	return c.JSON(http.StatusOK, so)
 }
 
 // @Security Bearer
@@ -226,7 +236,7 @@ func (h *userHandleApi) FindByTrashed(c echo.Context) error {
 // @Accept json
 // @Produce json
 // @Param request body requests.CreateUserRequest true "Create user request"
-// @Success 200 {object} pb.ApiResponseUser "Successfully created user"
+// @Success 200 {object} response.ApiResponseUser "Successfully created user"
 // @Failure 400 {object} response.ErrorResponse "Invalid request body or validation error"
 // @Failure 500 {object} response.ErrorResponse "Failed to create user"
 // @Router /api/user/create [post]
@@ -269,7 +279,9 @@ func (h *userHandleApi) Create(c echo.Context) error {
 		})
 	}
 
-	return c.JSON(http.StatusOK, res)
+	so := h.mapping.ToApiResponseUser(res)
+
+	return c.JSON(http.StatusOK, so)
 }
 
 // @Security Bearer
@@ -280,7 +292,7 @@ func (h *userHandleApi) Create(c echo.Context) error {
 // @Accept json
 // @Produce json
 // @Param UpdateUserRequest body requests.UpdateUserRequest true "Update user request"
-// @Success 200 {object} pb.ApiResponseUser "Successfully updated user"
+// @Success 200 {object} response.ApiResponseUser "Successfully updated user"
 // @Failure 400 {object} response.ErrorResponse "Invalid request body or validation error"
 // @Failure 500 {object} response.ErrorResponse "Failed to update user"
 // @Router /api/user/update/{id} [post]
@@ -324,7 +336,9 @@ func (h *userHandleApi) Update(c echo.Context) error {
 		})
 	}
 
-	return c.JSON(http.StatusOK, res)
+	so := h.mapping.ToApiResponseUser(res)
+
+	return c.JSON(http.StatusOK, so)
 }
 
 // @Security Bearer
@@ -335,7 +349,7 @@ func (h *userHandleApi) Update(c echo.Context) error {
 // @Accept json
 // @Produce json
 // @Param id path int true "User ID"
-// @Success 200 {object} pb.ApiResponseUser "Successfully retrieved trashed user"
+// @Success 200 {object} response.ApiResponseUserDeleteAt "Successfully retrieved trashed user"
 // @Failure 400 {object} response.ErrorResponse "Invalid request body or validation error"
 // @Failure 500 {object} response.ErrorResponse "Failed to retrieve trashed user"
 // @Router /api/user/trashed/{id} [get]
@@ -366,7 +380,9 @@ func (h *userHandleApi) TrashedUser(c echo.Context) error {
 		})
 	}
 
-	return c.JSON(http.StatusOK, user)
+	so := h.mapping.ToApiResponseUserDeleteAt(user)
+
+	return c.JSON(http.StatusOK, so)
 }
 
 // @Security Bearer
@@ -377,7 +393,7 @@ func (h *userHandleApi) TrashedUser(c echo.Context) error {
 // @Accept json
 // @Produce json
 // @Param id path int true "User ID"
-// @Success 200 {object} pb.ApiResponseUser "Successfully restored user"
+// @Success 200 {object} response.ApiResponseUserDeleteAt "Successfully restored user"
 // @Failure 400 {object} response.ErrorResponse "Invalid user ID"
 // @Failure 500 {object} response.ErrorResponse "Failed to restore user"
 // @Router /api/user/restore/{id} [post]
@@ -408,7 +424,9 @@ func (h *userHandleApi) RestoreUser(c echo.Context) error {
 		})
 	}
 
-	return c.JSON(http.StatusOK, user)
+	so := h.mapping.ToApiResponseUserDeleteAt(user)
+
+	return c.JSON(http.StatusOK, so)
 }
 
 // @Security Bearer
@@ -450,7 +468,9 @@ func (h *userHandleApi) DeleteUserPermanent(c echo.Context) error {
 		})
 	}
 
-	return c.JSON(http.StatusOK, user)
+	so := h.mapping.ToApiResponseUserDelete(user)
+
+	return c.JSON(http.StatusOK, so)
 }
 
 // @Security Bearer
@@ -478,9 +498,11 @@ func (h *userHandleApi) RestoreAllUser(c echo.Context) error {
 		})
 	}
 
+	so := h.mapping.ToApiResponseUserAll(res)
+
 	h.logger.Debug("Successfully restored all user")
 
-	return c.JSON(http.StatusOK, res)
+	return c.JSON(http.StatusOK, so)
 }
 
 // @Security Bearer
@@ -509,7 +531,9 @@ func (h *userHandleApi) DeleteAllUserPermanent(c echo.Context) error {
 		})
 	}
 
+	so := h.mapping.ToApiResponseUserAll(res)
+
 	h.logger.Debug("Successfully deleted all user permanently")
 
-	return c.JSON(http.StatusOK, res)
+	return c.JSON(http.StatusOK, so)
 }

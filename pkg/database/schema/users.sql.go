@@ -81,31 +81,6 @@ func (q *Queries) DeleteUserPermanently(ctx context.Context, userID int32) error
 	return err
 }
 
-const getTrashedUserByID = `-- name: GetTrashedUserByID :one
-SELECT user_id, firstname, lastname, email, password, created_at, updated_at, deleted_at
-FROM users
-WHERE
-    user_id = $1
-    AND deleted_at IS NOT NULL
-`
-
-// Get Trashed By User ID
-func (q *Queries) GetTrashedUserByID(ctx context.Context, userID int32) (*User, error) {
-	row := q.db.QueryRowContext(ctx, getTrashedUserByID, userID)
-	var i User
-	err := row.Scan(
-		&i.UserID,
-		&i.Firstname,
-		&i.Lastname,
-		&i.Email,
-		&i.Password,
-		&i.CreatedAt,
-		&i.UpdatedAt,
-		&i.DeletedAt,
-	)
-	return &i, err
-}
-
 const getUserByEmail = `-- name: GetUserByEmail :one
 SELECT user_id, firstname, lastname, email, password, created_at, updated_at, deleted_at FROM users WHERE email = $1 AND deleted_at IS NULL
 `
@@ -351,37 +326,61 @@ func (q *Queries) RestoreAllUsers(ctx context.Context) error {
 	return err
 }
 
-const restoreUser = `-- name: RestoreUser :exec
+const restoreUser = `-- name: RestoreUser :one
 UPDATE users
 SET
     deleted_at = NULL
 WHERE
     user_id = $1
     AND deleted_at IS NOT NULL
+    RETURNING user_id, firstname, lastname, email, password, created_at, updated_at, deleted_at
 `
 
 // Restore Trashed User
-func (q *Queries) RestoreUser(ctx context.Context, userID int32) error {
-	_, err := q.db.ExecContext(ctx, restoreUser, userID)
-	return err
+func (q *Queries) RestoreUser(ctx context.Context, userID int32) (*User, error) {
+	row := q.db.QueryRowContext(ctx, restoreUser, userID)
+	var i User
+	err := row.Scan(
+		&i.UserID,
+		&i.Firstname,
+		&i.Lastname,
+		&i.Email,
+		&i.Password,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.DeletedAt,
+	)
+	return &i, err
 }
 
-const trashUser = `-- name: TrashUser :exec
+const trashUser = `-- name: TrashUser :one
 UPDATE users
 SET
     deleted_at = current_timestamp
 WHERE
     user_id = $1
     AND deleted_at IS NULL
+    RETURNING user_id, firstname, lastname, email, password, created_at, updated_at, deleted_at
 `
 
 // Trash User
-func (q *Queries) TrashUser(ctx context.Context, userID int32) error {
-	_, err := q.db.ExecContext(ctx, trashUser, userID)
-	return err
+func (q *Queries) TrashUser(ctx context.Context, userID int32) (*User, error) {
+	row := q.db.QueryRowContext(ctx, trashUser, userID)
+	var i User
+	err := row.Scan(
+		&i.UserID,
+		&i.Firstname,
+		&i.Lastname,
+		&i.Email,
+		&i.Password,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.DeletedAt,
+	)
+	return &i, err
 }
 
-const updateUser = `-- name: UpdateUser :exec
+const updateUser = `-- name: UpdateUser :one
 UPDATE users
 SET
     firstname = $2,
@@ -392,6 +391,7 @@ SET
 WHERE
     user_id = $1
     AND deleted_at IS NULL
+    RETURNING user_id, firstname, lastname, email, password, created_at, updated_at, deleted_at
 `
 
 type UpdateUserParams struct {
@@ -403,13 +403,24 @@ type UpdateUserParams struct {
 }
 
 // Update User
-func (q *Queries) UpdateUser(ctx context.Context, arg UpdateUserParams) error {
-	_, err := q.db.ExecContext(ctx, updateUser,
+func (q *Queries) UpdateUser(ctx context.Context, arg UpdateUserParams) (*User, error) {
+	row := q.db.QueryRowContext(ctx, updateUser,
 		arg.UserID,
 		arg.Firstname,
 		arg.Lastname,
 		arg.Email,
 		arg.Password,
 	)
-	return err
+	var i User
+	err := row.Scan(
+		&i.UserID,
+		&i.Firstname,
+		&i.Lastname,
+		&i.Email,
+		&i.Password,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.DeletedAt,
+	)
+	return &i, err
 }
