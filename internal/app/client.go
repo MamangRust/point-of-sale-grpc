@@ -35,9 +35,12 @@ var (
 // @host localhost:5000
 // @BasePath /api/
 
-// @securityDefinitions.apikey BearerAuth
-// @in Header
+// @securityDefinitions.apikey ApiKeyAuth
+// @in header
 // @name Authorization
+// @description Type "Bearer" followed by a space and the JWT token obtained from login
+
+// @security ApiKeyAuth
 func RunClient() {
 	flag.Parse()
 
@@ -65,7 +68,7 @@ func RunClient() {
 	e.Use(middleware.Logger())
 
 	e.Use(middleware.CORSWithConfig(middleware.CORSConfig{
-		AllowOrigins: []string{"http://localhost:1420"},
+		AllowOrigins: []string{"http://localhost:1420", "http://localhost:5173"},
 		AllowMethods: []string{http.MethodGet, http.MethodPost, http.MethodPut, http.MethodDelete, http.MethodOptions},
 		AllowHeaders: []string{
 			echo.HeaderOrigin,

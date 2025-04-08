@@ -139,7 +139,7 @@ func (r *roleRepository) CreateRole(req *requests.CreateRoleRequest) (*record.Ro
 
 func (r *roleRepository) UpdateRole(req *requests.UpdateRoleRequest) (*record.RoleRecord, error) {
 	res, err := r.db.UpdateRole(r.ctx, db.UpdateRoleParams{
-		RoleID:   int32(req.ID),
+		RoleID:   int32(*req.ID),
 		RoleName: req.Name,
 	})
 

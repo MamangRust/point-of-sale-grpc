@@ -3,6 +3,8 @@ package protomapper
 import (
 	"pointofsale/internal/domain/response"
 	"pointofsale/internal/pb"
+
+	"google.golang.org/protobuf/types/known/wrapperspb"
 )
 
 type orderItemProtoMapper struct{}
@@ -82,6 +84,11 @@ func (o *orderItemProtoMapper) mapResponsesOrderItem(orderItems []*response.Orde
 }
 
 func (o *orderItemProtoMapper) mapResponseOrderItemDelete(orderItem *response.OrderItemResponseDeleteAt) *pb.OrderItemResponseDeleteAt {
+	var deletedAt *wrapperspb.StringValue
+	if orderItem.DeleteAt != nil {
+		deletedAt = wrapperspb.String(*orderItem.DeleteAt)
+	}
+
 	return &pb.OrderItemResponseDeleteAt{
 		Id:        int32(orderItem.ID),
 		OrderId:   int32(orderItem.OrderID),
@@ -90,7 +97,7 @@ func (o *orderItemProtoMapper) mapResponseOrderItemDelete(orderItem *response.Or
 		Price:     int32(orderItem.Price),
 		CreatedAt: orderItem.CreatedAt,
 		UpdatedAt: orderItem.UpdatedAt,
-		DeletedAt: orderItem.DeleteAt,
+		DeletedAt: deletedAt,
 	}
 }
 

@@ -3,6 +3,8 @@ package protomapper
 import (
 	"pointofsale/internal/domain/response"
 	"pointofsale/internal/pb"
+
+	"google.golang.org/protobuf/types/known/wrapperspb"
 )
 
 type productProtoMapper struct{}
@@ -78,7 +80,6 @@ func (p *productProtoMapper) mapResponseProduct(product *response.ProductRespons
 		CountInStock: int32(product.CountInStock),
 		Brand:        product.Brand,
 		Weight:       int32(product.Weight),
-		Rating:       float32(product.Rating),
 		SlugProduct:  product.SlugProduct,
 		ImageProduct: product.ImageProduct,
 		Barcode:      product.Barcode,
@@ -98,6 +99,11 @@ func (p *productProtoMapper) mapResponsesProduct(products []*response.ProductRes
 }
 
 func (p *productProtoMapper) mapResponseProductDeleteAt(product *response.ProductResponseDeleteAt) *pb.ProductResponseDeleteAt {
+	var deletedAt *wrapperspb.StringValue
+	if product.DeleteAt != nil {
+		deletedAt = wrapperspb.String(*product.DeleteAt)
+	}
+
 	return &pb.ProductResponseDeleteAt{
 		Id:           int32(product.ID),
 		MerchantId:   int32(product.MerchantID),
@@ -108,13 +114,12 @@ func (p *productProtoMapper) mapResponseProductDeleteAt(product *response.Produc
 		CountInStock: int32(product.CountInStock),
 		Brand:        product.Brand,
 		Weight:       int32(product.Weight),
-		Rating:       float32(product.Rating),
 		SlugProduct:  product.SlugProduct,
 		ImageProduct: product.ImageProduct,
 		Barcode:      product.Barcode,
 		CreatedAt:    product.CreatedAt,
 		UpdatedAt:    product.UpdatedAt,
-		DeletedAt:    product.DeleteAt,
+		DeletedAt:    deletedAt,
 	}
 }
 

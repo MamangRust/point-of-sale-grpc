@@ -20,26 +20,50 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	CashierService_FindAll_FullMethodName                   = "/pb.CashierService/FindAll"
-	CashierService_FindById_FullMethodName                  = "/pb.CashierService/FindById"
-	CashierService_FindByActive_FullMethodName              = "/pb.CashierService/FindByActive"
-	CashierService_FindByTrashed_FullMethodName             = "/pb.CashierService/FindByTrashed"
-	CashierService_FindByMerchant_FullMethodName            = "/pb.CashierService/FindByMerchant"
-	CashierService_CreateCashier_FullMethodName             = "/pb.CashierService/CreateCashier"
-	CashierService_UpdateCashier_FullMethodName             = "/pb.CashierService/UpdateCashier"
-	CashierService_TrashedCashier_FullMethodName            = "/pb.CashierService/TrashedCashier"
-	CashierService_RestoreCashier_FullMethodName            = "/pb.CashierService/RestoreCashier"
-	CashierService_DeleteCashierPermanent_FullMethodName    = "/pb.CashierService/DeleteCashierPermanent"
-	CashierService_RestoreAllCashier_FullMethodName         = "/pb.CashierService/RestoreAllCashier"
-	CashierService_DeleteAllCashierPermanent_FullMethodName = "/pb.CashierService/DeleteAllCashierPermanent"
+	CashierService_FindMonthlyTotalSales_FullMethodName           = "/pb.CashierService/FindMonthlyTotalSales"
+	CashierService_FindYearlyTotalSales_FullMethodName            = "/pb.CashierService/FindYearlyTotalSales"
+	CashierService_FindMonthlyTotalSalesById_FullMethodName       = "/pb.CashierService/FindMonthlyTotalSalesById"
+	CashierService_FindYearlyTotalSalesById_FullMethodName        = "/pb.CashierService/FindYearlyTotalSalesById"
+	CashierService_FindMonthlyTotalSalesByMerchant_FullMethodName = "/pb.CashierService/FindMonthlyTotalSalesByMerchant"
+	CashierService_FindYearlyTotalSalesByMerchant_FullMethodName  = "/pb.CashierService/FindYearlyTotalSalesByMerchant"
+	CashierService_FindAll_FullMethodName                         = "/pb.CashierService/FindAll"
+	CashierService_FindById_FullMethodName                        = "/pb.CashierService/FindById"
+	CashierService_FindMonthSales_FullMethodName                  = "/pb.CashierService/FindMonthSales"
+	CashierService_FindYearSales_FullMethodName                   = "/pb.CashierService/FindYearSales"
+	CashierService_FindMonthSalesByMerchant_FullMethodName        = "/pb.CashierService/FindMonthSalesByMerchant"
+	CashierService_FindYearSalesByMerchant_FullMethodName         = "/pb.CashierService/FindYearSalesByMerchant"
+	CashierService_FindMonthSalesById_FullMethodName              = "/pb.CashierService/FindMonthSalesById"
+	CashierService_FindYearSalesById_FullMethodName               = "/pb.CashierService/FindYearSalesById"
+	CashierService_FindByActive_FullMethodName                    = "/pb.CashierService/FindByActive"
+	CashierService_FindByTrashed_FullMethodName                   = "/pb.CashierService/FindByTrashed"
+	CashierService_FindByMerchant_FullMethodName                  = "/pb.CashierService/FindByMerchant"
+	CashierService_CreateCashier_FullMethodName                   = "/pb.CashierService/CreateCashier"
+	CashierService_UpdateCashier_FullMethodName                   = "/pb.CashierService/UpdateCashier"
+	CashierService_TrashedCashier_FullMethodName                  = "/pb.CashierService/TrashedCashier"
+	CashierService_RestoreCashier_FullMethodName                  = "/pb.CashierService/RestoreCashier"
+	CashierService_DeleteCashierPermanent_FullMethodName          = "/pb.CashierService/DeleteCashierPermanent"
+	CashierService_RestoreAllCashier_FullMethodName               = "/pb.CashierService/RestoreAllCashier"
+	CashierService_DeleteAllCashierPermanent_FullMethodName       = "/pb.CashierService/DeleteAllCashierPermanent"
 )
 
 // CashierServiceClient is the client API for CashierService service.
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type CashierServiceClient interface {
+	FindMonthlyTotalSales(ctx context.Context, in *FindYearMonthTotalSales, opts ...grpc.CallOption) (*ApiResponseCashierMonthlyTotalSales, error)
+	FindYearlyTotalSales(ctx context.Context, in *FindYearTotalSales, opts ...grpc.CallOption) (*ApiResponseCashierYearlyTotalSales, error)
+	FindMonthlyTotalSalesById(ctx context.Context, in *FindYearMonthTotalSalesById, opts ...grpc.CallOption) (*ApiResponseCashierMonthlyTotalSales, error)
+	FindYearlyTotalSalesById(ctx context.Context, in *FindYearTotalSalesById, opts ...grpc.CallOption) (*ApiResponseCashierYearlyTotalSales, error)
+	FindMonthlyTotalSalesByMerchant(ctx context.Context, in *FindYearMonthTotalSalesByMerchant, opts ...grpc.CallOption) (*ApiResponseCashierMonthlyTotalSales, error)
+	FindYearlyTotalSalesByMerchant(ctx context.Context, in *FindYearTotalSalesByMerchant, opts ...grpc.CallOption) (*ApiResponseCashierYearlyTotalSales, error)
 	FindAll(ctx context.Context, in *FindAllCashierRequest, opts ...grpc.CallOption) (*ApiResponsePaginationCashier, error)
 	FindById(ctx context.Context, in *FindByIdCashierRequest, opts ...grpc.CallOption) (*ApiResponseCashier, error)
+	FindMonthSales(ctx context.Context, in *FindYearCashier, opts ...grpc.CallOption) (*ApiResponseCashierMonthSales, error)
+	FindYearSales(ctx context.Context, in *FindYearCashier, opts ...grpc.CallOption) (*ApiResponseCashierYearSales, error)
+	FindMonthSalesByMerchant(ctx context.Context, in *FindYearCashierByMerchant, opts ...grpc.CallOption) (*ApiResponseCashierMonthSales, error)
+	FindYearSalesByMerchant(ctx context.Context, in *FindYearCashierByMerchant, opts ...grpc.CallOption) (*ApiResponseCashierYearSales, error)
+	FindMonthSalesById(ctx context.Context, in *FindYearCashierById, opts ...grpc.CallOption) (*ApiResponseCashierMonthSales, error)
+	FindYearSalesById(ctx context.Context, in *FindYearCashierById, opts ...grpc.CallOption) (*ApiResponseCashierYearSales, error)
 	FindByActive(ctx context.Context, in *FindAllCashierRequest, opts ...grpc.CallOption) (*ApiResponsePaginationCashierDeleteAt, error)
 	FindByTrashed(ctx context.Context, in *FindAllCashierRequest, opts ...grpc.CallOption) (*ApiResponsePaginationCashierDeleteAt, error)
 	FindByMerchant(ctx context.Context, in *FindByMerchantCashierRequest, opts ...grpc.CallOption) (*ApiResponsePaginationCashier, error)
@@ -60,6 +84,66 @@ func NewCashierServiceClient(cc grpc.ClientConnInterface) CashierServiceClient {
 	return &cashierServiceClient{cc}
 }
 
+func (c *cashierServiceClient) FindMonthlyTotalSales(ctx context.Context, in *FindYearMonthTotalSales, opts ...grpc.CallOption) (*ApiResponseCashierMonthlyTotalSales, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ApiResponseCashierMonthlyTotalSales)
+	err := c.cc.Invoke(ctx, CashierService_FindMonthlyTotalSales_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *cashierServiceClient) FindYearlyTotalSales(ctx context.Context, in *FindYearTotalSales, opts ...grpc.CallOption) (*ApiResponseCashierYearlyTotalSales, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ApiResponseCashierYearlyTotalSales)
+	err := c.cc.Invoke(ctx, CashierService_FindYearlyTotalSales_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *cashierServiceClient) FindMonthlyTotalSalesById(ctx context.Context, in *FindYearMonthTotalSalesById, opts ...grpc.CallOption) (*ApiResponseCashierMonthlyTotalSales, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ApiResponseCashierMonthlyTotalSales)
+	err := c.cc.Invoke(ctx, CashierService_FindMonthlyTotalSalesById_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *cashierServiceClient) FindYearlyTotalSalesById(ctx context.Context, in *FindYearTotalSalesById, opts ...grpc.CallOption) (*ApiResponseCashierYearlyTotalSales, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ApiResponseCashierYearlyTotalSales)
+	err := c.cc.Invoke(ctx, CashierService_FindYearlyTotalSalesById_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *cashierServiceClient) FindMonthlyTotalSalesByMerchant(ctx context.Context, in *FindYearMonthTotalSalesByMerchant, opts ...grpc.CallOption) (*ApiResponseCashierMonthlyTotalSales, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ApiResponseCashierMonthlyTotalSales)
+	err := c.cc.Invoke(ctx, CashierService_FindMonthlyTotalSalesByMerchant_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *cashierServiceClient) FindYearlyTotalSalesByMerchant(ctx context.Context, in *FindYearTotalSalesByMerchant, opts ...grpc.CallOption) (*ApiResponseCashierYearlyTotalSales, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ApiResponseCashierYearlyTotalSales)
+	err := c.cc.Invoke(ctx, CashierService_FindYearlyTotalSalesByMerchant_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *cashierServiceClient) FindAll(ctx context.Context, in *FindAllCashierRequest, opts ...grpc.CallOption) (*ApiResponsePaginationCashier, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(ApiResponsePaginationCashier)
@@ -74,6 +158,66 @@ func (c *cashierServiceClient) FindById(ctx context.Context, in *FindByIdCashier
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(ApiResponseCashier)
 	err := c.cc.Invoke(ctx, CashierService_FindById_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *cashierServiceClient) FindMonthSales(ctx context.Context, in *FindYearCashier, opts ...grpc.CallOption) (*ApiResponseCashierMonthSales, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ApiResponseCashierMonthSales)
+	err := c.cc.Invoke(ctx, CashierService_FindMonthSales_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *cashierServiceClient) FindYearSales(ctx context.Context, in *FindYearCashier, opts ...grpc.CallOption) (*ApiResponseCashierYearSales, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ApiResponseCashierYearSales)
+	err := c.cc.Invoke(ctx, CashierService_FindYearSales_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *cashierServiceClient) FindMonthSalesByMerchant(ctx context.Context, in *FindYearCashierByMerchant, opts ...grpc.CallOption) (*ApiResponseCashierMonthSales, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ApiResponseCashierMonthSales)
+	err := c.cc.Invoke(ctx, CashierService_FindMonthSalesByMerchant_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *cashierServiceClient) FindYearSalesByMerchant(ctx context.Context, in *FindYearCashierByMerchant, opts ...grpc.CallOption) (*ApiResponseCashierYearSales, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ApiResponseCashierYearSales)
+	err := c.cc.Invoke(ctx, CashierService_FindYearSalesByMerchant_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *cashierServiceClient) FindMonthSalesById(ctx context.Context, in *FindYearCashierById, opts ...grpc.CallOption) (*ApiResponseCashierMonthSales, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ApiResponseCashierMonthSales)
+	err := c.cc.Invoke(ctx, CashierService_FindMonthSalesById_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *cashierServiceClient) FindYearSalesById(ctx context.Context, in *FindYearCashierById, opts ...grpc.CallOption) (*ApiResponseCashierYearSales, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ApiResponseCashierYearSales)
+	err := c.cc.Invoke(ctx, CashierService_FindYearSalesById_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -184,8 +328,20 @@ func (c *cashierServiceClient) DeleteAllCashierPermanent(ctx context.Context, in
 // All implementations must embed UnimplementedCashierServiceServer
 // for forward compatibility.
 type CashierServiceServer interface {
+	FindMonthlyTotalSales(context.Context, *FindYearMonthTotalSales) (*ApiResponseCashierMonthlyTotalSales, error)
+	FindYearlyTotalSales(context.Context, *FindYearTotalSales) (*ApiResponseCashierYearlyTotalSales, error)
+	FindMonthlyTotalSalesById(context.Context, *FindYearMonthTotalSalesById) (*ApiResponseCashierMonthlyTotalSales, error)
+	FindYearlyTotalSalesById(context.Context, *FindYearTotalSalesById) (*ApiResponseCashierYearlyTotalSales, error)
+	FindMonthlyTotalSalesByMerchant(context.Context, *FindYearMonthTotalSalesByMerchant) (*ApiResponseCashierMonthlyTotalSales, error)
+	FindYearlyTotalSalesByMerchant(context.Context, *FindYearTotalSalesByMerchant) (*ApiResponseCashierYearlyTotalSales, error)
 	FindAll(context.Context, *FindAllCashierRequest) (*ApiResponsePaginationCashier, error)
 	FindById(context.Context, *FindByIdCashierRequest) (*ApiResponseCashier, error)
+	FindMonthSales(context.Context, *FindYearCashier) (*ApiResponseCashierMonthSales, error)
+	FindYearSales(context.Context, *FindYearCashier) (*ApiResponseCashierYearSales, error)
+	FindMonthSalesByMerchant(context.Context, *FindYearCashierByMerchant) (*ApiResponseCashierMonthSales, error)
+	FindYearSalesByMerchant(context.Context, *FindYearCashierByMerchant) (*ApiResponseCashierYearSales, error)
+	FindMonthSalesById(context.Context, *FindYearCashierById) (*ApiResponseCashierMonthSales, error)
+	FindYearSalesById(context.Context, *FindYearCashierById) (*ApiResponseCashierYearSales, error)
 	FindByActive(context.Context, *FindAllCashierRequest) (*ApiResponsePaginationCashierDeleteAt, error)
 	FindByTrashed(context.Context, *FindAllCashierRequest) (*ApiResponsePaginationCashierDeleteAt, error)
 	FindByMerchant(context.Context, *FindByMerchantCashierRequest) (*ApiResponsePaginationCashier, error)
@@ -206,11 +362,47 @@ type CashierServiceServer interface {
 // pointer dereference when methods are called.
 type UnimplementedCashierServiceServer struct{}
 
+func (UnimplementedCashierServiceServer) FindMonthlyTotalSales(context.Context, *FindYearMonthTotalSales) (*ApiResponseCashierMonthlyTotalSales, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method FindMonthlyTotalSales not implemented")
+}
+func (UnimplementedCashierServiceServer) FindYearlyTotalSales(context.Context, *FindYearTotalSales) (*ApiResponseCashierYearlyTotalSales, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method FindYearlyTotalSales not implemented")
+}
+func (UnimplementedCashierServiceServer) FindMonthlyTotalSalesById(context.Context, *FindYearMonthTotalSalesById) (*ApiResponseCashierMonthlyTotalSales, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method FindMonthlyTotalSalesById not implemented")
+}
+func (UnimplementedCashierServiceServer) FindYearlyTotalSalesById(context.Context, *FindYearTotalSalesById) (*ApiResponseCashierYearlyTotalSales, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method FindYearlyTotalSalesById not implemented")
+}
+func (UnimplementedCashierServiceServer) FindMonthlyTotalSalesByMerchant(context.Context, *FindYearMonthTotalSalesByMerchant) (*ApiResponseCashierMonthlyTotalSales, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method FindMonthlyTotalSalesByMerchant not implemented")
+}
+func (UnimplementedCashierServiceServer) FindYearlyTotalSalesByMerchant(context.Context, *FindYearTotalSalesByMerchant) (*ApiResponseCashierYearlyTotalSales, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method FindYearlyTotalSalesByMerchant not implemented")
+}
 func (UnimplementedCashierServiceServer) FindAll(context.Context, *FindAllCashierRequest) (*ApiResponsePaginationCashier, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method FindAll not implemented")
 }
 func (UnimplementedCashierServiceServer) FindById(context.Context, *FindByIdCashierRequest) (*ApiResponseCashier, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method FindById not implemented")
+}
+func (UnimplementedCashierServiceServer) FindMonthSales(context.Context, *FindYearCashier) (*ApiResponseCashierMonthSales, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method FindMonthSales not implemented")
+}
+func (UnimplementedCashierServiceServer) FindYearSales(context.Context, *FindYearCashier) (*ApiResponseCashierYearSales, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method FindYearSales not implemented")
+}
+func (UnimplementedCashierServiceServer) FindMonthSalesByMerchant(context.Context, *FindYearCashierByMerchant) (*ApiResponseCashierMonthSales, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method FindMonthSalesByMerchant not implemented")
+}
+func (UnimplementedCashierServiceServer) FindYearSalesByMerchant(context.Context, *FindYearCashierByMerchant) (*ApiResponseCashierYearSales, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method FindYearSalesByMerchant not implemented")
+}
+func (UnimplementedCashierServiceServer) FindMonthSalesById(context.Context, *FindYearCashierById) (*ApiResponseCashierMonthSales, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method FindMonthSalesById not implemented")
+}
+func (UnimplementedCashierServiceServer) FindYearSalesById(context.Context, *FindYearCashierById) (*ApiResponseCashierYearSales, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method FindYearSalesById not implemented")
 }
 func (UnimplementedCashierServiceServer) FindByActive(context.Context, *FindAllCashierRequest) (*ApiResponsePaginationCashierDeleteAt, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method FindByActive not implemented")
@@ -263,6 +455,114 @@ func RegisterCashierServiceServer(s grpc.ServiceRegistrar, srv CashierServiceSer
 	s.RegisterService(&CashierService_ServiceDesc, srv)
 }
 
+func _CashierService_FindMonthlyTotalSales_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(FindYearMonthTotalSales)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(CashierServiceServer).FindMonthlyTotalSales(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: CashierService_FindMonthlyTotalSales_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(CashierServiceServer).FindMonthlyTotalSales(ctx, req.(*FindYearMonthTotalSales))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _CashierService_FindYearlyTotalSales_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(FindYearTotalSales)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(CashierServiceServer).FindYearlyTotalSales(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: CashierService_FindYearlyTotalSales_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(CashierServiceServer).FindYearlyTotalSales(ctx, req.(*FindYearTotalSales))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _CashierService_FindMonthlyTotalSalesById_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(FindYearMonthTotalSalesById)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(CashierServiceServer).FindMonthlyTotalSalesById(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: CashierService_FindMonthlyTotalSalesById_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(CashierServiceServer).FindMonthlyTotalSalesById(ctx, req.(*FindYearMonthTotalSalesById))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _CashierService_FindYearlyTotalSalesById_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(FindYearTotalSalesById)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(CashierServiceServer).FindYearlyTotalSalesById(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: CashierService_FindYearlyTotalSalesById_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(CashierServiceServer).FindYearlyTotalSalesById(ctx, req.(*FindYearTotalSalesById))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _CashierService_FindMonthlyTotalSalesByMerchant_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(FindYearMonthTotalSalesByMerchant)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(CashierServiceServer).FindMonthlyTotalSalesByMerchant(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: CashierService_FindMonthlyTotalSalesByMerchant_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(CashierServiceServer).FindMonthlyTotalSalesByMerchant(ctx, req.(*FindYearMonthTotalSalesByMerchant))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _CashierService_FindYearlyTotalSalesByMerchant_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(FindYearTotalSalesByMerchant)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(CashierServiceServer).FindYearlyTotalSalesByMerchant(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: CashierService_FindYearlyTotalSalesByMerchant_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(CashierServiceServer).FindYearlyTotalSalesByMerchant(ctx, req.(*FindYearTotalSalesByMerchant))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _CashierService_FindAll_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(FindAllCashierRequest)
 	if err := dec(in); err != nil {
@@ -295,6 +595,114 @@ func _CashierService_FindById_Handler(srv interface{}, ctx context.Context, dec 
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(CashierServiceServer).FindById(ctx, req.(*FindByIdCashierRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _CashierService_FindMonthSales_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(FindYearCashier)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(CashierServiceServer).FindMonthSales(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: CashierService_FindMonthSales_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(CashierServiceServer).FindMonthSales(ctx, req.(*FindYearCashier))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _CashierService_FindYearSales_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(FindYearCashier)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(CashierServiceServer).FindYearSales(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: CashierService_FindYearSales_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(CashierServiceServer).FindYearSales(ctx, req.(*FindYearCashier))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _CashierService_FindMonthSalesByMerchant_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(FindYearCashierByMerchant)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(CashierServiceServer).FindMonthSalesByMerchant(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: CashierService_FindMonthSalesByMerchant_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(CashierServiceServer).FindMonthSalesByMerchant(ctx, req.(*FindYearCashierByMerchant))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _CashierService_FindYearSalesByMerchant_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(FindYearCashierByMerchant)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(CashierServiceServer).FindYearSalesByMerchant(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: CashierService_FindYearSalesByMerchant_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(CashierServiceServer).FindYearSalesByMerchant(ctx, req.(*FindYearCashierByMerchant))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _CashierService_FindMonthSalesById_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(FindYearCashierById)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(CashierServiceServer).FindMonthSalesById(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: CashierService_FindMonthSalesById_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(CashierServiceServer).FindMonthSalesById(ctx, req.(*FindYearCashierById))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _CashierService_FindYearSalesById_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(FindYearCashierById)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(CashierServiceServer).FindYearSalesById(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: CashierService_FindYearSalesById_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(CashierServiceServer).FindYearSalesById(ctx, req.(*FindYearCashierById))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -487,12 +895,60 @@ var CashierService_ServiceDesc = grpc.ServiceDesc{
 	HandlerType: (*CashierServiceServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
+			MethodName: "FindMonthlyTotalSales",
+			Handler:    _CashierService_FindMonthlyTotalSales_Handler,
+		},
+		{
+			MethodName: "FindYearlyTotalSales",
+			Handler:    _CashierService_FindYearlyTotalSales_Handler,
+		},
+		{
+			MethodName: "FindMonthlyTotalSalesById",
+			Handler:    _CashierService_FindMonthlyTotalSalesById_Handler,
+		},
+		{
+			MethodName: "FindYearlyTotalSalesById",
+			Handler:    _CashierService_FindYearlyTotalSalesById_Handler,
+		},
+		{
+			MethodName: "FindMonthlyTotalSalesByMerchant",
+			Handler:    _CashierService_FindMonthlyTotalSalesByMerchant_Handler,
+		},
+		{
+			MethodName: "FindYearlyTotalSalesByMerchant",
+			Handler:    _CashierService_FindYearlyTotalSalesByMerchant_Handler,
+		},
+		{
 			MethodName: "FindAll",
 			Handler:    _CashierService_FindAll_Handler,
 		},
 		{
 			MethodName: "FindById",
 			Handler:    _CashierService_FindById_Handler,
+		},
+		{
+			MethodName: "FindMonthSales",
+			Handler:    _CashierService_FindMonthSales_Handler,
+		},
+		{
+			MethodName: "FindYearSales",
+			Handler:    _CashierService_FindYearSales_Handler,
+		},
+		{
+			MethodName: "FindMonthSalesByMerchant",
+			Handler:    _CashierService_FindMonthSalesByMerchant_Handler,
+		},
+		{
+			MethodName: "FindYearSalesByMerchant",
+			Handler:    _CashierService_FindYearSalesByMerchant_Handler,
+		},
+		{
+			MethodName: "FindMonthSalesById",
+			Handler:    _CashierService_FindMonthSalesById_Handler,
+		},
+		{
+			MethodName: "FindYearSalesById",
+			Handler:    _CashierService_FindYearSalesById_Handler,
 		},
 		{
 			MethodName: "FindByActive",

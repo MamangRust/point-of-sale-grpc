@@ -38,19 +38,19 @@ func (s *userHandleGrpc) FindAll(ctx context.Context, request *pb.FindAllUserReq
 	users, totalRecords, err := s.userService.FindAll(page, pageSize, search)
 
 	if err != nil {
-		return nil, status.Errorf(codes.Internal, "%v", &pb.ErrorResponse{
-			Status:  "error",
-			Message: "Failed to fetch users: ",
+		return nil, status.Errorf(codes.Code(err.Code), "%v", &pb.ErrorResponse{
+			Status:  err.Status,
+			Message: err.Message,
 		})
 	}
 
-	totalPages := int(math.Ceil(float64(totalRecords) / float64(pageSize)))
+	totalPages := int(math.Ceil(float64(*totalRecords) / float64(pageSize)))
 
 	paginationMeta := &pb.PaginationMeta{
 		CurrentPage:  int32(page),
 		PageSize:     int32(pageSize),
 		TotalPages:   int32(totalPages),
-		TotalRecords: int32(totalRecords),
+		TotalRecords: int32(*totalRecords),
 	}
 
 	so := s.mapping.ToProtoResponsePaginationUser(paginationMeta, "success", "Successfully fetched users", users)
@@ -68,9 +68,9 @@ func (s *userHandleGrpc) FindById(ctx context.Context, request *pb.FindByIdUserR
 	user, err := s.userService.FindByID(int(request.GetId()))
 
 	if err != nil {
-		return nil, status.Errorf(codes.Internal, "%v", &pb.ErrorResponse{
-			Status:  "error",
-			Message: "Failed to fetch user: " + err.Message,
+		return nil, status.Errorf(codes.Code(err.Code), "%v", &pb.ErrorResponse{
+			Status:  err.Status,
+			Message: err.Message,
 		})
 	}
 
@@ -95,13 +95,13 @@ func (s *userHandleGrpc) FindByActive(ctx context.Context, request *pb.FindAllUs
 	users, totalRecords, err := s.userService.FindByActive(page, pageSize, search)
 
 	if err != nil {
-		return nil, status.Errorf(codes.Internal, "%v", &pb.ErrorResponse{
-			Status:  "error",
-			Message: "Failed to fetch active users: " + err.Message,
+		return nil, status.Errorf(codes.Code(err.Code), "%v", &pb.ErrorResponse{
+			Status:  err.Status,
+			Message: err.Message,
 		})
 	}
 
-	totalPages := int(math.Ceil(float64(totalRecords) / float64(pageSize)))
+	totalPages := int(math.Ceil(float64(*totalRecords) / float64(pageSize)))
 
 	paginationMeta := &pb.PaginationMeta{
 		CurrentPage:  int32(page),
@@ -129,13 +129,13 @@ func (s *userHandleGrpc) FindByTrashed(ctx context.Context, request *pb.FindAllU
 	users, totalRecords, err := s.userService.FindByTrashed(page, pageSize, search)
 
 	if err != nil {
-		return nil, status.Errorf(codes.Internal, "%v", &pb.ErrorResponse{
-			Status:  "error",
-			Message: "Failed to fetch trashed users: " + err.Message,
+		return nil, status.Errorf(codes.Code(err.Code), "%v", &pb.ErrorResponse{
+			Status:  err.Status,
+			Message: err.Message,
 		})
 	}
 
-	totalPages := int(math.Ceil(float64(totalRecords) / float64(pageSize)))
+	totalPages := int(math.Ceil(float64(*totalRecords) / float64(pageSize)))
 
 	paginationMeta := &pb.PaginationMeta{
 		CurrentPage:  int32(page),
@@ -160,8 +160,8 @@ func (s *userHandleGrpc) Create(ctx context.Context, request *pb.CreateUserReque
 
 	if err := req.Validate(); err != nil {
 		return nil, status.Errorf(codes.InvalidArgument, "%v", &pb.ErrorResponse{
-			Status:  "error",
-			Message: "Failed to create user: ",
+			Status:  "validation_error",
+			Message: "Invalid user data. Please check all required fields.",
 		})
 	}
 
@@ -180,7 +180,9 @@ func (s *userHandleGrpc) Create(ctx context.Context, request *pb.CreateUserReque
 }
 
 func (s *userHandleGrpc) Update(ctx context.Context, request *pb.UpdateUserRequest) (*pb.ApiResponseUser, error) {
-	if request.GetId() == 0 {
+	id := int(request.GetId())
+
+	if id == 0 {
 		return nil, status.Errorf(codes.InvalidArgument, "%v", &pb.ErrorResponse{
 			Status:  "error",
 			Message: "Invalid user id",
@@ -188,7 +190,7 @@ func (s *userHandleGrpc) Update(ctx context.Context, request *pb.UpdateUserReque
 	}
 
 	req := &requests.UpdateUserRequest{
-		UserID:          int(request.GetId()),
+		UserID:          &id,
 		FirstName:       request.GetFirstname(),
 		LastName:        request.GetLastname(),
 		Email:           request.GetEmail(),
@@ -198,8 +200,8 @@ func (s *userHandleGrpc) Update(ctx context.Context, request *pb.UpdateUserReque
 
 	if err := req.Validate(); err != nil {
 		return nil, status.Errorf(codes.InvalidArgument, "%v", &pb.ErrorResponse{
-			Status:  "error",
-			Message: "Failed to update user: ",
+			Status:  "validation_error",
+			Message: "Invalid user update data. Please verify your changes.",
 		})
 	}
 
@@ -228,9 +230,9 @@ func (s *userHandleGrpc) TrashedUser(ctx context.Context, request *pb.FindByIdUs
 	user, err := s.userService.TrashedUser(int(request.GetId()))
 
 	if err != nil {
-		return nil, status.Errorf(codes.Internal, "%v", &pb.ErrorResponse{
-			Status:  "error",
-			Message: "Failed to trashed user: " + err.Message,
+		return nil, status.Errorf(codes.Code(err.Code), "%v", &pb.ErrorResponse{
+			Status:  err.Status,
+			Message: err.Message,
 		})
 	}
 
@@ -250,9 +252,9 @@ func (s *userHandleGrpc) RestoreUser(ctx context.Context, request *pb.FindByIdUs
 	user, err := s.userService.RestoreUser(int(request.GetId()))
 
 	if err != nil {
-		return nil, status.Errorf(codes.Internal, "%v", &pb.ErrorResponse{
-			Status:  "error",
-			Message: "Failed to restore user: " + err.Message,
+		return nil, status.Errorf(codes.Code(err.Code), "%v", &pb.ErrorResponse{
+			Status:  err.Status,
+			Message: err.Message,
 		})
 	}
 
@@ -272,9 +274,9 @@ func (s *userHandleGrpc) DeleteUserPermanent(ctx context.Context, request *pb.Fi
 	_, err := s.userService.DeleteUserPermanent(int(request.GetId()))
 
 	if err != nil {
-		return nil, status.Errorf(codes.Internal, "%v", &pb.ErrorResponse{
-			Status:  "error",
-			Message: "Failed to delete user permanently: " + err.Message,
+		return nil, status.Errorf(codes.Code(err.Code), "%v", &pb.ErrorResponse{
+			Status:  err.Status,
+			Message: err.Message,
 		})
 	}
 
@@ -287,9 +289,9 @@ func (s *userHandleGrpc) RestoreAllUser(ctx context.Context, _ *emptypb.Empty) (
 	_, err := s.userService.RestoreAllUser()
 
 	if err != nil {
-		return nil, status.Errorf(codes.Internal, "%v", &pb.ErrorResponse{
-			Status:  "error",
-			Message: "Failed to restore all user: ",
+		return nil, status.Errorf(codes.Code(err.Code), "%v", &pb.ErrorResponse{
+			Status:  err.Status,
+			Message: err.Message,
 		})
 	}
 
@@ -302,9 +304,9 @@ func (s *userHandleGrpc) DeleteAllUserPermanent(ctx context.Context, _ *emptypb.
 	_, err := s.userService.DeleteAllUserPermanent()
 
 	if err != nil {
-		return nil, status.Errorf(codes.Internal, "%v", &pb.ErrorResponse{
-			Status:  "error",
-			Message: "Failed to delete user permanent: ",
+		return nil, status.Errorf(codes.Code(err.Code), "%v", &pb.ErrorResponse{
+			Status:  err.Status,
+			Message: err.Message,
 		})
 	}
 

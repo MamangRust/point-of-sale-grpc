@@ -2,10 +2,12 @@ package gapi
 
 import (
 	"context"
+	"net/http"
 	"pointofsale/internal/domain/requests"
 	protomapper "pointofsale/internal/mapper/proto"
 	"pointofsale/internal/pb"
 	"pointofsale/internal/service"
+	"strings"
 
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -22,17 +24,37 @@ func NewAuthHandleGrpc(auth service.AuthService, mapping protomapper.AuthProtoMa
 }
 
 func (s *authHandleGrpc) LoginUser(ctx context.Context, req *pb.LoginRequest) (*pb.ApiResponseLogin, error) {
+	if req == nil {
+		return nil, status.Error(codes.InvalidArgument, "request cannot be nil")
+	}
+
 	request := &requests.AuthRequest{
-		Email:    req.Email,
+		Email:    strings.TrimSpace(req.Email),
 		Password: req.Password,
 	}
 
-	res, err := s.authService.Login(request)
-	if err != nil {
-		return nil, status.Errorf(codes.Unauthenticated, "%v", &pb.ErrorResponse{
-			Status:  "error",
-			Message: "Login failed: ",
-		})
+	res, errRes := s.authService.Login(request)
+
+	if errRes != nil {
+		if errRes.Code == http.StatusUnauthorized {
+			return nil, status.Error(
+				codes.Unauthenticated,
+				"invalid credentials",
+			)
+		}
+		return nil, status.Errorf(
+			codes.Code(errRes.Code),
+			"%s: %s",
+			errRes.Status,
+			errRes.Message,
+		)
+	}
+
+	if res == nil || res.AccessToken == "" {
+		return nil, status.Error(
+			codes.Internal,
+			"authentication service returned empty token",
+		)
 	}
 
 	return s.mapping.ToProtoResponseLogin("success", "Login successful", res), nil
@@ -42,26 +64,46 @@ func (s *authHandleGrpc) RefreshToken(ctx context.Context, req *pb.RefreshTokenR
 	res, err := s.authService.RefreshToken(req.RefreshToken)
 
 	if err != nil {
-		return nil, status.Errorf(codes.Unauthenticated, "%v", &pb.ErrorResponse{
-			Status:  "error",
-			Message: "Refresh token failed: ",
-		})
+		switch {
+		case err.Code == http.StatusUnauthorized:
+			return nil, status.Error(codes.Unauthenticated, "invalid or expired refresh token")
+		case err.Code == http.StatusInternalServerError:
+			return nil, status.Error(codes.InvalidArgument, err.Message)
+		default:
+			return nil, status.Errorf(codes.Code(err.Code), "%s: %s", err.Status, err.Message)
+		}
 	}
 
-	return s.mapping.ToProtoResponseRefreshToken("success", "Registration successful", res), nil
+	if res == nil || res.AccessToken == "" || res.RefreshToken == "" {
+		return nil, status.Error(codes.Internal, "failed to generate valid tokens")
+	}
+
+	return s.mapping.ToProtoResponseRefreshToken("success", "tokens refreshed successfully", res), nil
 }
 
 func (s *authHandleGrpc) GetMe(ctx context.Context, req *pb.GetMeRequest) (*pb.ApiResponseGetMe, error) {
+	if req.AccessToken == "" {
+		return nil, status.Error(codes.InvalidArgument, "access token is required")
+	}
+
 	res, err := s.authService.GetMe(req.AccessToken)
 
 	if err != nil {
-		return nil, status.Errorf(codes.Unauthenticated, "%v", &pb.ErrorResponse{
-			Status:  "error",
-			Message: "Get me failed: ",
-		})
+		switch {
+		case err.Code == http.StatusUnauthorized:
+			return nil, status.Error(codes.Unauthenticated, "invalid or expired access token")
+		case err.Code == http.StatusInternalServerError:
+			return nil, status.Error(codes.Internal, err.Message)
+		default:
+			return nil, status.Errorf(codes.Code(err.Code), "%s: %s", err.Status, err.Message)
+		}
 	}
 
-	return s.mapping.ToProtoResponseGetMe("success", "Refresh token successful", res), nil
+	if res == nil {
+		return nil, status.Error(codes.Internal, "failed to get user information")
+	}
+
+	return s.mapping.ToProtoResponseGetMe("success", "user data retrieved successfully", res), nil
 }
 
 func (s *authHandleGrpc) RegisterUser(ctx context.Context, req *pb.RegisterRequest) (*pb.ApiResponseRegister, error) {
@@ -73,10 +115,20 @@ func (s *authHandleGrpc) RegisterUser(ctx context.Context, req *pb.RegisterReque
 		ConfirmPassword: req.ConfirmPassword,
 	}
 
-	res, errResp := s.authService.Register(request)
-	if errResp != nil {
-		return nil, status.Errorf(codes.InvalidArgument, "status: %s, message: %s", errResp.Status, errResp.Message)
+	if err := request.Validate(); err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, "%v", &pb.ErrorResponse{
+			Status:  "validation_error",
+			Message: "Invalid registration data. Please check your input.",
+		})
 	}
 
-	return s.mapping.ToProtoResponseRegister("success", "Get me successful", res), nil
+	res, err := s.authService.Register(request)
+	if err != nil {
+		return nil, status.Errorf(codes.Code(err.Code), "%v", &pb.ErrorResponse{
+			Status:  err.Status,
+			Message: err.Message,
+		})
+	}
+
+	return s.mapping.ToProtoResponseRegister("success", "Registration successful", res), nil
 }

@@ -69,7 +69,6 @@ func (r *productSeeder) Seed() error {
 		price := int32(rand.Intn(5000000) + 50000)
 		countInStock := int32(rand.Intn(100) + 1)
 		weight := sql.NullInt32{Int32: int32(rand.Intn(5000) + 100), Valid: true}
-		rating := sql.NullFloat64{Float64: rand.Float64()*5 + 1, Valid: true}
 		slug := sql.NullString{String: fmt.Sprintf("%s-%d", name, rand.Intn(1000)), Valid: true}
 		image := sql.NullString{String: images[rand.Intn(len(images))], Valid: true}
 		barcode := sql.NullString{String: fmt.Sprintf("BC-%d", rand.Intn(9999999)), Valid: true}
@@ -83,7 +82,6 @@ func (r *productSeeder) Seed() error {
 			CountInStock: countInStock,
 			Brand:        brand,
 			Weight:       weight,
-			Rating:       rating,
 			SlugProduct:  slug,
 			ImageProduct: image,
 			Barcode:      barcode,

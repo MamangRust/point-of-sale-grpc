@@ -29,7 +29,6 @@ func (s *productRecordMapper) ToProductRecord(product *db.Product) *record.Produ
 		CountInStock: int(product.CountInStock),
 		Brand:        product.Brand.String,
 		Weight:       int(product.Weight.Int32),
-		Rating:       float32(product.Rating.Float64),
 		SlugProduct:  product.SlugProduct.String,
 		ImageProduct: product.ImageProduct.String,
 		Barcode:      product.Barcode.String,
@@ -66,7 +65,6 @@ func (s *productRecordMapper) ToProductRecordPagination(product *db.GetProductsR
 		CountInStock: int(product.CountInStock),
 		Brand:        product.Brand.String,
 		Weight:       int(product.Weight.Int32),
-		Rating:       float32(product.Rating.Float64),
 		SlugProduct:  product.SlugProduct.String,
 		ImageProduct: product.ImageProduct.String,
 		Barcode:      product.Barcode.String,
@@ -103,7 +101,6 @@ func (s *productRecordMapper) ToProductRecordActivePagination(product *db.GetPro
 		CountInStock: int(product.CountInStock),
 		Brand:        product.Brand.String,
 		Weight:       int(product.Weight.Int32),
-		Rating:       float32(product.Rating.Float64),
 		SlugProduct:  product.SlugProduct.String,
 		ImageProduct: product.ImageProduct.String,
 		Barcode:      product.Barcode.String,
@@ -140,7 +137,6 @@ func (s *productRecordMapper) ToProductRecordTrashedPagination(product *db.GetPr
 		CountInStock: int(product.CountInStock),
 		Brand:        product.Brand.String,
 		Weight:       int(product.Weight.Int32),
-		Rating:       float32(product.Rating.Float64),
 		SlugProduct:  product.SlugProduct.String,
 		ImageProduct: product.ImageProduct.String,
 		Barcode:      product.Barcode.String,
@@ -161,29 +157,15 @@ func (s *productRecordMapper) ToProductsRecordTrashedPagination(products []*db.G
 }
 
 func (s *productRecordMapper) ToProductRecordMerchantPagination(product *db.GetProductsByMerchantRow) *record.ProductRecord {
-	var deletedAt *string
-	if product.DeletedAt.Valid {
-		deletedAtStr := product.DeletedAt.Time.Format("2006-01-02 15:04:05.000")
-		deletedAt = &deletedAtStr
-	}
-
 	return &record.ProductRecord{
 		ID:           int(product.ProductID),
-		MerchantID:   int(product.MerchantID),
-		CategoryID:   int(product.CategoryID),
 		Name:         product.Name,
 		Description:  product.Description.String,
 		Price:        int(product.Price),
 		CountInStock: int(product.CountInStock),
 		Brand:        product.Brand.String,
-		Weight:       int(product.Weight.Int32),
-		Rating:       float32(product.Rating.Float64),
-		SlugProduct:  product.SlugProduct.String,
 		ImageProduct: product.ImageProduct.String,
-		Barcode:      product.Barcode.String,
 		CreatedAt:    product.CreatedAt.Time.Format("2006-01-02 15:04:05.000"),
-		UpdatedAt:    product.UpdatedAt.Time.Format("2006-01-02 15:04:05.000"),
-		DeletedAt:    deletedAt,
 	}
 }
 
@@ -214,7 +196,6 @@ func (s *productRecordMapper) ToProductRecordCategoryPagination(product *db.GetP
 		CountInStock: int(product.CountInStock),
 		Brand:        product.Brand.String,
 		Weight:       int(product.Weight.Int32),
-		Rating:       float32(product.Rating.Float64),
 		SlugProduct:  product.SlugProduct.String,
 		ImageProduct: product.ImageProduct.String,
 		Barcode:      product.Barcode.String,

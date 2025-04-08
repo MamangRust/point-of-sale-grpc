@@ -4,7 +4,7 @@ CREATE TABLE "orders" (
     "order_id" SERIAL PRIMARY KEY,
     "merchant_id" INT NOT NULL REFERENCES "merchants" ("merchant_id"),
     "cashier_id" INT NOT NULL REFERENCES "cashiers" ("cashier_id"),
-    "total_price" INT NOT NULL,
+    "total_price" BIGINT NOT NULL,
     "created_at" TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     "updated_at" TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     "deleted_at" TIMESTAMP DEFAULT NULL

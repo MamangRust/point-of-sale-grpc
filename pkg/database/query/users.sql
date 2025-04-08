@@ -47,8 +47,6 @@ SELECT * FROM users WHERE email = $1 AND deleted_at IS NULL;
 
 
 
-
-
 -- Create User
 -- name: CreateUser :one
 INSERT INTO
@@ -69,6 +67,7 @@ VALUES (
         current_timestamp
     ) RETURNING *;
 
+
 -- Update User
 -- name: UpdateUser :one
 UPDATE users
@@ -82,7 +81,6 @@ WHERE
     user_id = $1
     AND deleted_at IS NULL
     RETURNING *;
-
 
 
 -- Trash User

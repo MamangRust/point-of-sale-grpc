@@ -1,306 +1,4 @@
 definitions:
-  pb.ApiResponseCashier:
-    properties:
-      data:
-        $ref: '#/definitions/pb.CashierResponse'
-      message:
-        type: string
-      status:
-        type: string
-    type: object
-  pb.ApiResponseCashierAll:
-    properties:
-      message:
-        type: string
-      status:
-        type: string
-    type: object
-  pb.ApiResponseCashierDeleteAt:
-    properties:
-      data:
-        $ref: '#/definitions/pb.CashierResponseDeleteAt'
-      message:
-        type: string
-      status:
-        type: string
-    type: object
-  pb.ApiResponseCategory:
-    properties:
-      data:
-        $ref: '#/definitions/pb.CategoryResponse'
-      message:
-        type: string
-      status:
-        type: string
-    type: object
-  pb.ApiResponseGetMe:
-    properties:
-      data:
-        $ref: '#/definitions/pb.UserResponse'
-      message:
-        type: string
-      status:
-        type: string
-    type: object
-  pb.ApiResponseLogin:
-    properties:
-      data:
-        $ref: '#/definitions/pb.TokenResponse'
-      message:
-        type: string
-      status:
-        type: string
-    type: object
-  pb.ApiResponsePaginationRole:
-    properties:
-      data:
-        items:
-          $ref: '#/definitions/pb.RoleResponse'
-        type: array
-      message:
-        type: string
-      pagination:
-        $ref: '#/definitions/pb.PaginationMeta'
-      status:
-        type: string
-    type: object
-  pb.ApiResponsePaginationRoleDeleteAt:
-    properties:
-      data:
-        items:
-          $ref: '#/definitions/pb.RoleResponseDeleteAt'
-        type: array
-      message:
-        type: string
-      pagination:
-        $ref: '#/definitions/pb.PaginationMeta'
-      status:
-        type: string
-    type: object
-  pb.ApiResponseProduct:
-    properties:
-      data:
-        $ref: '#/definitions/pb.ProductResponse'
-      message:
-        type: string
-      status:
-        type: string
-    type: object
-  pb.ApiResponseRefreshToken:
-    properties:
-      data:
-        $ref: '#/definitions/pb.TokenResponse'
-      message:
-        type: string
-      status:
-        type: string
-    type: object
-  pb.ApiResponseRegister:
-    properties:
-      data:
-        $ref: '#/definitions/pb.UserResponse'
-      message:
-        type: string
-      status:
-        type: string
-    type: object
-  pb.ApiResponseRole:
-    properties:
-      data:
-        $ref: '#/definitions/pb.RoleResponse'
-      message:
-        type: string
-      status:
-        type: string
-    type: object
-  pb.ApiResponseRoleAll:
-    properties:
-      message:
-        type: string
-      status:
-        type: string
-    type: object
-  pb.ApiResponseUser:
-    properties:
-      data:
-        $ref: '#/definitions/pb.UserResponse'
-      message:
-        type: string
-      status:
-        type: string
-    type: object
-  pb.ApiResponseUserAll:
-    properties:
-      message:
-        type: string
-      status:
-        type: string
-    type: object
-  pb.ApiResponseUserDelete:
-    properties:
-      message:
-        type: string
-      status:
-        type: string
-    type: object
-  pb.ApiResponsesUser:
-    properties:
-      data:
-        items:
-          $ref: '#/definitions/pb.UserResponse'
-        type: array
-      message:
-        type: string
-      status:
-        type: string
-    type: object
-  pb.CashierResponse:
-    properties:
-      created_at:
-        type: string
-      id:
-        type: integer
-      merchant_id:
-        type: integer
-      name:
-        type: string
-      updated_at:
-        type: string
-    type: object
-  pb.CashierResponseDeleteAt:
-    properties:
-      created_at:
-        type: string
-      deleted_at:
-        type: string
-      id:
-        type: integer
-      merchant_id:
-        type: integer
-      name:
-        type: string
-      updated_at:
-        type: string
-    type: object
-  pb.CategoryResponse:
-    properties:
-      created_at:
-        type: string
-      description:
-        type: string
-      id:
-        type: integer
-      image_category:
-        type: string
-      name:
-        type: string
-      slug_category:
-        type: string
-      updated_at:
-        type: string
-    type: object
-  pb.CreateRoleRequest:
-    properties:
-      name:
-        type: string
-    type: object
-  pb.PaginationMeta:
-    properties:
-      current_page:
-        type: integer
-      page_size:
-        type: integer
-      total_pages:
-        type: integer
-      total_records:
-        type: integer
-    type: object
-  pb.ProductResponse:
-    properties:
-      barcode:
-        type: string
-      brand:
-        type: string
-      category_id:
-        type: integer
-      count_in_stock:
-        type: integer
-      created_at:
-        type: string
-      description:
-        type: string
-      id:
-        type: integer
-      image_product:
-        type: string
-      merchant_id:
-        type: integer
-      name:
-        type: string
-      price:
-        type: integer
-      rating:
-        type: number
-      slug_product:
-        type: string
-      updated_at:
-        type: string
-      weight:
-        type: integer
-    type: object
-  pb.RoleResponse:
-    properties:
-      created_at:
-        type: string
-      id:
-        type: integer
-      name:
-        type: string
-      updated_at:
-        type: string
-    type: object
-  pb.RoleResponseDeleteAt:
-    properties:
-      created_at:
-        type: string
-      deleted_at:
-        type: string
-      id:
-        type: integer
-      name:
-        type: string
-      updated_at:
-        type: string
-    type: object
-  pb.TokenResponse:
-    properties:
-      access_token:
-        type: string
-      refresh_token:
-        type: string
-    type: object
-  pb.UpdateRoleRequest:
-    properties:
-      id:
-        type: integer
-      name:
-        type: string
-    type: object
-  pb.UserResponse:
-    properties:
-      created_at:
-        type: string
-      email:
-        type: string
-      firstname:
-        type: string
-      id:
-        type: integer
-      lastname:
-        type: string
-      updated_at:
-        type: string
-    type: object
   requests.AuthRequest:
     properties:
       email:
@@ -324,6 +22,18 @@ definitions:
     - merchant_id
     - name
     - user_id
+    type: object
+  requests.CreateCategoryRequest:
+    properties:
+      description:
+        type: string
+      name:
+        type: string
+      slug_category:
+        type: string
+    required:
+    - description
+    - name
     type: object
   requests.CreateMerchantRequest:
     properties:
@@ -373,13 +83,17 @@ definitions:
         type: array
       merchant_id:
         type: integer
-      total_price:
-        type: integer
     required:
     - cashier_id
     - items
     - merchant_id
-    - total_price
+    type: object
+  requests.CreateRoleRequest:
+    properties:
+      name:
+        type: string
+    required:
+    - name
     type: object
   requests.CreateTransactionRequest:
     properties:
@@ -441,6 +155,21 @@ definitions:
     - cashier_id
     - name
     type: object
+  requests.UpdateCategoryRequest:
+    properties:
+      category_id:
+        type: integer
+      description:
+        type: string
+      name:
+        type: string
+      slug_category:
+        type: string
+    required:
+    - category_id
+    - description
+    - name
+    type: object
   requests.UpdateMerchantRequest:
     properties:
       address:
@@ -493,12 +222,20 @@ definitions:
         type: array
       order_id:
         type: integer
-      total_price:
-        type: integer
     required:
     - items
     - order_id
-    - total_price
+    type: object
+  requests.UpdateRoleRequest:
+    properties:
+      id:
+        minimum: 1
+        type: integer
+      name:
+        type: string
+    required:
+    - id
+    - name
     type: object
   requests.UpdateTransactionRequest:
     properties:
@@ -558,8 +295,46 @@ definitions:
       status:
         type: string
     type: object
+  response.ApiResponseCashierAll:
+    properties:
+      message:
+        type: string
+      status:
+        type: string
+    type: object
   response.ApiResponseCashierDelete:
     properties:
+      message:
+        type: string
+      status:
+        type: string
+    type: object
+  response.ApiResponseCashierDeleteAt:
+    properties:
+      data:
+        $ref: '#/definitions/response.CashierResponseDeleteAt'
+      message:
+        type: string
+      status:
+        type: string
+    type: object
+  response.ApiResponseCashierMonthSales:
+    properties:
+      data:
+        items:
+          $ref: '#/definitions/response.CashierResponseMonthSales'
+        type: array
+      message:
+        type: string
+      status:
+        type: string
+    type: object
+  response.ApiResponseCashierYearSales:
+    properties:
+      data:
+        items:
+          $ref: '#/definitions/response.CashierResponseYearSales'
+        type: array
       message:
         type: string
       status:
@@ -593,6 +368,46 @@ definitions:
       data:
         $ref: '#/definitions/response.CategoryResponseDeleteAt'
       message:
+        type: string
+      status:
+        type: string
+    type: object
+  response.ApiResponseCategoryMonthPrice:
+    properties:
+      data:
+        items:
+          $ref: '#/definitions/response.CategoryMonthPriceResponse'
+        type: array
+      message:
+        type: string
+      status:
+        type: string
+    type: object
+  response.ApiResponseCategoryYearPrice:
+    properties:
+      data:
+        items:
+          $ref: '#/definitions/response.CategoryYearPriceResponse'
+        type: array
+      message:
+        type: string
+      status:
+        type: string
+    type: object
+  response.ApiResponseGetMe:
+    properties:
+      data:
+        $ref: '#/definitions/response.UserResponse'
+      messsage:
+        type: string
+      status:
+        type: string
+    type: object
+  response.ApiResponseLogin:
+    properties:
+      data:
+        $ref: '#/definitions/response.TokenResponse'
+      messsage:
         type: string
       status:
         type: string
@@ -661,6 +476,28 @@ definitions:
       status:
         type: string
     type: object
+  response.ApiResponseOrderMonthly:
+    properties:
+      data:
+        items:
+          $ref: '#/definitions/response.OrderMonthlyResponse'
+        type: array
+      message:
+        type: string
+      status:
+        type: string
+    type: object
+  response.ApiResponseOrderYearly:
+    properties:
+      data:
+        items:
+          $ref: '#/definitions/response.OrderYearlyResponse'
+        type: array
+      message:
+        type: string
+      status:
+        type: string
+    type: object
   response.ApiResponsePaginationCashier:
     properties:
       data:
@@ -718,6 +555,19 @@ definitions:
       data:
         items:
           $ref: '#/definitions/response.MerchantResponse'
+        type: array
+      message:
+        type: string
+      pagination:
+        $ref: '#/definitions/response.PaginationMeta'
+      status:
+        type: string
+    type: object
+  response.ApiResponsePaginationMerchantDeleteAt:
+    properties:
+      data:
+        items:
+          $ref: '#/definitions/response.MerchantResponseDeleteAt'
         type: array
       message:
         type: string
@@ -796,6 +646,32 @@ definitions:
       data:
         items:
           $ref: '#/definitions/response.ProductResponseDeleteAt'
+        type: array
+      message:
+        type: string
+      pagination:
+        $ref: '#/definitions/response.PaginationMeta'
+      status:
+        type: string
+    type: object
+  response.ApiResponsePaginationRole:
+    properties:
+      data:
+        items:
+          $ref: '#/definitions/response.RoleResponse'
+        type: array
+      message:
+        type: string
+      pagination:
+        $ref: '#/definitions/response.PaginationMeta'
+      status:
+        type: string
+    type: object
+  response.ApiResponsePaginationRoleDeleteAt:
+    properties:
+      data:
+        items:
+          $ref: '#/definitions/response.RoleResponseDeleteAt'
         type: array
       message:
         type: string
@@ -888,6 +764,40 @@ definitions:
       status:
         type: string
     type: object
+  response.ApiResponseRefreshToken:
+    properties:
+      data:
+        $ref: '#/definitions/response.TokenResponse'
+      messsage:
+        type: string
+      status:
+        type: string
+    type: object
+  response.ApiResponseRegister:
+    properties:
+      data:
+        $ref: '#/definitions/response.UserResponse'
+      messsage:
+        type: string
+      status:
+        type: string
+    type: object
+  response.ApiResponseRole:
+    properties:
+      data:
+        $ref: '#/definitions/response.RoleResponse'
+      message:
+        type: string
+      status:
+        type: string
+    type: object
+  response.ApiResponseRoleAll:
+    properties:
+      message:
+        type: string
+      status:
+        type: string
+    type: object
   response.ApiResponseTransaction:
     properties:
       data:
@@ -929,6 +839,20 @@ definitions:
       status:
         type: string
     type: object
+  response.ApiResponseUserAll:
+    properties:
+      message:
+        type: string
+      status:
+        type: string
+    type: object
+  response.ApiResponseUserDelete:
+    properties:
+      message:
+        type: string
+      status:
+        type: string
+    type: object
   response.ApiResponseUserDeleteAt:
     properties:
       data:
@@ -943,6 +867,72 @@ definitions:
       data:
         items:
           $ref: '#/definitions/response.OrderItemResponse'
+        type: array
+      message:
+        type: string
+      status:
+        type: string
+    type: object
+  response.ApiResponsesTransactionMonthFailed:
+    properties:
+      data:
+        items:
+          $ref: '#/definitions/response.TransactionMonthlyAmountFailedResponse'
+        type: array
+      message:
+        type: string
+      status:
+        type: string
+    type: object
+  response.ApiResponsesTransactionMonthMethod:
+    properties:
+      data:
+        items:
+          $ref: '#/definitions/response.TransactionMonthlyMethodResponse'
+        type: array
+      message:
+        type: string
+      status:
+        type: string
+    type: object
+  response.ApiResponsesTransactionMonthSuccess:
+    properties:
+      data:
+        items:
+          $ref: '#/definitions/response.TransactionMonthlyAmountSuccessResponse'
+        type: array
+      message:
+        type: string
+      status:
+        type: string
+    type: object
+  response.ApiResponsesTransactionYearFailed:
+    properties:
+      data:
+        items:
+          $ref: '#/definitions/response.TransactionYearlyAmountFailedResponse'
+        type: array
+      message:
+        type: string
+      status:
+        type: string
+    type: object
+  response.ApiResponsesTransactionYearMethod:
+    properties:
+      data:
+        items:
+          $ref: '#/definitions/response.TransactionYearlyMethodResponse'
+        type: array
+      message:
+        type: string
+      status:
+        type: string
+    type: object
+  response.ApiResponsesTransactionYearSuccess:
+    properties:
+      data:
+        items:
+          $ref: '#/definitions/response.TransactionYearlyAmountSuccessResponse'
         type: array
       message:
         type: string
@@ -976,6 +966,47 @@ definitions:
         type: string
       updated_at:
         type: string
+    type: object
+  response.CashierResponseMonthSales:
+    properties:
+      cashier_id:
+        type: integer
+      cashier_name:
+        type: string
+      month:
+        type: string
+      order_count:
+        type: integer
+      total_sales:
+        type: integer
+    type: object
+  response.CashierResponseYearSales:
+    properties:
+      cashier_id:
+        type: integer
+      cashier_name:
+        type: string
+      order_count:
+        type: integer
+      total_sales:
+        type: integer
+      year:
+        type: string
+    type: object
+  response.CategoryMonthPriceResponse:
+    properties:
+      category_id:
+        type: integer
+      category_name:
+        type: string
+      items_sold:
+        type: integer
+      month:
+        type: string
+      order_count:
+        type: integer
+      total_revenue:
+        type: integer
     type: object
   response.CategoryResponse:
     properties:
@@ -1013,8 +1044,27 @@ definitions:
       updated_at:
         type: string
     type: object
+  response.CategoryYearPriceResponse:
+    properties:
+      category_id:
+        type: integer
+      category_name:
+        type: string
+      items_sold:
+        type: integer
+      order_count:
+        type: integer
+      total_revenue:
+        type: integer
+      unique_products_sold:
+        type: integer
+      year:
+        type: string
+    type: object
   response.ErrorResponse:
     properties:
+      code:
+        type: integer
       message:
         type: string
       status:
@@ -1104,6 +1154,17 @@ definitions:
       updated_at:
         type: string
     type: object
+  response.OrderMonthlyResponse:
+    properties:
+      month:
+        type: string
+      order_count:
+        type: integer
+      total_items_sold:
+        type: integer
+      total_revenue:
+        type: integer
+    type: object
   response.OrderResponse:
     properties:
       cashier_id:
@@ -1134,6 +1195,21 @@ definitions:
       total_price:
         type: integer
       updated_at:
+        type: string
+    type: object
+  response.OrderYearlyResponse:
+    properties:
+      active_cashiers:
+        type: integer
+      order_count:
+        type: integer
+      total_items_sold:
+        type: integer
+      total_revenue:
+        type: integer
+      unique_products_sold:
+        type: integer
+      year:
         type: string
     type: object
   response.PaginationMeta:
@@ -1171,8 +1247,6 @@ definitions:
         type: string
       price:
         type: integer
-      rating:
-        type: number
       slug_product:
         type: string
       updated_at:
@@ -1206,13 +1280,75 @@ definitions:
         type: string
       price:
         type: integer
-      rating:
-        type: number
       slug_product:
         type: string
       updated_at:
         type: string
       weight:
+        type: integer
+    type: object
+  response.RoleResponse:
+    properties:
+      created_at:
+        type: string
+      id:
+        type: integer
+      name:
+        type: string
+      updated_at:
+        type: string
+    type: object
+  response.RoleResponseDeleteAt:
+    properties:
+      created_at:
+        type: string
+      deleted_at:
+        type: string
+      id:
+        type: integer
+      name:
+        type: string
+      updated_at:
+        type: string
+    type: object
+  response.TokenResponse:
+    properties:
+      access_token:
+        type: string
+      refresh_token:
+        type: string
+    type: object
+  response.TransactionMonthlyAmountFailedResponse:
+    properties:
+      month:
+        type: string
+      total_amount:
+        type: integer
+      total_failed:
+        type: integer
+      year:
+        type: string
+    type: object
+  response.TransactionMonthlyAmountSuccessResponse:
+    properties:
+      month:
+        type: string
+      total_amount:
+        type: integer
+      total_success:
+        type: integer
+      year:
+        type: string
+    type: object
+  response.TransactionMonthlyMethodResponse:
+    properties:
+      month:
+        type: string
+      payment_method:
+        type: string
+      total_amount:
+        type: integer
+      total_transactions:
         type: integer
     type: object
   response.TransactionResponse:
@@ -1259,6 +1395,35 @@ definitions:
       updated_at:
         type: string
     type: object
+  response.TransactionYearlyAmountFailedResponse:
+    properties:
+      total_amount:
+        type: integer
+      total_failed:
+        type: integer
+      year:
+        type: string
+    type: object
+  response.TransactionYearlyAmountSuccessResponse:
+    properties:
+      total_amount:
+        type: integer
+      total_success:
+        type: integer
+      year:
+        type: string
+    type: object
+  response.TransactionYearlyMethodResponse:
+    properties:
+      payment_method:
+        type: string
+      total_amount:
+        type: integer
+      total_transactions:
+        type: integer
+      year:
+        type: string
+    type: object
   response.UserResponse:
     properties:
       created_at:
@@ -1294,6 +1459,19 @@ definitions:
 info:
   contact: {}
 paths:
+  /api/auth/hello:
+    get:
+      description: Returns a simple "Hello" message for testing purposes.
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Hello
+          schema:
+            type: string
+      summary: Returns a "Hello" message
+      tags:
+      - Auth
   /api/auth/login:
     post:
       consumes:
@@ -1312,7 +1490,7 @@ paths:
         "200":
           description: Success
           schema:
-            $ref: '#/definitions/pb.ApiResponseLogin'
+            $ref: '#/definitions/response.ApiResponseLogin'
         "400":
           description: Bad Request
           schema:
@@ -1334,7 +1512,7 @@ paths:
         "200":
           description: Success
           schema:
-            $ref: '#/definitions/pb.ApiResponseGetMe'
+            $ref: '#/definitions/response.ApiResponseGetMe'
         "401":
           description: Unauthorized
           schema:
@@ -1367,7 +1545,7 @@ paths:
         "200":
           description: Success
           schema:
-            $ref: '#/definitions/pb.ApiResponseRefreshToken'
+            $ref: '#/definitions/response.ApiResponseRefreshToken'
         "400":
           description: Bad Request
           schema:
@@ -1399,7 +1577,7 @@ paths:
         "200":
           description: Success
           schema:
-            $ref: '#/definitions/pb.ApiResponseRegister'
+            $ref: '#/definitions/response.ApiResponseRegister'
         "400":
           description: Bad Request
           schema:
@@ -1579,7 +1757,7 @@ paths:
         "200":
           description: Successfully deleted cashier record permanently
           schema:
-            $ref: '#/definitions/pb.ApiResponseCashierAll'
+            $ref: '#/definitions/response.ApiResponseCashierAll'
         "400":
           description: 'Bad Request: Invalid ID'
           schema:
@@ -1591,6 +1769,414 @@ paths:
       security:
       - Bearer: []
       summary: Permanently delete a cashier
+      tags:
+      - Cashier
+  /api/cashier/merchant/monthly-sales:
+    get:
+      consumes:
+      - application/json
+      description: Retrieve monthly cashiers statistics for a specific merchant
+      parameters:
+      - description: Merchant ID
+        in: query
+        name: merchant_id
+        required: true
+        type: integer
+      - description: Year in YYYY format (e.g., 2023)
+        in: query
+        name: year
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successfully retrieved monthly sales by merchant
+          schema:
+            $ref: '#/definitions/response.ApiResponseCashierMonthSales'
+        "400":
+          description: Invalid merchant ID or year parameter
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "404":
+          description: Merchant not found
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      security:
+      - Bearer: []
+      summary: Get monthly sales by merchant
+      tags:
+      - Cashier
+  /api/cashier/merchant/monthly-total-sales:
+    get:
+      consumes:
+      - application/json
+      description: Retrieve monthly cashiers statistics for a given year
+      parameters:
+      - description: Year in YYYY format (e.g., 2023)
+        in: query
+        name: year
+        required: true
+        type: integer
+      - description: Month
+        in: query
+        name: month
+        required: true
+        type: integer
+      - description: Merchant ID
+        in: query
+        name: merchant_id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successfully retrieved monthly sales data
+          schema:
+            $ref: '#/definitions/response.ApiResponseCashierMonthSales'
+        "400":
+          description: Invalid year parameter
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      security:
+      - Bearer: []
+      summary: Get monthly cashiers statistics
+      tags:
+      - Cashier
+  /api/cashier/merchant/yearly-sales:
+    get:
+      consumes:
+      - application/json
+      description: Retrieve yearly cashier statistics for a specific merchant
+      parameters:
+      - description: Merchant ID
+        in: query
+        name: merchant_id
+        required: true
+        type: integer
+      - description: Year in YYYY format (e.g., 2023)
+        in: query
+        name: year
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successfully retrieved yearly sales by merchant
+          schema:
+            $ref: '#/definitions/response.ApiResponseCashierYearSales'
+        "400":
+          description: Invalid merchant ID or year parameter
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "404":
+          description: Merchant not found
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      security:
+      - Bearer: []
+      summary: Get yearly sales by merchant
+      tags:
+      - Cashier
+  /api/cashier/merchant/yearly-total-sales:
+    get:
+      consumes:
+      - application/json
+      description: Retrieve the yearly cashiers for a specific year.
+      parameters:
+      - description: Year
+        in: query
+        name: year
+        required: true
+        type: integer
+      - description: Merchant ID
+        in: query
+        name: merchant_id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Yearly cashiers
+          schema:
+            $ref: '#/definitions/response.ApiResponseCashierYearSales'
+        "400":
+          description: Invalid year parameter
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "500":
+          description: Failed to retrieve yearly cashiers
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      security:
+      - Bearer: []
+      summary: Get yearly cashiers
+      tags:
+      - Cashier
+  /api/cashier/monthly-sales:
+    get:
+      consumes:
+      - application/json
+      description: Retrieve monthly cashiers statistics for a given year
+      parameters:
+      - description: Year in YYYY format (e.g., 2023)
+        in: query
+        name: year
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successfully retrieved monthly sales data
+          schema:
+            $ref: '#/definitions/response.ApiResponseCashierMonthSales'
+        "400":
+          description: Invalid year parameter
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      security:
+      - Bearer: []
+      summary: Get monthly cashiers statistics
+      tags:
+      - Cashier
+  /api/cashier/monthly-total-sales:
+    get:
+      consumes:
+      - application/json
+      description: Retrieve monthly cashiers statistics for a given year
+      parameters:
+      - description: Year in YYYY format (e.g., 2023)
+        in: query
+        name: year
+        required: true
+        type: integer
+      - description: Month
+        in: query
+        name: month
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successfully retrieved monthly sales data
+          schema:
+            $ref: '#/definitions/response.ApiResponseCashierMonthSales'
+        "400":
+          description: Invalid year parameter
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      security:
+      - Bearer: []
+      summary: Get monthly cashiers statistics
+      tags:
+      - Cashier
+  /api/cashier/mycashier/monthly-sales:
+    get:
+      consumes:
+      - application/json
+      description: Retrieve monthly cashier statistics for a specific cashier
+      parameters:
+      - description: Cashier ID
+        in: query
+        name: cashier_id
+        required: true
+        type: integer
+      - description: Year in YYYY format (e.g., 2023)
+        in: query
+        name: year
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successfully retrieved monthly sales by cashier
+          schema:
+            $ref: '#/definitions/response.ApiResponseCashierMonthSales'
+        "400":
+          description: Invalid cashier ID or year parameter
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "404":
+          description: Cashier not found
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      security:
+      - Bearer: []
+      summary: Get monthly sales by cashier
+      tags:
+      - Cashier
+  /api/cashier/mycashier/monthly-total-sales:
+    get:
+      consumes:
+      - application/json
+      description: Retrieve monthly cashiers statistics for a given year
+      parameters:
+      - description: Year in YYYY format (e.g., 2023)
+        in: query
+        name: year
+        required: true
+        type: integer
+      - description: Month
+        in: query
+        name: month
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successfully retrieved monthly sales data
+          schema:
+            $ref: '#/definitions/response.ApiResponseCashierMonthSales'
+        "400":
+          description: Invalid year parameter
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      security:
+      - Bearer: []
+      summary: Get monthly cashiers statistics
+      tags:
+      - Cashier
+  /api/cashier/mycashier/yearly-sales:
+    get:
+      consumes:
+      - application/json
+      description: Retrieve yearly cashier statistics for a specific cashier
+      parameters:
+      - description: Cashier ID
+        in: query
+        name: cashier_id
+        required: true
+        type: integer
+      - description: Year in YYYY format (e.g., 2023)
+        in: query
+        name: year
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successfully retrieved yearly sales by cashier
+          schema:
+            $ref: '#/definitions/response.ApiResponseCashierYearSales'
+        "400":
+          description: Invalid cashier ID or year parameter
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "404":
+          description: Cashier not found
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      security:
+      - Bearer: []
+      summary: Get yearly sales by cashier
+      tags:
+      - Cashier
+  /api/cashier/mycashier/yearly-total-sales:
+    get:
+      consumes:
+      - application/json
+      description: Retrieve the yearly cashiers for a specific year.
+      parameters:
+      - description: Year
+        in: query
+        name: year
+        required: true
+        type: integer
+      - description: Cashier ID
+        in: query
+        name: cashier_id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Yearly cashiers
+          schema:
+            $ref: '#/definitions/response.ApiResponseCashierYearSales'
+        "400":
+          description: Invalid year parameter
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "500":
+          description: Failed to retrieve yearly cashiers
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      security:
+      - Bearer: []
+      summary: Get yearly cashiers
       tags:
       - Cashier
   /api/cashier/restore/{id}:
@@ -1610,7 +2196,7 @@ paths:
         "200":
           description: Successfully restored cashier
           schema:
-            $ref: '#/definitions/pb.ApiResponseCashierDeleteAt'
+            $ref: '#/definitions/response.ApiResponseCashierDeleteAt'
         "400":
           description: Invalid cashier ID
           schema:
@@ -1641,7 +2227,7 @@ paths:
         "200":
           description: Successfully restored cashier all
           schema:
-            $ref: '#/definitions/pb.ApiResponseCashierAll'
+            $ref: '#/definitions/response.ApiResponseCashierAll'
         "400":
           description: Invalid cashier ID
           schema:
@@ -1693,7 +2279,7 @@ paths:
         "200":
           description: Successfully retrieved trashed cashier
           schema:
-            $ref: '#/definitions/pb.ApiResponseCashierDeleteAt'
+            $ref: '#/definitions/response.ApiResponseCashierDeleteAt'
         "400":
           description: Invalid request body or validation error
           schema:
@@ -1725,7 +2311,7 @@ paths:
         "200":
           description: Successfully updated cashier
           schema:
-            $ref: '#/definitions/pb.ApiResponseCashier'
+            $ref: '#/definitions/response.ApiResponseCashier'
         "400":
           description: Invalid request body or validation error
           schema:
@@ -1737,6 +2323,68 @@ paths:
       security:
       - Bearer: []
       summary: Update an existing cashier
+      tags:
+      - Cashier
+  /api/cashier/yearly-sales:
+    get:
+      consumes:
+      - application/json
+      description: Retrieve the yearly cashiers for a specific year.
+      parameters:
+      - description: Year
+        in: query
+        name: year
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Yearly cashiers
+          schema:
+            $ref: '#/definitions/response.ApiResponseCashierYearSales'
+        "400":
+          description: Invalid year parameter
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "500":
+          description: Failed to retrieve yearly cashiers
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      security:
+      - Bearer: []
+      summary: Get yearly cashiers
+      tags:
+      - Cashier
+  /api/cashier/yearly-total-sales:
+    get:
+      consumes:
+      - application/json
+      description: Retrieve the yearly cashiers for a specific year.
+      parameters:
+      - description: Year
+        in: query
+        name: year
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Yearly cashiers
+          schema:
+            $ref: '#/definitions/response.ApiResponseCashierYearSales'
+        "400":
+          description: Invalid year parameter
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "500":
+          description: Failed to retrieve yearly cashiers
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      security:
+      - Bearer: []
+      summary: Get yearly cashiers
       tags:
       - Cashier
   /api/category:
@@ -1830,36 +2478,22 @@ paths:
   /api/category/create:
     post:
       consumes:
-      - multipart/form-data
-      description: Create a new category with the provided details and an image file
+      - application/json
+      description: Create a new category with the provided details
       parameters:
-      - description: Category name
-        in: formData
-        name: name
+      - description: Category details
+        in: body
+        name: request
         required: true
-        type: string
-      - description: Category description
-        in: formData
-        name: description
-        required: true
-        type: string
-      - description: Category slug
-        in: formData
-        name: slug_category
-        required: true
-        type: string
-      - description: Category image file
-        in: formData
-        name: image_category
-        required: true
-        type: file
+        schema:
+          $ref: '#/definitions/requests.CreateCategoryRequest'
       produces:
       - application/json
       responses:
-        "200":
+        "201":
           description: Successfully created category
           schema:
-            $ref: '#/definitions/pb.ApiResponseCategory'
+            $ref: '#/definitions/response.ApiResponseCategory'
         "400":
           description: Invalid request body or validation error
           schema:
@@ -1933,6 +2567,338 @@ paths:
       security:
       - Bearer: []
       summary: Permanently delete a category
+      tags:
+      - Category
+  /api/category/merchant/monthly-pricing:
+    get:
+      consumes:
+      - application/json
+      description: Retrieve monthly pricing statistics for categories by specific
+        merchant
+      parameters:
+      - description: Merchant ID
+        in: query
+        name: merchant_id
+        required: true
+        type: integer
+      - description: Year in YYYY format (e.g., 2023)
+        in: query
+        name: year
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Monthly category pricing by merchant
+          schema:
+            $ref: '#/definitions/response.ApiResponseCategoryMonthPrice'
+        "400":
+          description: Invalid merchant ID or year parameter
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "404":
+          description: Merchant not found
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      security:
+      - Bearer: []
+      summary: Get monthly category pricing by merchant
+      tags:
+      - Category
+  /api/category/merchant/monthly-total-pricing:
+    get:
+      consumes:
+      - application/json
+      description: Retrieve monthly pricing statistics for all categories
+      parameters:
+      - description: Year in YYYY format (e.g., 2023)
+        in: query
+        name: year
+        required: true
+        type: integer
+      - description: Month
+        in: query
+        name: month
+        required: true
+        type: integer
+      - description: Category ID
+        in: query
+        name: category_id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Monthly category pricing data
+          schema:
+            $ref: '#/definitions/response.ApiResponseCategoryMonthPrice'
+        "400":
+          description: Invalid year parameter
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      security:
+      - Bearer: []
+      summary: Get monthly category pricing
+      tags:
+      - Category
+  /api/category/merchant/yearly-pricing:
+    get:
+      consumes:
+      - application/json
+      description: Retrieve yearly pricing statistics for categories by specific merchant
+      parameters:
+      - description: Merchant ID
+        in: query
+        name: merchant_id
+        required: true
+        type: integer
+      - description: Year in YYYY format (e.g., 2023)
+        in: query
+        name: year
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Yearly category pricing by merchant
+          schema:
+            $ref: '#/definitions/response.ApiResponseCategoryYearPrice'
+        "400":
+          description: Invalid merchant ID or year parameter
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "404":
+          description: Merchant not found
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      security:
+      - Bearer: []
+      summary: Get yearly category pricing by merchant
+      tags:
+      - Category
+  /api/category/monthly-pricing:
+    get:
+      consumes:
+      - application/json
+      description: Retrieve monthly pricing statistics for all categories
+      parameters:
+      - description: Year in YYYY format (e.g., 2023)
+        in: query
+        name: year
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Monthly category pricing data
+          schema:
+            $ref: '#/definitions/response.ApiResponseCategoryMonthPrice'
+        "400":
+          description: Invalid year parameter
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      security:
+      - Bearer: []
+      summary: Get monthly category pricing
+      tags:
+      - Category
+  /api/category/monthly-total-pricing:
+    get:
+      consumes:
+      - application/json
+      description: Retrieve monthly pricing statistics for all categories
+      parameters:
+      - description: Year in YYYY format (e.g., 2023)
+        in: query
+        name: year
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Monthly category pricing data
+          schema:
+            $ref: '#/definitions/response.ApiResponseCategoryMonthPrice'
+        "400":
+          description: Invalid year parameter
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      security:
+      - Bearer: []
+      summary: Get monthly category pricing
+      tags:
+      - Category
+  /api/category/mycategory/monthly-pricing:
+    get:
+      consumes:
+      - application/json
+      description: Retrieve monthly pricing statistics for specific category
+      parameters:
+      - description: Category ID
+        in: path
+        name: category_id
+        required: true
+        type: integer
+      - description: Year in YYYY format (e.g., 2023)
+        in: query
+        name: year
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Monthly pricing by category
+          schema:
+            $ref: '#/definitions/response.ApiResponseCategoryMonthPrice'
+        "400":
+          description: Invalid category ID or year parameter
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "404":
+          description: Category not found
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      security:
+      - Bearer: []
+      summary: Get monthly pricing by category ID
+      tags:
+      - Category
+  /api/category/mycategory/monthly-total-pricing:
+    get:
+      consumes:
+      - application/json
+      description: Retrieve monthly pricing statistics for all categories
+      parameters:
+      - description: Year in YYYY format (e.g., 2023)
+        in: query
+        name: year
+        required: true
+        type: integer
+      - description: Month
+        in: query
+        name: month
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Monthly category pricing data
+          schema:
+            $ref: '#/definitions/response.ApiResponseCategoryMonthPrice'
+        "400":
+          description: Invalid year parameter
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      security:
+      - Bearer: []
+      summary: Get monthly category pricing
+      tags:
+      - Category
+  /api/category/mycategory/yearly-pricing:
+    get:
+      consumes:
+      - application/json
+      description: Retrieve yearly pricing statistics for specific category
+      parameters:
+      - description: Category ID
+        in: path
+        name: category_id
+        required: true
+        type: integer
+      - description: Year in YYYY format (e.g., 2023)
+        in: query
+        name: year
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Yearly pricing by category
+          schema:
+            $ref: '#/definitions/response.ApiResponseCategoryYearPrice'
+        "400":
+          description: Invalid category ID or year parameter
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "404":
+          description: Category not found
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      security:
+      - Bearer: []
+      summary: Get yearly pricing by category ID
       tags:
       - Category
   /api/category/restore/{id}:
@@ -2052,41 +3018,22 @@ paths:
   /api/category/update:
     post:
       consumes:
-      - multipart/form-data
-      description: Update an existing category record with the provided details and
-        an optional image file
+      - application/json
+      description: Update an existing category record with the provided details
       parameters:
-      - description: Category ID
-        in: formData
-        name: category_id
+      - description: Category update details
+        in: body
+        name: request
         required: true
-        type: integer
-      - description: Category name
-        in: formData
-        name: name
-        required: true
-        type: string
-      - description: Category description
-        in: formData
-        name: description
-        required: true
-        type: string
-      - description: Category slug
-        in: formData
-        name: slug_category
-        required: true
-        type: string
-      - description: New category image file
-        in: formData
-        name: image_category
-        type: file
+        schema:
+          $ref: '#/definitions/requests.UpdateCategoryRequest'
       produces:
       - application/json
       responses:
         "200":
           description: Successfully updated category
           schema:
-            $ref: '#/definitions/pb.ApiResponseCategory'
+            $ref: '#/definitions/response.ApiResponseCategory'
         "400":
           description: Invalid request body or validation error
           schema:
@@ -2098,6 +3045,81 @@ paths:
       security:
       - Bearer: []
       summary: Update an existing category
+      tags:
+      - Category
+  /api/category/yearly-pricing:
+    get:
+      consumes:
+      - application/json
+      description: Retrieve yearly pricing statistics for all categories
+      parameters:
+      - description: Year in YYYY format (e.g., 2023)
+        in: query
+        name: year
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Yearly category pricing data
+          schema:
+            $ref: '#/definitions/response.ApiResponseCategoryYearPrice'
+        "400":
+          description: Invalid year parameter
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      security:
+      - Bearer: []
+      summary: Get yearly category pricing
+      tags:
+      - Category
+  /api/category/yearly-total-pricing:
+    get:
+      consumes:
+      - application/json
+      description: Retrieve yearly pricing statistics for all categories
+      parameters:
+      - description: Year in YYYY format (e.g., 2023)
+        in: query
+        name: year
+        required: true
+        type: integer
+      - description: Category ID
+        in: query
+        name: category_id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Yearly category pricing data
+          schema:
+            $ref: '#/definitions/response.ApiResponseCategoryYearPrice'
+        "400":
+          description: Invalid year parameter
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      security:
+      - Bearer: []
+      summary: Get yearly category pricing
       tags:
       - Category
   /api/merchant:
@@ -2178,7 +3200,7 @@ paths:
         "200":
           description: List of active merchant
           schema:
-            $ref: '#/definitions/pb.ApiResponsesUser'
+            $ref: '#/definitions/response.ApiResponsePaginationMerchantDeleteAt'
         "500":
           description: Failed to retrieve merchant data
           schema:
@@ -2355,7 +3377,7 @@ paths:
         "200":
           description: List of trashed merchant data
           schema:
-            $ref: '#/definitions/pb.ApiResponsesUser'
+            $ref: '#/definitions/response.ApiResponsePaginationMerchantDeleteAt'
         "500":
           description: Failed to retrieve merchant data
           schema:
@@ -2428,6 +3450,46 @@ paths:
       summary: Update an existing merchant
       tags:
       - Merchant
+  /api/merchant/yearly-total-pricing:
+    get:
+      consumes:
+      - application/json
+      description: Retrieve yearly pricing statistics for all categories
+      parameters:
+      - description: Year in YYYY format (e.g., 2023)
+        in: query
+        name: year
+        required: true
+        type: integer
+      - description: Category ID
+        in: query
+        name: category_id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Yearly category pricing data
+          schema:
+            $ref: '#/definitions/response.ApiResponseCategoryYearPrice'
+        "400":
+          description: Invalid year parameter
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      security:
+      - Bearer: []
+      summary: Get yearly category pricing
+      tags:
+      - Category
   /api/order:
     get:
       consumes:
@@ -2499,7 +3561,7 @@ paths:
       - Bearer: []
       summary: Find all order items
       tags:
-      - OrderItem
+      - Order-Item
   /api/order-item/active:
     get:
       consumes:
@@ -2520,7 +3582,7 @@ paths:
       - Bearer: []
       summary: Retrieve active order items
       tags:
-      - OrderItem
+      - Order-Item
   /api/order-item/order/{order_id}:
     get:
       consumes:
@@ -2551,7 +3613,7 @@ paths:
       - Bearer: []
       summary: Find order items by order ID
       tags:
-      - OrderItem
+      - Order-Item
   /api/order-item/trashed:
     get:
       consumes:
@@ -2572,7 +3634,7 @@ paths:
       - Bearer: []
       summary: Retrieve trashed order items
       tags:
-      - OrderItem
+      - Order-Item
   /api/order/{id}:
     get:
       consumes:
@@ -2709,6 +3771,244 @@ paths:
       summary: Permanently delete all orders
       tags:
       - Order
+  /api/order/merchant/monthly-revenue:
+    get:
+      consumes:
+      - application/json
+      description: Retrieve monthly revenue statistics for specific merchant
+      parameters:
+      - description: Merchant ID
+        in: query
+        name: merchant_id
+        required: true
+        type: integer
+      - description: Year in YYYY format (e.g., 2023)
+        in: query
+        name: year
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Monthly revenue by merchant
+          schema:
+            $ref: '#/definitions/response.ApiResponseOrderMonthly'
+        "400":
+          description: Invalid merchant ID or year parameter
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "404":
+          description: Merchant not found
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      security:
+      - Bearer: []
+      summary: Get monthly revenue by merchant
+      tags:
+      - Order
+  /api/order/merchant/monthly-total-revenue:
+    get:
+      consumes:
+      - application/json
+      description: Retrieve monthly revenue statistics for all orders
+      parameters:
+      - description: Year in YYYY format (e.g., 2023)
+        in: query
+        name: year
+        required: true
+        type: integer
+      - description: Month
+        in: query
+        name: month
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Monthly revenue data
+          schema:
+            $ref: '#/definitions/response.ApiResponseOrderMonthly'
+        "400":
+          description: Invalid year parameter
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      security:
+      - Bearer: []
+      summary: Get monthly revenue report
+      tags:
+      - Order
+  /api/order/merchant/yearly-revenue:
+    get:
+      consumes:
+      - application/json
+      description: Retrieve yearly revenue statistics for specific merchant
+      parameters:
+      - description: Merchant ID
+        in: query
+        name: merchant_id
+        required: true
+        type: integer
+      - description: Year in YYYY format (e.g., 2023)
+        in: query
+        name: year
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Yearly revenue by merchant
+          schema:
+            $ref: '#/definitions/response.ApiResponseOrderYearly'
+        "400":
+          description: Invalid merchant ID or year parameter
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "404":
+          description: Merchant not found
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      security:
+      - Bearer: []
+      summary: Get yearly revenue by merchant
+      tags:
+      - Order
+  /api/order/merchant/yearly-total-revenue:
+    get:
+      consumes:
+      - application/json
+      description: Retrieve yearly revenue statistics for all orders
+      parameters:
+      - description: Year in YYYY format (e.g., 2023)
+        in: query
+        name: year
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Yearly revenue data
+          schema:
+            $ref: '#/definitions/response.ApiResponseOrderYearly'
+        "400":
+          description: Invalid year parameter
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      security:
+      - Bearer: []
+      summary: Get yearly revenue report
+      tags:
+      - Order
+  /api/order/monthly-revenue:
+    get:
+      consumes:
+      - application/json
+      description: Retrieve monthly revenue statistics for all orders
+      parameters:
+      - description: Year in YYYY format (e.g., 2023)
+        in: query
+        name: year
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Monthly revenue data
+          schema:
+            $ref: '#/definitions/response.ApiResponseOrderMonthly'
+        "400":
+          description: Invalid year parameter
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      security:
+      - Bearer: []
+      summary: Get monthly revenue report
+      tags:
+      - Order
+  /api/order/monthly-total-revenue:
+    get:
+      consumes:
+      - application/json
+      description: Retrieve monthly revenue statistics for all orders
+      parameters:
+      - description: Year in YYYY format (e.g., 2023)
+        in: query
+        name: year
+        required: true
+        type: integer
+      - description: Month
+        in: query
+        name: month
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Monthly revenue data
+          schema:
+            $ref: '#/definitions/response.ApiResponseOrderMonthly'
+        "400":
+          description: Invalid year parameter
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      security:
+      - Bearer: []
+      summary: Get monthly revenue report
+      tags:
+      - Order
   /api/order/restore/{id}:
     post:
       consumes:
@@ -2843,6 +4143,76 @@ paths:
       security:
       - Bearer: []
       summary: Update an existing order
+      tags:
+      - Order
+  /api/order/yearly-revenue:
+    get:
+      consumes:
+      - application/json
+      description: Retrieve yearly revenue statistics for all orders
+      parameters:
+      - description: Year in YYYY format (e.g., 2023)
+        in: query
+        name: year
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Yearly revenue data
+          schema:
+            $ref: '#/definitions/response.ApiResponseOrderYearly'
+        "400":
+          description: Invalid year parameter
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      security:
+      - Bearer: []
+      summary: Get yearly revenue report
+      tags:
+      - Order
+  /api/order/yearly-total-revenue:
+    get:
+      consumes:
+      - application/json
+      description: Retrieve yearly revenue statistics for all orders
+      parameters:
+      - description: Year in YYYY format (e.g., 2023)
+        in: query
+        name: year
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Yearly revenue data
+          schema:
+            $ref: '#/definitions/response.ApiResponseOrderYearly'
+        "400":
+          description: Invalid year parameter
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      security:
+      - Bearer: []
+      summary: Get yearly revenue report
       tags:
       - Order
   /api/product:
@@ -2984,12 +4354,12 @@ paths:
         in: formData
         name: merchant_id
         required: true
-        type: integer
+        type: string
       - description: Category ID
         in: formData
         name: category_id
         required: true
-        type: integer
+        type: string
       - description: Product name
         in: formData
         name: name
@@ -3004,12 +4374,12 @@ paths:
         in: formData
         name: price
         required: true
-        type: integer
+        type: string
       - description: Product count in stock
         in: formData
         name: count_in_stock
         required: true
-        type: integer
+        type: string
       - description: Product brand
         in: formData
         name: brand
@@ -3019,12 +4389,12 @@ paths:
         in: formData
         name: weight
         required: true
-        type: integer
+        type: string
       - description: Product rating
         in: formData
         name: rating
         required: true
-        type: integer
+        type: string
       - description: Product slug
         in: formData
         name: slug_product
@@ -3046,7 +4416,7 @@ paths:
         "200":
           description: Successfully created product
           schema:
-            $ref: '#/definitions/pb.ApiResponseProduct'
+            $ref: '#/definitions/response.ApiResponseProduct'
         "400":
           description: Invalid request body or validation error
           schema:
@@ -3268,17 +4638,17 @@ paths:
         in: formData
         name: product_id
         required: true
-        type: integer
+        type: string
       - description: Merchant ID
         in: formData
         name: merchant_id
         required: true
-        type: integer
+        type: string
       - description: Category ID
         in: formData
         name: category_id
         required: true
-        type: integer
+        type: string
       - description: Product name
         in: formData
         name: name
@@ -3293,12 +4663,12 @@ paths:
         in: formData
         name: price
         required: true
-        type: integer
+        type: string
       - description: Product count in stock
         in: formData
         name: count_in_stock
         required: true
-        type: integer
+        type: string
       - description: Product brand
         in: formData
         name: brand
@@ -3308,12 +4678,12 @@ paths:
         in: formData
         name: weight
         required: true
-        type: integer
+        type: string
       - description: Product rating
         in: formData
         name: rating
         required: true
-        type: integer
+        type: string
       - description: Product slug
         in: formData
         name: slug_product
@@ -3334,7 +4704,7 @@ paths:
         "200":
           description: Successfully updated product
           schema:
-            $ref: '#/definitions/pb.ApiResponseProduct'
+            $ref: '#/definitions/response.ApiResponseProduct'
         "400":
           description: Invalid request body or validation error
           schema:
@@ -3373,7 +4743,7 @@ paths:
         "200":
           description: List of roles
           schema:
-            $ref: '#/definitions/pb.ApiResponsePaginationRole'
+            $ref: '#/definitions/response.ApiResponsePaginationRole'
         "400":
           description: Invalid query parameters
           schema:
@@ -3397,14 +4767,14 @@ paths:
         name: request
         required: true
         schema:
-          $ref: '#/definitions/pb.CreateRoleRequest'
+          $ref: '#/definitions/requests.CreateRoleRequest'
       produces:
       - application/json
       responses:
         "200":
           description: Created role data
           schema:
-            $ref: '#/definitions/pb.ApiResponseRole'
+            $ref: '#/definitions/response.ApiResponseRole'
         "400":
           description: Invalid request body
           schema:
@@ -3435,7 +4805,7 @@ paths:
         "200":
           description: Soft-deleted role data
           schema:
-            $ref: '#/definitions/pb.ApiResponseRole'
+            $ref: '#/definitions/response.ApiResponseRole'
         "400":
           description: Invalid role ID
           schema:
@@ -3465,7 +4835,7 @@ paths:
         "200":
           description: Role data
           schema:
-            $ref: '#/definitions/pb.ApiResponseRole'
+            $ref: '#/definitions/response.ApiResponseRole'
         "400":
           description: Invalid role ID
           schema:
@@ -3494,14 +4864,14 @@ paths:
         name: request
         required: true
         schema:
-          $ref: '#/definitions/pb.UpdateRoleRequest'
+          $ref: '#/definitions/requests.UpdateRoleRequest'
       produces:
       - application/json
       responses:
         "200":
           description: Updated role data
           schema:
-            $ref: '#/definitions/pb.ApiResponseRole'
+            $ref: '#/definitions/response.ApiResponseRole'
         "400":
           description: Invalid role ID or request body
           schema:
@@ -3540,7 +4910,7 @@ paths:
         "200":
           description: List of active roles
           schema:
-            $ref: '#/definitions/pb.ApiResponsePaginationRoleDeleteAt'
+            $ref: '#/definitions/response.ApiResponsePaginationRoleDeleteAt'
         "400":
           description: Invalid query parameters
           schema:
@@ -3565,7 +4935,7 @@ paths:
         "200":
           description: Permanently deleted roles data
           schema:
-            $ref: '#/definitions/pb.ApiResponseRoleAll'
+            $ref: '#/definitions/response.ApiResponseRoleAll'
         "500":
           description: Failed to delete all roles permanently
           schema:
@@ -3592,7 +4962,7 @@ paths:
         "200":
           description: Permanently deleted role data
           schema:
-            $ref: '#/definitions/pb.ApiResponseRole'
+            $ref: '#/definitions/response.ApiResponseRole'
         "400":
           description: Invalid role ID
           schema:
@@ -3617,7 +4987,7 @@ paths:
         "200":
           description: Restored roles data
           schema:
-            $ref: '#/definitions/pb.ApiResponseRoleAll'
+            $ref: '#/definitions/response.ApiResponseRoleAll'
         "500":
           description: Failed to restore all roles
           schema:
@@ -3644,7 +5014,7 @@ paths:
         "200":
           description: Restored role data
           schema:
-            $ref: '#/definitions/pb.ApiResponseRole'
+            $ref: '#/definitions/response.ApiResponseRole'
         "400":
           description: Invalid role ID
           schema:
@@ -3683,7 +5053,7 @@ paths:
         "200":
           description: List of trashed roles
           schema:
-            $ref: '#/definitions/pb.ApiResponsePaginationRoleDeleteAt'
+            $ref: '#/definitions/response.ApiResponsePaginationRoleDeleteAt'
         "400":
           description: Invalid query parameters
           schema:
@@ -3714,7 +5084,7 @@ paths:
         "200":
           description: Role data
           schema:
-            $ref: '#/definitions/pb.ApiResponseRole'
+            $ref: '#/definitions/response.ApiResponseRole'
         "400":
           description: Invalid user ID
           schema:
@@ -3909,6 +5279,401 @@ paths:
       summary: Permanently delete all transactions
       tags:
       - Transaction
+  /api/transaction/merchant/monthly-failed:
+    get:
+      consumes:
+      - application/json
+      description: Retrieve statistics of failed transactions by month for specific
+        merchant
+      parameters:
+      - description: Merchant ID
+        in: query
+        name: merchant_id
+        required: true
+        type: integer
+      - description: Year in YYYY format (e.g., 2023)
+        in: query
+        name: year
+        required: true
+        type: integer
+      - description: Month in MM format (1-12)
+        in: query
+        name: month
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.ApiResponsesTransactionMonthFailed'
+        "400":
+          description: Invalid merchant ID, year or month parameter
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "404":
+          description: Merchant not found
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      security:
+      - Bearer: []
+      summary: Get monthly failed transactions by merchant
+      tags:
+      - Transaction
+  /api/transaction/merchant/monthly-methods:
+    get:
+      consumes:
+      - application/json
+      description: Retrieve statistics of payment methods used by month for specific
+        merchant
+      parameters:
+      - description: Merchant ID
+        in: query
+        name: merchant_id
+        required: true
+        type: integer
+      - description: Year in YYYY format (e.g., 2023)
+        in: query
+        name: year
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.ApiResponsesTransactionMonthMethod'
+        "400":
+          description: Invalid merchant ID or year parameter
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "404":
+          description: Merchant not found
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      security:
+      - Bearer: []
+      summary: Get monthly payment method distribution by merchant
+      tags:
+      - Transaction
+  /api/transaction/merchant/monthly-success:
+    get:
+      consumes:
+      - application/json
+      description: Retrieve statistics of successful transactions by month for specific
+        merchant
+      parameters:
+      - description: Merchant ID
+        in: query
+        name: merchant_id
+        required: true
+        type: integer
+      - description: Year in YYYY format (e.g., 2023)
+        in: query
+        name: year
+        required: true
+        type: integer
+      - description: Month in MM format (1-12)
+        in: query
+        name: month
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.ApiResponsesTransactionMonthSuccess'
+        "400":
+          description: Invalid merchant ID, year or month parameter
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "404":
+          description: Merchant not found
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      security:
+      - Bearer: []
+      summary: Get monthly successful transactions by merchant
+      tags:
+      - Transaction
+  /api/transaction/merchant/yearly-failed:
+    get:
+      consumes:
+      - application/json
+      description: Retrieve statistics of failed transactions by year for specific
+        merchant
+      parameters:
+      - description: Merchant ID
+        in: query
+        name: merchant_id
+        required: true
+        type: integer
+      - description: Year in YYYY format (e.g., 2023)
+        in: query
+        name: year
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.ApiResponsesTransactionYearFailed'
+        "400":
+          description: Invalid merchant ID or year parameter
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "404":
+          description: Merchant not found
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      security:
+      - Bearer: []
+      summary: Get yearly failed transactions by merchant
+      tags:
+      - Transaction
+  /api/transaction/merchant/yearly-methods:
+    get:
+      consumes:
+      - application/json
+      description: Retrieve statistics of payment methods used by year for specific
+        merchant
+      parameters:
+      - description: Merchant ID
+        in: query
+        name: merchant_id
+        required: true
+        type: integer
+      - description: Year in YYYY format (e.g., 2023)
+        in: query
+        name: year
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.ApiResponsesTransactionYearMethod'
+        "400":
+          description: Invalid merchant ID or year parameter
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "404":
+          description: Merchant not found
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      security:
+      - Bearer: []
+      summary: Get yearly payment method distribution by merchant
+      tags:
+      - Transaction
+  /api/transaction/merchant/yearly-success:
+    get:
+      consumes:
+      - application/json
+      description: Retrieve statistics of successful transactions by year for specific
+        merchant
+      parameters:
+      - description: Merchant ID
+        in: query
+        name: merchant_id
+        required: true
+        type: integer
+      - description: Year in YYYY format (e.g., 2023)
+        in: query
+        name: year
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.ApiResponsesTransactionYearSuccess'
+        "400":
+          description: Invalid merchant ID or year parameter
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "404":
+          description: Merchant not found
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      security:
+      - Bearer: []
+      summary: Get yearly successful transactions by merchant
+      tags:
+      - Transaction
+  /api/transaction/monthly-failed:
+    get:
+      consumes:
+      - application/json
+      description: Retrieve statistics of failed transactions by month
+      parameters:
+      - description: Year in YYYY format (e.g., 2023)
+        in: query
+        name: year
+        required: true
+        type: integer
+      - description: Month in MM format (1-12)
+        in: query
+        name: month
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.ApiResponsesTransactionMonthFailed'
+        "400":
+          description: Invalid year or month parameter
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      security:
+      - Bearer: []
+      summary: Get monthly failed transactions
+      tags:
+      - Transaction
+  /api/transaction/monthly-methods:
+    get:
+      consumes:
+      - application/json
+      description: Retrieve statistics of payment methods used by month
+      parameters:
+      - description: Year in YYYY format (e.g., 2023)
+        in: query
+        name: year
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.ApiResponsesTransactionMonthMethod'
+        "400":
+          description: Invalid year parameter
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      security:
+      - Bearer: []
+      summary: Get monthly payment method distribution
+      tags:
+      - Transaction
+  /api/transaction/monthly-success:
+    get:
+      consumes:
+      - application/json
+      description: Retrieve statistics of successful transactions by month
+      parameters:
+      - description: Year in YYYY format (e.g., 2023)
+        in: query
+        name: year
+        required: true
+        type: integer
+      - description: Month in MM format (1-12)
+        in: query
+        name: month
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.ApiResponsesTransactionMonthSuccess'
+        "400":
+          description: Invalid year or month parameter
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      security:
+      - Bearer: []
+      summary: Get monthly successful transactions
+      tags:
+      - Transaction
   /api/transaction/restore/{id}:
     post:
       consumes:
@@ -4045,6 +5810,111 @@ paths:
       summary: Update an existing transaction
       tags:
       - Transaction
+  /api/transaction/yearly-failed:
+    get:
+      consumes:
+      - application/json
+      description: Retrieve statistics of failed transactions by year
+      parameters:
+      - description: Year in YYYY format (e.g., 2023)
+        in: query
+        name: year
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.ApiResponsesTransactionYearFailed'
+        "400":
+          description: Invalid year parameter
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      security:
+      - Bearer: []
+      summary: Get yearly failed transactions
+      tags:
+      - Transaction
+  /api/transaction/yearly-methods:
+    get:
+      consumes:
+      - application/json
+      description: Retrieve statistics of payment methods used by year
+      parameters:
+      - description: Year in YYYY format (e.g., 2023)
+        in: query
+        name: year
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.ApiResponsesTransactionYearMethod'
+        "400":
+          description: Invalid year parameter
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      security:
+      - Bearer: []
+      summary: Get yearly payment method distribution
+      tags:
+      - Transaction
+  /api/transaction/yearly-success:
+    get:
+      consumes:
+      - application/json
+      description: Retrieve statistics of successful transactions by year
+      parameters:
+      - description: Year in YYYY format (e.g., 2023)
+        in: query
+        name: year
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.ApiResponsesTransactionYearSuccess'
+        "400":
+          description: Invalid year parameter
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      security:
+      - Bearer: []
+      summary: Get yearly successful transactions
+      tags:
+      - Transaction
   /api/user:
     get:
       consumes:
@@ -4098,7 +5968,7 @@ paths:
         "200":
           description: User data
           schema:
-            $ref: '#/definitions/pb.ApiResponseUser'
+            $ref: '#/definitions/response.ApiResponseUser'
         "400":
           description: Invalid user ID
           schema:
@@ -4182,7 +6052,7 @@ paths:
         "200":
           description: Successfully deleted user record permanently
           schema:
-            $ref: '#/definitions/pb.ApiResponseUserDelete'
+            $ref: '#/definitions/response.ApiResponseUserDelete'
         "400":
           description: 'Bad Request: Invalid ID'
           schema:
@@ -4213,7 +6083,7 @@ paths:
         "200":
           description: Successfully deleted user record permanently
           schema:
-            $ref: '#/definitions/pb.ApiResponseUserDelete'
+            $ref: '#/definitions/response.ApiResponseUserAll'
         "400":
           description: 'Bad Request: Invalid ID'
           schema:
@@ -4275,7 +6145,7 @@ paths:
         "200":
           description: Successfully restored user all
           schema:
-            $ref: '#/definitions/pb.ApiResponseUserAll'
+            $ref: '#/definitions/response.ApiResponseUserAll'
         "400":
           description: Invalid user ID
           schema:
@@ -4373,17 +6243,4 @@ paths:
       summary: Update an existing user
       tags:
       - User
-  /auth/hello:
-    get:
-      description: Returns a simple "Hello" message for testing purposes.
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: Hello
-          schema:
-            type: string
-      summary: Returns a "Hello" message
-      tags:
-      - Auth
 swagger: "2.0"

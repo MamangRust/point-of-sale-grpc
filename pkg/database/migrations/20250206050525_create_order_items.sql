@@ -2,7 +2,7 @@
 -- +goose StatementBegin
 CREATE TABLE "order_items" (
     "order_item_id" SERIAL PRIMARY KEY,
-    "order_id" INT NOT NULL REFERENCES "orders" ("order_id"),
+    "order_id" INT NOT NULL REFERENCES "orders" ("order_id") ON DELETE CASCADE,
     "product_id" INT NOT NULL REFERENCES "products" ("product_id"),
     "quantity" INT NOT NULL,
     "price" INT NOT NULL,

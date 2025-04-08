@@ -52,6 +52,20 @@ type UserRoleRepository interface {
 }
 
 type CategoryRepository interface {
+	GetMonthlyTotalPrice(year int, month int) ([]*record.CategoriesMonthlyTotalPriceRecord, error)
+	GetYearlyTotalPrices(year int) ([]*record.CategoriesYearlyTotalPriceRecord, error)
+	GetMonthlyTotalPriceById(year int, month int, category_id int) ([]*record.CategoriesMonthlyTotalPriceRecord, error)
+	GetYearlyTotalPricesById(year int, category_id int) ([]*record.CategoriesYearlyTotalPriceRecord, error)
+	GetMonthlyTotalPriceByMerchant(year int, month int, merchant_id int) ([]*record.CategoriesMonthlyTotalPriceRecord, error)
+	GetYearlyTotalPricesByMerchant(year int, merchant_id int) ([]*record.CategoriesYearlyTotalPriceRecord, error)
+
+	GetMonthPrice(year int) ([]*record.CategoriesMonthPriceRecord, error)
+	GetYearPrice(year int) ([]*record.CategoriesYearPriceRecord, error)
+	GetMonthPriceByMerchant(year int, merchant_id int) ([]*record.CategoriesMonthPriceRecord, error)
+	GetYearPriceByMerchant(year int, merchant_id int) ([]*record.CategoriesYearPriceRecord, error)
+	GetMonthPriceById(year int, category_id int) ([]*record.CategoriesMonthPriceRecord, error)
+	GetYearPriceById(year int, category_id int) ([]*record.CategoriesYearPriceRecord, error)
+
 	FindAllCategory(search string, page, pageSize int) ([]*record.CategoriesRecord, int, error)
 	FindById(category_id int) (*record.CategoriesRecord, error)
 	FindByActive(search string, page, pageSize int) ([]*record.CategoriesRecord, int, error)
@@ -66,6 +80,20 @@ type CategoryRepository interface {
 }
 
 type CashierRepository interface {
+	GetMonthlyTotalSales(year int, month int) ([]*record.CashierRecordMonthTotalSales, error)
+	GetYearlyTotalSales(year int) ([]*record.CashierRecordYearTotalSales, error)
+	GetMonthlyTotalSalesById(year int, month int, cashier_id int) ([]*record.CashierRecordMonthTotalSales, error)
+	GetYearlyTotalSalesById(year int, cashier_id int) ([]*record.CashierRecordYearTotalSales, error)
+	GetMonthlyTotalSalesByMerchant(year int, month int, merchant_id int) ([]*record.CashierRecordMonthTotalSales, error)
+	GetYearlyTotalSalesByMerchant(year int, merchant_id int) ([]*record.CashierRecordYearTotalSales, error)
+
+	GetMonthyCashier(year int) ([]*record.CashierRecordMonthSales, error)
+	GetYearlyCashier(year int) ([]*record.CashierRecordYearSales, error)
+	GetMonthlyCashierByMerchant(year int, merchant_id int) ([]*record.CashierRecordMonthSales, error)
+	GetYearlyCashierByMerchant(year int, merchant_id int) ([]*record.CashierRecordYearSales, error)
+	GetMonthlyCashierById(year int, cashier_id int) ([]*record.CashierRecordMonthSales, error)
+	GetYearlyCashierById(year int, cashier_id int) ([]*record.CashierRecordYearSales, error)
+
 	FindAllCashiers(search string, page, pageSize int) ([]*record.CashierRecord, int, error)
 	FindById(cashier_id int) (*record.CashierRecord, error)
 	FindByActive(search string, page, pageSize int) ([]*record.CashierRecord, int, error)
@@ -95,13 +123,25 @@ type MerchantRepository interface {
 }
 
 type OrderRepository interface {
+	GetMonthlyTotalRevenue(year int, month int) ([]*record.OrderMonthlyTotalRevenueRecord, error)
+	GetYearlyTotalRevenue(year int) ([]*record.OrderYearlyTotalRevenueRecord, error)
+	GetMonthlyTotalRevenueById(year int, month int, order_id int) ([]*record.OrderMonthlyTotalRevenueRecord, error)
+	GetYearlyTotalRevenueById(year int, order_id int) ([]*record.OrderYearlyTotalRevenueRecord, error)
+	GetMonthlyTotalRevenueByMerchant(year int, month int, merchant_id int) ([]*record.OrderMonthlyTotalRevenueRecord, error)
+	GetYearlyTotalRevenueByMerchant(year int, merchant_id int) ([]*record.OrderYearlyTotalRevenueRecord, error)
+
+	GetMonthlyOrder(year int) ([]*record.OrderMonthlyRecord, error)
+	GetYearlyOrder(year int) ([]*record.OrderYearlyRecord, error)
+	GetMonthlyOrderByMerchant(year int, merchant_id int) ([]*record.OrderMonthlyRecord, error)
+	GetYearlyOrderByMerchant(year int, merchant_id int) ([]*record.OrderYearlyRecord, error)
+
 	FindAllOrders(search string, page, pageSize int) ([]*record.OrderRecord, int, error)
 	FindByActive(search string, page, pageSize int) ([]*record.OrderRecord, int, error)
 	FindByTrashed(search string, page, pageSize int) ([]*record.OrderRecord, int, error)
 	FindByMerchant(merchant_id int, search string, page, pageSize int) ([]*record.OrderRecord, int, error)
 	FindById(order_id int) (*record.OrderRecord, error)
-	CreateOrder(request *requests.CreateOrderRequest) (*record.OrderRecord, error)
-	UpdateOrder(request *requests.UpdateOrderRequest) (*record.OrderRecord, error)
+	CreateOrder(request *requests.CreateOrderRecordRequest) (*record.OrderRecord, error)
+	UpdateOrder(request *requests.UpdateOrderRecordRequest) (*record.OrderRecord, error)
 	TrashedOrder(order_id int) (*record.OrderRecord, error)
 	RestoreOrder(order_id int) (*record.OrderRecord, error)
 	DeleteOrderPermanent(order_id int) (bool, error)
@@ -128,11 +168,12 @@ type ProductRepository interface {
 	FindAllProducts(search string, page, pageSize int) ([]*record.ProductRecord, int, error)
 	FindByActive(search string, page, pageSize int) ([]*record.ProductRecord, int, error)
 	FindByTrashed(search string, page, pageSize int) ([]*record.ProductRecord, int, error)
-	FindByMerchant(merchant_id int, search string, page, pageSize int) ([]*record.ProductRecord, int, error)
+	FindByMerchant(req *requests.ProductByMerchantRequest) ([]*record.ProductRecord, int, error)
 
 	FindByCategory(category_name string, search string, page, pageSize int) ([]*record.ProductRecord, int, error)
 
 	FindById(user_id int) (*record.ProductRecord, error)
+	FindByIdTrashed(id int) (*record.ProductRecord, error)
 	CreateProduct(request *requests.CreateProductRequest) (*record.ProductRecord, error)
 	UpdateProduct(request *requests.UpdateProductRequest) (*record.ProductRecord, error)
 	UpdateProductCountStock(product_id int, stock int) (*record.ProductRecord, error)
@@ -144,6 +185,20 @@ type ProductRepository interface {
 }
 
 type TransactionRepository interface {
+	GetMonthlyAmountSuccess(year int, month int) ([]*record.TransactionMonthlyAmountSuccessRecord, error)
+	GetYearlyAmountSuccess(year int) ([]*record.TransactionYearlyAmountSuccessRecord, error)
+	GetMonthlyAmountFailed(year int, month int) ([]*record.TransactionMonthlyAmountFailedRecord, error)
+	GetYearlyAmountFailed(year int) ([]*record.TransactionYearlyAmountFailedRecord, error)
+	GetMonthlyAmountSuccessByMerchant(year int, month int, merchantID int) ([]*record.TransactionMonthlyAmountSuccessRecord, error)
+	GetYearlyAmountSuccessByMerchant(year int, merchantID int) ([]*record.TransactionYearlyAmountSuccessRecord, error)
+	GetMonthlyAmountFailedByMerchant(year int, month int, merchantID int) ([]*record.TransactionMonthlyAmountFailedRecord, error)
+	GetYearlyAmountFailedByMerchant(year int, merchantID int) ([]*record.TransactionYearlyAmountFailedRecord, error)
+
+	GetMonthlyTransactionMethod(year int) ([]*record.TransactionMonthlyMethodRecord, error)
+	GetYearlyTransactionMethod(year int) ([]*record.TransactionYearlyMethodRecord, error)
+	GetMonthlyTransactionMethodByMerchant(year int, merchant_id int) ([]*record.TransactionMonthlyMethodRecord, error)
+	GetYearlyTransactionMethodByMerchant(year int, merchant_id int) ([]*record.TransactionYearlyMethodRecord, error)
+
 	FindAllTransactions(search string, page, pageSize int) ([]*record.TransactionRecord, int, error)
 	FindByActive(search string, page, pageSize int) ([]*record.TransactionRecord, int, error)
 	FindByTrashed(search string, page, pageSize int) ([]*record.TransactionRecord, int, error)

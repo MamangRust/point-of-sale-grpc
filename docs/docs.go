@@ -15,6 +15,26 @@ const docTemplate = `{
     "host": "{{.Host}}",
     "basePath": "{{.BasePath}}",
     "paths": {
+        "/api/auth/hello": {
+            "get": {
+                "description": "Returns a simple \"Hello\" message for testing purposes.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Auth"
+                ],
+                "summary": "Returns a \"Hello\" message",
+                "responses": {
+                    "200": {
+                        "description": "Hello",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
         "/api/auth/login": {
             "post": {
                 "description": "Authenticates a user using the provided email and password.",
@@ -43,7 +63,7 @@ const docTemplate = `{
                     "200": {
                         "description": "Success",
                         "schema": {
-                            "$ref": "#/definitions/pb.ApiResponseLogin"
+                            "$ref": "#/definitions/response.ApiResponseLogin"
                         }
                     },
                     "400": {
@@ -83,7 +103,7 @@ const docTemplate = `{
                     "200": {
                         "description": "Success",
                         "schema": {
-                            "$ref": "#/definitions/pb.ApiResponseGetMe"
+                            "$ref": "#/definitions/response.ApiResponseGetMe"
                         }
                     },
                     "401": {
@@ -134,7 +154,7 @@ const docTemplate = `{
                     "200": {
                         "description": "Success",
                         "schema": {
-                            "$ref": "#/definitions/pb.ApiResponseRefreshToken"
+                            "$ref": "#/definitions/response.ApiResponseRefreshToken"
                         }
                     },
                     "400": {
@@ -180,7 +200,7 @@ const docTemplate = `{
                     "200": {
                         "description": "Success",
                         "schema": {
-                            "$ref": "#/definitions/pb.ApiResponseRegister"
+                            "$ref": "#/definitions/response.ApiResponseRegister"
                         }
                     },
                     "400": {
@@ -370,7 +390,7 @@ const docTemplate = `{
                     "200": {
                         "description": "Successfully deleted cashier record permanently",
                         "schema": {
-                            "$ref": "#/definitions/pb.ApiResponseCashierAll"
+                            "$ref": "#/definitions/response.ApiResponseCashierAll"
                         }
                     },
                     "400": {
@@ -437,6 +457,638 @@ const docTemplate = `{
                 }
             }
         },
+        "/api/cashier/merchant/monthly-sales": {
+            "get": {
+                "security": [
+                    {
+                        "Bearer": []
+                    }
+                ],
+                "description": "Retrieve monthly cashiers statistics for a specific merchant",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Cashier"
+                ],
+                "summary": "Get monthly sales by merchant",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Merchant ID",
+                        "name": "merchant_id",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Year in YYYY format (e.g., 2023)",
+                        "name": "year",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successfully retrieved monthly sales by merchant",
+                        "schema": {
+                            "$ref": "#/definitions/response.ApiResponseCashierMonthSales"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid merchant ID or year parameter",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Merchant not found",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/cashier/merchant/monthly-total-sales": {
+            "get": {
+                "security": [
+                    {
+                        "Bearer": []
+                    }
+                ],
+                "description": "Retrieve monthly cashiers statistics for a given year",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Cashier"
+                ],
+                "summary": "Get monthly cashiers statistics",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Year in YYYY format (e.g., 2023)",
+                        "name": "year",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Month",
+                        "name": "month",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Merchant ID",
+                        "name": "merchant_id",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successfully retrieved monthly sales data",
+                        "schema": {
+                            "$ref": "#/definitions/response.ApiResponseCashierMonthSales"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid year parameter",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/cashier/merchant/yearly-sales": {
+            "get": {
+                "security": [
+                    {
+                        "Bearer": []
+                    }
+                ],
+                "description": "Retrieve yearly cashier statistics for a specific merchant",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Cashier"
+                ],
+                "summary": "Get yearly sales by merchant",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Merchant ID",
+                        "name": "merchant_id",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Year in YYYY format (e.g., 2023)",
+                        "name": "year",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successfully retrieved yearly sales by merchant",
+                        "schema": {
+                            "$ref": "#/definitions/response.ApiResponseCashierYearSales"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid merchant ID or year parameter",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Merchant not found",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/cashier/merchant/yearly-total-sales": {
+            "get": {
+                "security": [
+                    {
+                        "Bearer": []
+                    }
+                ],
+                "description": "Retrieve the yearly cashiers for a specific year.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Cashier"
+                ],
+                "summary": "Get yearly cashiers",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Year",
+                        "name": "year",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Merchant ID",
+                        "name": "merchant_id",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Yearly cashiers",
+                        "schema": {
+                            "$ref": "#/definitions/response.ApiResponseCashierYearSales"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid year parameter",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Failed to retrieve yearly cashiers",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/cashier/monthly-sales": {
+            "get": {
+                "security": [
+                    {
+                        "Bearer": []
+                    }
+                ],
+                "description": "Retrieve monthly cashiers statistics for a given year",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Cashier"
+                ],
+                "summary": "Get monthly cashiers statistics",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Year in YYYY format (e.g., 2023)",
+                        "name": "year",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successfully retrieved monthly sales data",
+                        "schema": {
+                            "$ref": "#/definitions/response.ApiResponseCashierMonthSales"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid year parameter",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/cashier/monthly-total-sales": {
+            "get": {
+                "security": [
+                    {
+                        "Bearer": []
+                    }
+                ],
+                "description": "Retrieve monthly cashiers statistics for a given year",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Cashier"
+                ],
+                "summary": "Get monthly cashiers statistics",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Year in YYYY format (e.g., 2023)",
+                        "name": "year",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Month",
+                        "name": "month",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successfully retrieved monthly sales data",
+                        "schema": {
+                            "$ref": "#/definitions/response.ApiResponseCashierMonthSales"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid year parameter",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/cashier/mycashier/monthly-sales": {
+            "get": {
+                "security": [
+                    {
+                        "Bearer": []
+                    }
+                ],
+                "description": "Retrieve monthly cashier statistics for a specific cashier",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Cashier"
+                ],
+                "summary": "Get monthly sales by cashier",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Cashier ID",
+                        "name": "cashier_id",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Year in YYYY format (e.g., 2023)",
+                        "name": "year",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successfully retrieved monthly sales by cashier",
+                        "schema": {
+                            "$ref": "#/definitions/response.ApiResponseCashierMonthSales"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid cashier ID or year parameter",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Cashier not found",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/cashier/mycashier/monthly-total-sales": {
+            "get": {
+                "security": [
+                    {
+                        "Bearer": []
+                    }
+                ],
+                "description": "Retrieve monthly cashiers statistics for a given year",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Cashier"
+                ],
+                "summary": "Get monthly cashiers statistics",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Year in YYYY format (e.g., 2023)",
+                        "name": "year",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Month",
+                        "name": "month",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successfully retrieved monthly sales data",
+                        "schema": {
+                            "$ref": "#/definitions/response.ApiResponseCashierMonthSales"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid year parameter",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/cashier/mycashier/yearly-sales": {
+            "get": {
+                "security": [
+                    {
+                        "Bearer": []
+                    }
+                ],
+                "description": "Retrieve yearly cashier statistics for a specific cashier",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Cashier"
+                ],
+                "summary": "Get yearly sales by cashier",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Cashier ID",
+                        "name": "cashier_id",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Year in YYYY format (e.g., 2023)",
+                        "name": "year",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successfully retrieved yearly sales by cashier",
+                        "schema": {
+                            "$ref": "#/definitions/response.ApiResponseCashierYearSales"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid cashier ID or year parameter",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Cashier not found",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/cashier/mycashier/yearly-total-sales": {
+            "get": {
+                "security": [
+                    {
+                        "Bearer": []
+                    }
+                ],
+                "description": "Retrieve the yearly cashiers for a specific year.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Cashier"
+                ],
+                "summary": "Get yearly cashiers",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Year",
+                        "name": "year",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Cashier ID",
+                        "name": "cashier_id",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Yearly cashiers",
+                        "schema": {
+                            "$ref": "#/definitions/response.ApiResponseCashierYearSales"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid year parameter",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Failed to retrieve yearly cashiers",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/api/cashier/restore/all": {
             "post": {
                 "security": [
@@ -468,7 +1120,7 @@ const docTemplate = `{
                     "200": {
                         "description": "Successfully restored cashier all",
                         "schema": {
-                            "$ref": "#/definitions/pb.ApiResponseCashierAll"
+                            "$ref": "#/definitions/response.ApiResponseCashierAll"
                         }
                     },
                     "400": {
@@ -517,7 +1169,7 @@ const docTemplate = `{
                     "200": {
                         "description": "Successfully restored cashier",
                         "schema": {
-                            "$ref": "#/definitions/pb.ApiResponseCashierDeleteAt"
+                            "$ref": "#/definitions/response.ApiResponseCashierDeleteAt"
                         }
                     },
                     "400": {
@@ -600,7 +1252,7 @@ const docTemplate = `{
                     "200": {
                         "description": "Successfully retrieved trashed cashier",
                         "schema": {
-                            "$ref": "#/definitions/pb.ApiResponseCashierDeleteAt"
+                            "$ref": "#/definitions/response.ApiResponseCashierDeleteAt"
                         }
                     },
                     "400": {
@@ -651,7 +1303,7 @@ const docTemplate = `{
                     "200": {
                         "description": "Successfully updated cashier",
                         "schema": {
-                            "$ref": "#/definitions/pb.ApiResponseCashier"
+                            "$ref": "#/definitions/response.ApiResponseCashier"
                         }
                     },
                     "400": {
@@ -662,6 +1314,104 @@ const docTemplate = `{
                     },
                     "500": {
                         "description": "Failed to update cashier",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/cashier/yearly-sales": {
+            "get": {
+                "security": [
+                    {
+                        "Bearer": []
+                    }
+                ],
+                "description": "Retrieve the yearly cashiers for a specific year.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Cashier"
+                ],
+                "summary": "Get yearly cashiers",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Year",
+                        "name": "year",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Yearly cashiers",
+                        "schema": {
+                            "$ref": "#/definitions/response.ApiResponseCashierYearSales"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid year parameter",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Failed to retrieve yearly cashiers",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/cashier/yearly-total-sales": {
+            "get": {
+                "security": [
+                    {
+                        "Bearer": []
+                    }
+                ],
+                "description": "Retrieve the yearly cashiers for a specific year.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Cashier"
+                ],
+                "summary": "Get yearly cashiers",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Year",
+                        "name": "year",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Yearly cashiers",
+                        "schema": {
+                            "$ref": "#/definitions/response.ApiResponseCashierYearSales"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid year parameter",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Failed to retrieve yearly cashiers",
                         "schema": {
                             "$ref": "#/definitions/response.ErrorResponse"
                         }
@@ -815,9 +1565,9 @@ const docTemplate = `{
                         "Bearer": []
                     }
                 ],
-                "description": "Create a new category with the provided details and an image file",
+                "description": "Create a new category with the provided details",
                 "consumes": [
-                    "multipart/form-data"
+                    "application/json"
                 ],
                 "produces": [
                     "application/json"
@@ -828,39 +1578,20 @@ const docTemplate = `{
                 "summary": "Create a new category",
                 "parameters": [
                     {
-                        "type": "string",
-                        "description": "Category name",
-                        "name": "name",
-                        "in": "formData",
-                        "required": true
-                    },
-                    {
-                        "type": "string",
-                        "description": "Category description",
-                        "name": "description",
-                        "in": "formData",
-                        "required": true
-                    },
-                    {
-                        "type": "string",
-                        "description": "Category slug",
-                        "name": "slug_category",
-                        "in": "formData",
-                        "required": true
-                    },
-                    {
-                        "type": "file",
-                        "description": "Category image file",
-                        "name": "image_category",
-                        "in": "formData",
-                        "required": true
+                        "description": "Category details",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/requests.CreateCategoryRequest"
+                        }
                     }
                 ],
                 "responses": {
-                    "200": {
+                    "201": {
                         "description": "Successfully created category",
                         "schema": {
-                            "$ref": "#/definitions/pb.ApiResponseCategory"
+                            "$ref": "#/definitions/response.ApiResponseCategory"
                         }
                     },
                     "400": {
@@ -969,6 +1700,519 @@ const docTemplate = `{
                     },
                     "500": {
                         "description": "Failed to delete category:",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/category/merchant/monthly-pricing": {
+            "get": {
+                "security": [
+                    {
+                        "Bearer": []
+                    }
+                ],
+                "description": "Retrieve monthly pricing statistics for categories by specific merchant",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Category"
+                ],
+                "summary": "Get monthly category pricing by merchant",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Merchant ID",
+                        "name": "merchant_id",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Year in YYYY format (e.g., 2023)",
+                        "name": "year",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Monthly category pricing by merchant",
+                        "schema": {
+                            "$ref": "#/definitions/response.ApiResponseCategoryMonthPrice"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid merchant ID or year parameter",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Merchant not found",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/category/merchant/monthly-total-pricing": {
+            "get": {
+                "security": [
+                    {
+                        "Bearer": []
+                    }
+                ],
+                "description": "Retrieve monthly pricing statistics for all categories",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Category"
+                ],
+                "summary": "Get monthly category pricing",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Year in YYYY format (e.g., 2023)",
+                        "name": "year",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Month",
+                        "name": "month",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Category ID",
+                        "name": "category_id",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Monthly category pricing data",
+                        "schema": {
+                            "$ref": "#/definitions/response.ApiResponseCategoryMonthPrice"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid year parameter",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/category/merchant/yearly-pricing": {
+            "get": {
+                "security": [
+                    {
+                        "Bearer": []
+                    }
+                ],
+                "description": "Retrieve yearly pricing statistics for categories by specific merchant",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Category"
+                ],
+                "summary": "Get yearly category pricing by merchant",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Merchant ID",
+                        "name": "merchant_id",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Year in YYYY format (e.g., 2023)",
+                        "name": "year",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Yearly category pricing by merchant",
+                        "schema": {
+                            "$ref": "#/definitions/response.ApiResponseCategoryYearPrice"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid merchant ID or year parameter",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Merchant not found",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/category/monthly-pricing": {
+            "get": {
+                "security": [
+                    {
+                        "Bearer": []
+                    }
+                ],
+                "description": "Retrieve monthly pricing statistics for all categories",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Category"
+                ],
+                "summary": "Get monthly category pricing",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Year in YYYY format (e.g., 2023)",
+                        "name": "year",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Monthly category pricing data",
+                        "schema": {
+                            "$ref": "#/definitions/response.ApiResponseCategoryMonthPrice"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid year parameter",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/category/monthly-total-pricing": {
+            "get": {
+                "security": [
+                    {
+                        "Bearer": []
+                    }
+                ],
+                "description": "Retrieve monthly pricing statistics for all categories",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Category"
+                ],
+                "summary": "Get monthly category pricing",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Year in YYYY format (e.g., 2023)",
+                        "name": "year",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Monthly category pricing data",
+                        "schema": {
+                            "$ref": "#/definitions/response.ApiResponseCategoryMonthPrice"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid year parameter",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/category/mycategory/monthly-pricing": {
+            "get": {
+                "security": [
+                    {
+                        "Bearer": []
+                    }
+                ],
+                "description": "Retrieve monthly pricing statistics for specific category",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Category"
+                ],
+                "summary": "Get monthly pricing by category ID",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Category ID",
+                        "name": "category_id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Year in YYYY format (e.g., 2023)",
+                        "name": "year",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Monthly pricing by category",
+                        "schema": {
+                            "$ref": "#/definitions/response.ApiResponseCategoryMonthPrice"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid category ID or year parameter",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Category not found",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/category/mycategory/monthly-total-pricing": {
+            "get": {
+                "security": [
+                    {
+                        "Bearer": []
+                    }
+                ],
+                "description": "Retrieve monthly pricing statistics for all categories",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Category"
+                ],
+                "summary": "Get monthly category pricing",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Year in YYYY format (e.g., 2023)",
+                        "name": "year",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Month",
+                        "name": "month",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Monthly category pricing data",
+                        "schema": {
+                            "$ref": "#/definitions/response.ApiResponseCategoryMonthPrice"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid year parameter",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/category/mycategory/yearly-pricing": {
+            "get": {
+                "security": [
+                    {
+                        "Bearer": []
+                    }
+                ],
+                "description": "Retrieve yearly pricing statistics for specific category",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Category"
+                ],
+                "summary": "Get yearly pricing by category ID",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Category ID",
+                        "name": "category_id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Year in YYYY format (e.g., 2023)",
+                        "name": "year",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Yearly pricing by category",
+                        "schema": {
+                            "$ref": "#/definitions/response.ApiResponseCategoryYearPrice"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid category ID or year parameter",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Category not found",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
                         "schema": {
                             "$ref": "#/definitions/response.ErrorResponse"
                         }
@@ -1164,9 +2408,9 @@ const docTemplate = `{
                         "Bearer": []
                     }
                 ],
-                "description": "Update an existing category record with the provided details and an optional image file",
+                "description": "Update an existing category record with the provided details",
                 "consumes": [
-                    "multipart/form-data"
+                    "application/json"
                 ],
                 "produces": [
                     "application/json"
@@ -1177,45 +2421,20 @@ const docTemplate = `{
                 "summary": "Update an existing category",
                 "parameters": [
                     {
-                        "type": "integer",
-                        "description": "Category ID",
-                        "name": "category_id",
-                        "in": "formData",
-                        "required": true
-                    },
-                    {
-                        "type": "string",
-                        "description": "Category name",
-                        "name": "name",
-                        "in": "formData",
-                        "required": true
-                    },
-                    {
-                        "type": "string",
-                        "description": "Category description",
-                        "name": "description",
-                        "in": "formData",
-                        "required": true
-                    },
-                    {
-                        "type": "string",
-                        "description": "Category slug",
-                        "name": "slug_category",
-                        "in": "formData",
-                        "required": true
-                    },
-                    {
-                        "type": "file",
-                        "description": "New category image file",
-                        "name": "image_category",
-                        "in": "formData"
+                        "description": "Category update details",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/requests.UpdateCategoryRequest"
+                        }
                     }
                 ],
                 "responses": {
                     "200": {
                         "description": "Successfully updated category",
                         "schema": {
-                            "$ref": "#/definitions/pb.ApiResponseCategory"
+                            "$ref": "#/definitions/response.ApiResponseCategory"
                         }
                     },
                     "400": {
@@ -1226,6 +2445,123 @@ const docTemplate = `{
                     },
                     "500": {
                         "description": "Failed to update category",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/category/yearly-pricing": {
+            "get": {
+                "security": [
+                    {
+                        "Bearer": []
+                    }
+                ],
+                "description": "Retrieve yearly pricing statistics for all categories",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Category"
+                ],
+                "summary": "Get yearly category pricing",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Year in YYYY format (e.g., 2023)",
+                        "name": "year",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Yearly category pricing data",
+                        "schema": {
+                            "$ref": "#/definitions/response.ApiResponseCategoryYearPrice"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid year parameter",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/category/yearly-total-pricing": {
+            "get": {
+                "security": [
+                    {
+                        "Bearer": []
+                    }
+                ],
+                "description": "Retrieve yearly pricing statistics for all categories",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Category"
+                ],
+                "summary": "Get yearly category pricing",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Year in YYYY format (e.g., 2023)",
+                        "name": "year",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Category ID",
+                        "name": "category_id",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Yearly category pricing data",
+                        "schema": {
+                            "$ref": "#/definitions/response.ApiResponseCategoryYearPrice"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid year parameter",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
                         "schema": {
                             "$ref": "#/definitions/response.ErrorResponse"
                         }
@@ -1360,7 +2696,7 @@ const docTemplate = `{
                     "200": {
                         "description": "List of active merchant",
                         "schema": {
-                            "$ref": "#/definitions/pb.ApiResponsesUser"
+                            "$ref": "#/definitions/response.ApiResponsePaginationMerchantDeleteAt"
                         }
                     },
                     "500": {
@@ -1641,7 +2977,7 @@ const docTemplate = `{
                     "200": {
                         "description": "List of trashed merchant data",
                         "schema": {
-                            "$ref": "#/definitions/pb.ApiResponsesUser"
+                            "$ref": "#/definitions/response.ApiResponsePaginationMerchantDeleteAt"
                         }
                     },
                     "500": {
@@ -1746,6 +3082,68 @@ const docTemplate = `{
                     },
                     "500": {
                         "description": "Failed to update merchant",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/merchant/yearly-total-pricing": {
+            "get": {
+                "security": [
+                    {
+                        "Bearer": []
+                    }
+                ],
+                "description": "Retrieve yearly pricing statistics for all categories",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Category"
+                ],
+                "summary": "Get yearly category pricing",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Year in YYYY format (e.g., 2023)",
+                        "name": "year",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Category ID",
+                        "name": "category_id",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Yearly category pricing data",
+                        "schema": {
+                            "$ref": "#/definitions/response.ApiResponseCategoryYearPrice"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid year parameter",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
                         "schema": {
                             "$ref": "#/definitions/response.ErrorResponse"
                         }
@@ -1873,7 +3271,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "OrderItem"
+                    "Order-Item"
                 ],
                 "summary": "Find all order items",
                 "parameters": [
@@ -1929,7 +3327,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "OrderItem"
+                    "Order-Item"
                 ],
                 "summary": "Retrieve active order items",
                 "responses": {
@@ -1963,7 +3361,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "OrderItem"
+                    "Order-Item"
                 ],
                 "summary": "Find order items by order ID",
                 "parameters": [
@@ -2012,7 +3410,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "OrderItem"
+                    "Order-Item"
                 ],
                 "summary": "Retrieve trashed order items",
                 "responses": {
@@ -2192,6 +3590,376 @@ const docTemplate = `{
                     },
                     "500": {
                         "description": "Failed to delete order:",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/order/merchant/monthly-revenue": {
+            "get": {
+                "security": [
+                    {
+                        "Bearer": []
+                    }
+                ],
+                "description": "Retrieve monthly revenue statistics for specific merchant",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Order"
+                ],
+                "summary": "Get monthly revenue by merchant",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Merchant ID",
+                        "name": "merchant_id",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Year in YYYY format (e.g., 2023)",
+                        "name": "year",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Monthly revenue by merchant",
+                        "schema": {
+                            "$ref": "#/definitions/response.ApiResponseOrderMonthly"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid merchant ID or year parameter",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Merchant not found",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/order/merchant/monthly-total-revenue": {
+            "get": {
+                "security": [
+                    {
+                        "Bearer": []
+                    }
+                ],
+                "description": "Retrieve monthly revenue statistics for all orders",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Order"
+                ],
+                "summary": "Get monthly revenue report",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Year in YYYY format (e.g., 2023)",
+                        "name": "year",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Month",
+                        "name": "month",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Monthly revenue data",
+                        "schema": {
+                            "$ref": "#/definitions/response.ApiResponseOrderMonthly"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid year parameter",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/order/merchant/yearly-revenue": {
+            "get": {
+                "security": [
+                    {
+                        "Bearer": []
+                    }
+                ],
+                "description": "Retrieve yearly revenue statistics for specific merchant",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Order"
+                ],
+                "summary": "Get yearly revenue by merchant",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Merchant ID",
+                        "name": "merchant_id",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Year in YYYY format (e.g., 2023)",
+                        "name": "year",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Yearly revenue by merchant",
+                        "schema": {
+                            "$ref": "#/definitions/response.ApiResponseOrderYearly"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid merchant ID or year parameter",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Merchant not found",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/order/merchant/yearly-total-revenue": {
+            "get": {
+                "security": [
+                    {
+                        "Bearer": []
+                    }
+                ],
+                "description": "Retrieve yearly revenue statistics for all orders",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Order"
+                ],
+                "summary": "Get yearly revenue report",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Year in YYYY format (e.g., 2023)",
+                        "name": "year",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Yearly revenue data",
+                        "schema": {
+                            "$ref": "#/definitions/response.ApiResponseOrderYearly"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid year parameter",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/order/monthly-revenue": {
+            "get": {
+                "security": [
+                    {
+                        "Bearer": []
+                    }
+                ],
+                "description": "Retrieve monthly revenue statistics for all orders",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Order"
+                ],
+                "summary": "Get monthly revenue report",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Year in YYYY format (e.g., 2023)",
+                        "name": "year",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Monthly revenue data",
+                        "schema": {
+                            "$ref": "#/definitions/response.ApiResponseOrderMonthly"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid year parameter",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/order/monthly-total-revenue": {
+            "get": {
+                "security": [
+                    {
+                        "Bearer": []
+                    }
+                ],
+                "description": "Retrieve monthly revenue statistics for all orders",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Order"
+                ],
+                "summary": "Get monthly revenue report",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Year in YYYY format (e.g., 2023)",
+                        "name": "year",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Month",
+                        "name": "month",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Monthly revenue data",
+                        "schema": {
+                            "$ref": "#/definitions/response.ApiResponseOrderMonthly"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid year parameter",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
                         "schema": {
                             "$ref": "#/definitions/response.ErrorResponse"
                         }
@@ -2409,6 +4177,116 @@ const docTemplate = `{
                     },
                     "500": {
                         "description": "Failed to update order",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/order/yearly-revenue": {
+            "get": {
+                "security": [
+                    {
+                        "Bearer": []
+                    }
+                ],
+                "description": "Retrieve yearly revenue statistics for all orders",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Order"
+                ],
+                "summary": "Get yearly revenue report",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Year in YYYY format (e.g., 2023)",
+                        "name": "year",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Yearly revenue data",
+                        "schema": {
+                            "$ref": "#/definitions/response.ApiResponseOrderYearly"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid year parameter",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/order/yearly-total-revenue": {
+            "get": {
+                "security": [
+                    {
+                        "Bearer": []
+                    }
+                ],
+                "description": "Retrieve yearly revenue statistics for all orders",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Order"
+                ],
+                "summary": "Get yearly revenue report",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Year in YYYY format (e.g., 2023)",
+                        "name": "year",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Yearly revenue data",
+                        "schema": {
+                            "$ref": "#/definitions/response.ApiResponseOrderYearly"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid year parameter",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
                         "schema": {
                             "$ref": "#/definitions/response.ErrorResponse"
                         }
@@ -2638,14 +4516,14 @@ const docTemplate = `{
                 "summary": "Create a new product",
                 "parameters": [
                     {
-                        "type": "integer",
+                        "type": "string",
                         "description": "Merchant ID",
                         "name": "merchant_id",
                         "in": "formData",
                         "required": true
                     },
                     {
-                        "type": "integer",
+                        "type": "string",
                         "description": "Category ID",
                         "name": "category_id",
                         "in": "formData",
@@ -2666,14 +4544,14 @@ const docTemplate = `{
                         "required": true
                     },
                     {
-                        "type": "integer",
+                        "type": "string",
                         "description": "Product price",
                         "name": "price",
                         "in": "formData",
                         "required": true
                     },
                     {
-                        "type": "integer",
+                        "type": "string",
                         "description": "Product count in stock",
                         "name": "count_in_stock",
                         "in": "formData",
@@ -2687,14 +4565,14 @@ const docTemplate = `{
                         "required": true
                     },
                     {
-                        "type": "integer",
+                        "type": "string",
                         "description": "Product weight",
                         "name": "weight",
                         "in": "formData",
                         "required": true
                     },
                     {
-                        "type": "integer",
+                        "type": "string",
                         "description": "Product rating",
                         "name": "rating",
                         "in": "formData",
@@ -2726,7 +4604,7 @@ const docTemplate = `{
                     "200": {
                         "description": "Successfully created product",
                         "schema": {
-                            "$ref": "#/definitions/pb.ApiResponseProduct"
+                            "$ref": "#/definitions/response.ApiResponseProduct"
                         }
                     },
                     "400": {
@@ -3076,21 +4954,21 @@ const docTemplate = `{
                 "summary": "Update an existing product",
                 "parameters": [
                     {
-                        "type": "integer",
+                        "type": "string",
                         "description": "Product ID",
                         "name": "product_id",
                         "in": "formData",
                         "required": true
                     },
                     {
-                        "type": "integer",
+                        "type": "string",
                         "description": "Merchant ID",
                         "name": "merchant_id",
                         "in": "formData",
                         "required": true
                     },
                     {
-                        "type": "integer",
+                        "type": "string",
                         "description": "Category ID",
                         "name": "category_id",
                         "in": "formData",
@@ -3111,14 +4989,14 @@ const docTemplate = `{
                         "required": true
                     },
                     {
-                        "type": "integer",
+                        "type": "string",
                         "description": "Product price",
                         "name": "price",
                         "in": "formData",
                         "required": true
                     },
                     {
-                        "type": "integer",
+                        "type": "string",
                         "description": "Product count in stock",
                         "name": "count_in_stock",
                         "in": "formData",
@@ -3132,14 +5010,14 @@ const docTemplate = `{
                         "required": true
                     },
                     {
-                        "type": "integer",
+                        "type": "string",
                         "description": "Product weight",
                         "name": "weight",
                         "in": "formData",
                         "required": true
                     },
                     {
-                        "type": "integer",
+                        "type": "string",
                         "description": "Product rating",
                         "name": "rating",
                         "in": "formData",
@@ -3170,7 +5048,7 @@ const docTemplate = `{
                     "200": {
                         "description": "Successfully updated product",
                         "schema": {
-                            "$ref": "#/definitions/pb.ApiResponseProduct"
+                            "$ref": "#/definitions/response.ApiResponseProduct"
                         }
                     },
                     "400": {
@@ -3279,7 +5157,7 @@ const docTemplate = `{
                     "200": {
                         "description": "List of roles",
                         "schema": {
-                            "$ref": "#/definitions/pb.ApiResponsePaginationRole"
+                            "$ref": "#/definitions/response.ApiResponsePaginationRole"
                         }
                     },
                     "400": {
@@ -3320,7 +5198,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/pb.CreateRoleRequest"
+                            "$ref": "#/definitions/requests.CreateRoleRequest"
                         }
                     }
                 ],
@@ -3328,7 +5206,7 @@ const docTemplate = `{
                     "200": {
                         "description": "Created role data",
                         "schema": {
-                            "$ref": "#/definitions/pb.ApiResponseRole"
+                            "$ref": "#/definitions/response.ApiResponseRole"
                         }
                     },
                     "400": {
@@ -3388,7 +5266,7 @@ const docTemplate = `{
                     "200": {
                         "description": "List of active roles",
                         "schema": {
-                            "$ref": "#/definitions/pb.ApiResponsePaginationRoleDeleteAt"
+                            "$ref": "#/definitions/response.ApiResponsePaginationRoleDeleteAt"
                         }
                     },
                     "400": {
@@ -3428,7 +5306,7 @@ const docTemplate = `{
                     "200": {
                         "description": "Permanently deleted roles data",
                         "schema": {
-                            "$ref": "#/definitions/pb.ApiResponseRoleAll"
+                            "$ref": "#/definitions/response.ApiResponseRoleAll"
                         }
                     },
                     "500": {
@@ -3471,7 +5349,7 @@ const docTemplate = `{
                     "200": {
                         "description": "Permanently deleted role data",
                         "schema": {
-                            "$ref": "#/definitions/pb.ApiResponseRole"
+                            "$ref": "#/definitions/response.ApiResponseRole"
                         }
                     },
                     "400": {
@@ -3511,7 +5389,7 @@ const docTemplate = `{
                     "200": {
                         "description": "Restored roles data",
                         "schema": {
-                            "$ref": "#/definitions/pb.ApiResponseRoleAll"
+                            "$ref": "#/definitions/response.ApiResponseRoleAll"
                         }
                     },
                     "500": {
@@ -3554,7 +5432,7 @@ const docTemplate = `{
                     "200": {
                         "description": "Restored role data",
                         "schema": {
-                            "$ref": "#/definitions/pb.ApiResponseRole"
+                            "$ref": "#/definitions/response.ApiResponseRole"
                         }
                     },
                     "400": {
@@ -3614,7 +5492,7 @@ const docTemplate = `{
                     "200": {
                         "description": "List of trashed roles",
                         "schema": {
-                            "$ref": "#/definitions/pb.ApiResponsePaginationRoleDeleteAt"
+                            "$ref": "#/definitions/response.ApiResponsePaginationRoleDeleteAt"
                         }
                     },
                     "400": {
@@ -3663,7 +5541,7 @@ const docTemplate = `{
                     "200": {
                         "description": "Role data",
                         "schema": {
-                            "$ref": "#/definitions/pb.ApiResponseRole"
+                            "$ref": "#/definitions/response.ApiResponseRole"
                         }
                     },
                     "400": {
@@ -3712,7 +5590,7 @@ const docTemplate = `{
                     "200": {
                         "description": "Role data",
                         "schema": {
-                            "$ref": "#/definitions/pb.ApiResponseRole"
+                            "$ref": "#/definitions/response.ApiResponseRole"
                         }
                     },
                     "400": {
@@ -3760,7 +5638,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/pb.UpdateRoleRequest"
+                            "$ref": "#/definitions/requests.UpdateRoleRequest"
                         }
                     }
                 ],
@@ -3768,7 +5646,7 @@ const docTemplate = `{
                     "200": {
                         "description": "Updated role data",
                         "schema": {
-                            "$ref": "#/definitions/pb.ApiResponseRole"
+                            "$ref": "#/definitions/response.ApiResponseRole"
                         }
                     },
                     "400": {
@@ -3815,7 +5693,7 @@ const docTemplate = `{
                     "200": {
                         "description": "Soft-deleted role data",
                         "schema": {
-                            "$ref": "#/definitions/pb.ApiResponseRole"
+                            "$ref": "#/definitions/response.ApiResponseRole"
                         }
                     },
                     "400": {
@@ -4070,6 +5948,607 @@ const docTemplate = `{
                 }
             }
         },
+        "/api/transaction/merchant/monthly-failed": {
+            "get": {
+                "security": [
+                    {
+                        "Bearer": []
+                    }
+                ],
+                "description": "Retrieve statistics of failed transactions by month for specific merchant",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Transaction"
+                ],
+                "summary": "Get monthly failed transactions by merchant",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Merchant ID",
+                        "name": "merchant_id",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Year in YYYY format (e.g., 2023)",
+                        "name": "year",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Month in MM format (1-12)",
+                        "name": "month",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/response.ApiResponsesTransactionMonthFailed"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid merchant ID, year or month parameter",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Merchant not found",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/transaction/merchant/monthly-methods": {
+            "get": {
+                "security": [
+                    {
+                        "Bearer": []
+                    }
+                ],
+                "description": "Retrieve statistics of payment methods used by month for specific merchant",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Transaction"
+                ],
+                "summary": "Get monthly payment method distribution by merchant",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Merchant ID",
+                        "name": "merchant_id",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Year in YYYY format (e.g., 2023)",
+                        "name": "year",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/response.ApiResponsesTransactionMonthMethod"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid merchant ID or year parameter",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Merchant not found",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/transaction/merchant/monthly-success": {
+            "get": {
+                "security": [
+                    {
+                        "Bearer": []
+                    }
+                ],
+                "description": "Retrieve statistics of successful transactions by month for specific merchant",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Transaction"
+                ],
+                "summary": "Get monthly successful transactions by merchant",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Merchant ID",
+                        "name": "merchant_id",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Year in YYYY format (e.g., 2023)",
+                        "name": "year",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Month in MM format (1-12)",
+                        "name": "month",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/response.ApiResponsesTransactionMonthSuccess"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid merchant ID, year or month parameter",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Merchant not found",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/transaction/merchant/yearly-failed": {
+            "get": {
+                "security": [
+                    {
+                        "Bearer": []
+                    }
+                ],
+                "description": "Retrieve statistics of failed transactions by year for specific merchant",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Transaction"
+                ],
+                "summary": "Get yearly failed transactions by merchant",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Merchant ID",
+                        "name": "merchant_id",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Year in YYYY format (e.g., 2023)",
+                        "name": "year",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/response.ApiResponsesTransactionYearFailed"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid merchant ID or year parameter",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Merchant not found",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/transaction/merchant/yearly-methods": {
+            "get": {
+                "security": [
+                    {
+                        "Bearer": []
+                    }
+                ],
+                "description": "Retrieve statistics of payment methods used by year for specific merchant",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Transaction"
+                ],
+                "summary": "Get yearly payment method distribution by merchant",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Merchant ID",
+                        "name": "merchant_id",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Year in YYYY format (e.g., 2023)",
+                        "name": "year",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/response.ApiResponsesTransactionYearMethod"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid merchant ID or year parameter",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Merchant not found",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/transaction/merchant/yearly-success": {
+            "get": {
+                "security": [
+                    {
+                        "Bearer": []
+                    }
+                ],
+                "description": "Retrieve statistics of successful transactions by year for specific merchant",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Transaction"
+                ],
+                "summary": "Get yearly successful transactions by merchant",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Merchant ID",
+                        "name": "merchant_id",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Year in YYYY format (e.g., 2023)",
+                        "name": "year",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/response.ApiResponsesTransactionYearSuccess"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid merchant ID or year parameter",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Merchant not found",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/transaction/monthly-failed": {
+            "get": {
+                "security": [
+                    {
+                        "Bearer": []
+                    }
+                ],
+                "description": "Retrieve statistics of failed transactions by month",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Transaction"
+                ],
+                "summary": "Get monthly failed transactions",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Year in YYYY format (e.g., 2023)",
+                        "name": "year",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Month in MM format (1-12)",
+                        "name": "month",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/response.ApiResponsesTransactionMonthFailed"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid year or month parameter",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/transaction/monthly-methods": {
+            "get": {
+                "security": [
+                    {
+                        "Bearer": []
+                    }
+                ],
+                "description": "Retrieve statistics of payment methods used by month",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Transaction"
+                ],
+                "summary": "Get monthly payment method distribution",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Year in YYYY format (e.g., 2023)",
+                        "name": "year",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/response.ApiResponsesTransactionMonthMethod"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid year parameter",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/transaction/monthly-success": {
+            "get": {
+                "security": [
+                    {
+                        "Bearer": []
+                    }
+                ],
+                "description": "Retrieve statistics of successful transactions by month",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Transaction"
+                ],
+                "summary": "Get monthly successful transactions",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Year in YYYY format (e.g., 2023)",
+                        "name": "year",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Month in MM format (1-12)",
+                        "name": "month",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/response.ApiResponsesTransactionMonthSuccess"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid year or month parameter",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/api/transaction/restore/all": {
             "post": {
                 "security": [
@@ -4280,6 +6759,171 @@ const docTemplate = `{
                     },
                     "500": {
                         "description": "Failed to update transaction",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/transaction/yearly-failed": {
+            "get": {
+                "security": [
+                    {
+                        "Bearer": []
+                    }
+                ],
+                "description": "Retrieve statistics of failed transactions by year",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Transaction"
+                ],
+                "summary": "Get yearly failed transactions",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Year in YYYY format (e.g., 2023)",
+                        "name": "year",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/response.ApiResponsesTransactionYearFailed"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid year parameter",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/transaction/yearly-methods": {
+            "get": {
+                "security": [
+                    {
+                        "Bearer": []
+                    }
+                ],
+                "description": "Retrieve statistics of payment methods used by year",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Transaction"
+                ],
+                "summary": "Get yearly payment method distribution",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Year in YYYY format (e.g., 2023)",
+                        "name": "year",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/response.ApiResponsesTransactionYearMethod"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid year parameter",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/transaction/yearly-success": {
+            "get": {
+                "security": [
+                    {
+                        "Bearer": []
+                    }
+                ],
+                "description": "Retrieve statistics of successful transactions by year",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Transaction"
+                ],
+                "summary": "Get yearly successful transactions",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Year in YYYY format (e.g., 2023)",
+                        "name": "year",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/response.ApiResponsesTransactionYearSuccess"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid year parameter",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
                         "schema": {
                             "$ref": "#/definitions/response.ErrorResponse"
                         }
@@ -4508,7 +7152,7 @@ const docTemplate = `{
                     "200": {
                         "description": "Successfully deleted user record permanently",
                         "schema": {
-                            "$ref": "#/definitions/pb.ApiResponseUserDelete"
+                            "$ref": "#/definitions/response.ApiResponseUserAll"
                         }
                     },
                     "400": {
@@ -4557,7 +7201,7 @@ const docTemplate = `{
                     "200": {
                         "description": "Successfully deleted user record permanently",
                         "schema": {
-                            "$ref": "#/definitions/pb.ApiResponseUserDelete"
+                            "$ref": "#/definitions/response.ApiResponseUserDelete"
                         }
                     },
                     "400": {
@@ -4606,7 +7250,7 @@ const docTemplate = `{
                     "200": {
                         "description": "Successfully restored user all",
                         "schema": {
-                            "$ref": "#/definitions/pb.ApiResponseUserAll"
+                            "$ref": "#/definitions/response.ApiResponseUserAll"
                         }
                     },
                     "400": {
@@ -4838,7 +7482,7 @@ const docTemplate = `{
                     "200": {
                         "description": "User data",
                         "schema": {
-                            "$ref": "#/definitions/pb.ApiResponseUser"
+                            "$ref": "#/definitions/response.ApiResponseUser"
                         }
                     },
                     "400": {
@@ -4855,496 +7499,9 @@ const docTemplate = `{
                     }
                 }
             }
-        },
-        "/auth/hello": {
-            "get": {
-                "description": "Returns a simple \"Hello\" message for testing purposes.",
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Auth"
-                ],
-                "summary": "Returns a \"Hello\" message",
-                "responses": {
-                    "200": {
-                        "description": "Hello",
-                        "schema": {
-                            "type": "string"
-                        }
-                    }
-                }
-            }
         }
     },
     "definitions": {
-        "pb.ApiResponseCashier": {
-            "type": "object",
-            "properties": {
-                "data": {
-                    "$ref": "#/definitions/pb.CashierResponse"
-                },
-                "message": {
-                    "type": "string"
-                },
-                "status": {
-                    "type": "string"
-                }
-            }
-        },
-        "pb.ApiResponseCashierAll": {
-            "type": "object",
-            "properties": {
-                "message": {
-                    "type": "string"
-                },
-                "status": {
-                    "type": "string"
-                }
-            }
-        },
-        "pb.ApiResponseCashierDeleteAt": {
-            "type": "object",
-            "properties": {
-                "data": {
-                    "$ref": "#/definitions/pb.CashierResponseDeleteAt"
-                },
-                "message": {
-                    "type": "string"
-                },
-                "status": {
-                    "type": "string"
-                }
-            }
-        },
-        "pb.ApiResponseCategory": {
-            "type": "object",
-            "properties": {
-                "data": {
-                    "$ref": "#/definitions/pb.CategoryResponse"
-                },
-                "message": {
-                    "type": "string"
-                },
-                "status": {
-                    "type": "string"
-                }
-            }
-        },
-        "pb.ApiResponseGetMe": {
-            "type": "object",
-            "properties": {
-                "data": {
-                    "$ref": "#/definitions/pb.UserResponse"
-                },
-                "message": {
-                    "type": "string"
-                },
-                "status": {
-                    "type": "string"
-                }
-            }
-        },
-        "pb.ApiResponseLogin": {
-            "type": "object",
-            "properties": {
-                "data": {
-                    "$ref": "#/definitions/pb.TokenResponse"
-                },
-                "message": {
-                    "type": "string"
-                },
-                "status": {
-                    "type": "string"
-                }
-            }
-        },
-        "pb.ApiResponsePaginationRole": {
-            "type": "object",
-            "properties": {
-                "data": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/pb.RoleResponse"
-                    }
-                },
-                "message": {
-                    "type": "string"
-                },
-                "pagination": {
-                    "$ref": "#/definitions/pb.PaginationMeta"
-                },
-                "status": {
-                    "type": "string"
-                }
-            }
-        },
-        "pb.ApiResponsePaginationRoleDeleteAt": {
-            "type": "object",
-            "properties": {
-                "data": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/pb.RoleResponseDeleteAt"
-                    }
-                },
-                "message": {
-                    "type": "string"
-                },
-                "pagination": {
-                    "$ref": "#/definitions/pb.PaginationMeta"
-                },
-                "status": {
-                    "type": "string"
-                }
-            }
-        },
-        "pb.ApiResponseProduct": {
-            "type": "object",
-            "properties": {
-                "data": {
-                    "$ref": "#/definitions/pb.ProductResponse"
-                },
-                "message": {
-                    "type": "string"
-                },
-                "status": {
-                    "type": "string"
-                }
-            }
-        },
-        "pb.ApiResponseRefreshToken": {
-            "type": "object",
-            "properties": {
-                "data": {
-                    "$ref": "#/definitions/pb.TokenResponse"
-                },
-                "message": {
-                    "type": "string"
-                },
-                "status": {
-                    "type": "string"
-                }
-            }
-        },
-        "pb.ApiResponseRegister": {
-            "type": "object",
-            "properties": {
-                "data": {
-                    "$ref": "#/definitions/pb.UserResponse"
-                },
-                "message": {
-                    "type": "string"
-                },
-                "status": {
-                    "type": "string"
-                }
-            }
-        },
-        "pb.ApiResponseRole": {
-            "type": "object",
-            "properties": {
-                "data": {
-                    "$ref": "#/definitions/pb.RoleResponse"
-                },
-                "message": {
-                    "type": "string"
-                },
-                "status": {
-                    "type": "string"
-                }
-            }
-        },
-        "pb.ApiResponseRoleAll": {
-            "type": "object",
-            "properties": {
-                "message": {
-                    "type": "string"
-                },
-                "status": {
-                    "type": "string"
-                }
-            }
-        },
-        "pb.ApiResponseUser": {
-            "type": "object",
-            "properties": {
-                "data": {
-                    "$ref": "#/definitions/pb.UserResponse"
-                },
-                "message": {
-                    "type": "string"
-                },
-                "status": {
-                    "type": "string"
-                }
-            }
-        },
-        "pb.ApiResponseUserAll": {
-            "type": "object",
-            "properties": {
-                "message": {
-                    "type": "string"
-                },
-                "status": {
-                    "type": "string"
-                }
-            }
-        },
-        "pb.ApiResponseUserDelete": {
-            "type": "object",
-            "properties": {
-                "message": {
-                    "type": "string"
-                },
-                "status": {
-                    "type": "string"
-                }
-            }
-        },
-        "pb.ApiResponsesUser": {
-            "type": "object",
-            "properties": {
-                "data": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/pb.UserResponse"
-                    }
-                },
-                "message": {
-                    "type": "string"
-                },
-                "status": {
-                    "type": "string"
-                }
-            }
-        },
-        "pb.CashierResponse": {
-            "type": "object",
-            "properties": {
-                "created_at": {
-                    "type": "string"
-                },
-                "id": {
-                    "type": "integer"
-                },
-                "merchant_id": {
-                    "type": "integer"
-                },
-                "name": {
-                    "type": "string"
-                },
-                "updated_at": {
-                    "type": "string"
-                }
-            }
-        },
-        "pb.CashierResponseDeleteAt": {
-            "type": "object",
-            "properties": {
-                "created_at": {
-                    "type": "string"
-                },
-                "deleted_at": {
-                    "type": "string"
-                },
-                "id": {
-                    "type": "integer"
-                },
-                "merchant_id": {
-                    "type": "integer"
-                },
-                "name": {
-                    "type": "string"
-                },
-                "updated_at": {
-                    "type": "string"
-                }
-            }
-        },
-        "pb.CategoryResponse": {
-            "type": "object",
-            "properties": {
-                "created_at": {
-                    "type": "string"
-                },
-                "description": {
-                    "type": "string"
-                },
-                "id": {
-                    "type": "integer"
-                },
-                "image_category": {
-                    "type": "string"
-                },
-                "name": {
-                    "type": "string"
-                },
-                "slug_category": {
-                    "type": "string"
-                },
-                "updated_at": {
-                    "type": "string"
-                }
-            }
-        },
-        "pb.CreateRoleRequest": {
-            "type": "object",
-            "properties": {
-                "name": {
-                    "type": "string"
-                }
-            }
-        },
-        "pb.PaginationMeta": {
-            "type": "object",
-            "properties": {
-                "current_page": {
-                    "type": "integer"
-                },
-                "page_size": {
-                    "type": "integer"
-                },
-                "total_pages": {
-                    "type": "integer"
-                },
-                "total_records": {
-                    "type": "integer"
-                }
-            }
-        },
-        "pb.ProductResponse": {
-            "type": "object",
-            "properties": {
-                "barcode": {
-                    "type": "string"
-                },
-                "brand": {
-                    "type": "string"
-                },
-                "category_id": {
-                    "type": "integer"
-                },
-                "count_in_stock": {
-                    "type": "integer"
-                },
-                "created_at": {
-                    "type": "string"
-                },
-                "description": {
-                    "type": "string"
-                },
-                "id": {
-                    "type": "integer"
-                },
-                "image_product": {
-                    "type": "string"
-                },
-                "merchant_id": {
-                    "type": "integer"
-                },
-                "name": {
-                    "type": "string"
-                },
-                "price": {
-                    "type": "integer"
-                },
-                "rating": {
-                    "type": "number"
-                },
-                "slug_product": {
-                    "type": "string"
-                },
-                "updated_at": {
-                    "type": "string"
-                },
-                "weight": {
-                    "type": "integer"
-                }
-            }
-        },
-        "pb.RoleResponse": {
-            "type": "object",
-            "properties": {
-                "created_at": {
-                    "type": "string"
-                },
-                "id": {
-                    "type": "integer"
-                },
-                "name": {
-                    "type": "string"
-                },
-                "updated_at": {
-                    "type": "string"
-                }
-            }
-        },
-        "pb.RoleResponseDeleteAt": {
-            "type": "object",
-            "properties": {
-                "created_at": {
-                    "type": "string"
-                },
-                "deleted_at": {
-                    "type": "string"
-                },
-                "id": {
-                    "type": "integer"
-                },
-                "name": {
-                    "type": "string"
-                },
-                "updated_at": {
-                    "type": "string"
-                }
-            }
-        },
-        "pb.TokenResponse": {
-            "type": "object",
-            "properties": {
-                "access_token": {
-                    "type": "string"
-                },
-                "refresh_token": {
-                    "type": "string"
-                }
-            }
-        },
-        "pb.UpdateRoleRequest": {
-            "type": "object",
-            "properties": {
-                "id": {
-                    "type": "integer"
-                },
-                "name": {
-                    "type": "string"
-                }
-            }
-        },
-        "pb.UserResponse": {
-            "type": "object",
-            "properties": {
-                "created_at": {
-                    "type": "string"
-                },
-                "email": {
-                    "type": "string"
-                },
-                "firstname": {
-                    "type": "string"
-                },
-                "id": {
-                    "type": "integer"
-                },
-                "lastname": {
-                    "type": "string"
-                },
-                "updated_at": {
-                    "type": "string"
-                }
-            }
-        },
         "requests.AuthRequest": {
             "type": "object",
             "required": [
@@ -5377,6 +7534,24 @@ const docTemplate = `{
                 },
                 "user_id": {
                     "type": "integer"
+                }
+            }
+        },
+        "requests.CreateCategoryRequest": {
+            "type": "object",
+            "required": [
+                "description",
+                "name"
+            ],
+            "properties": {
+                "description": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "slug_category": {
+                    "type": "string"
                 }
             }
         },
@@ -5439,8 +7614,7 @@ const docTemplate = `{
             "required": [
                 "cashier_id",
                 "items",
-                "merchant_id",
-                "total_price"
+                "merchant_id"
             ],
             "properties": {
                 "cashier_id": {
@@ -5454,9 +7628,17 @@ const docTemplate = `{
                 },
                 "merchant_id": {
                     "type": "integer"
-                },
-                "total_price": {
-                    "type": "integer"
+                }
+            }
+        },
+        "requests.CreateRoleRequest": {
+            "type": "object",
+            "required": [
+                "name"
+            ],
+            "properties": {
+                "name": {
+                    "type": "string"
                 }
             }
         },
@@ -5546,6 +7728,28 @@ const docTemplate = `{
                 }
             }
         },
+        "requests.UpdateCategoryRequest": {
+            "type": "object",
+            "required": [
+                "category_id",
+                "description",
+                "name"
+            ],
+            "properties": {
+                "category_id": {
+                    "type": "integer"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "slug_category": {
+                    "type": "string"
+                }
+            }
+        },
         "requests.UpdateMerchantRequest": {
             "type": "object",
             "required": [
@@ -5612,8 +7816,7 @@ const docTemplate = `{
             "type": "object",
             "required": [
                 "items",
-                "order_id",
-                "total_price"
+                "order_id"
             ],
             "properties": {
                 "items": {
@@ -5624,9 +7827,22 @@ const docTemplate = `{
                 },
                 "order_id": {
                     "type": "integer"
+                }
+            }
+        },
+        "requests.UpdateRoleRequest": {
+            "type": "object",
+            "required": [
+                "id",
+                "name"
+            ],
+            "properties": {
+                "id": {
+                    "type": "integer",
+                    "minimum": 1
                 },
-                "total_price": {
-                    "type": "integer"
+                "name": {
+                    "type": "string"
                 }
             }
         },
@@ -5712,9 +7928,68 @@ const docTemplate = `{
                 }
             }
         },
+        "response.ApiResponseCashierAll": {
+            "type": "object",
+            "properties": {
+                "message": {
+                    "type": "string"
+                },
+                "status": {
+                    "type": "string"
+                }
+            }
+        },
         "response.ApiResponseCashierDelete": {
             "type": "object",
             "properties": {
+                "message": {
+                    "type": "string"
+                },
+                "status": {
+                    "type": "string"
+                }
+            }
+        },
+        "response.ApiResponseCashierDeleteAt": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "$ref": "#/definitions/response.CashierResponseDeleteAt"
+                },
+                "message": {
+                    "type": "string"
+                },
+                "status": {
+                    "type": "string"
+                }
+            }
+        },
+        "response.ApiResponseCashierMonthSales": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/response.CashierResponseMonthSales"
+                    }
+                },
+                "message": {
+                    "type": "string"
+                },
+                "status": {
+                    "type": "string"
+                }
+            }
+        },
+        "response.ApiResponseCashierYearSales": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/response.CashierResponseYearSales"
+                    }
+                },
                 "message": {
                     "type": "string"
                 },
@@ -5766,6 +8041,68 @@ const docTemplate = `{
                     "$ref": "#/definitions/response.CategoryResponseDeleteAt"
                 },
                 "message": {
+                    "type": "string"
+                },
+                "status": {
+                    "type": "string"
+                }
+            }
+        },
+        "response.ApiResponseCategoryMonthPrice": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/response.CategoryMonthPriceResponse"
+                    }
+                },
+                "message": {
+                    "type": "string"
+                },
+                "status": {
+                    "type": "string"
+                }
+            }
+        },
+        "response.ApiResponseCategoryYearPrice": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/response.CategoryYearPriceResponse"
+                    }
+                },
+                "message": {
+                    "type": "string"
+                },
+                "status": {
+                    "type": "string"
+                }
+            }
+        },
+        "response.ApiResponseGetMe": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "$ref": "#/definitions/response.UserResponse"
+                },
+                "messsage": {
+                    "type": "string"
+                },
+                "status": {
+                    "type": "string"
+                }
+            }
+        },
+        "response.ApiResponseLogin": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "$ref": "#/definitions/response.TokenResponse"
+                },
+                "messsage": {
                     "type": "string"
                 },
                 "status": {
@@ -5873,6 +8210,40 @@ const docTemplate = `{
                 }
             }
         },
+        "response.ApiResponseOrderMonthly": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/response.OrderMonthlyResponse"
+                    }
+                },
+                "message": {
+                    "type": "string"
+                },
+                "status": {
+                    "type": "string"
+                }
+            }
+        },
+        "response.ApiResponseOrderYearly": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/response.OrderYearlyResponse"
+                    }
+                },
+                "message": {
+                    "type": "string"
+                },
+                "status": {
+                    "type": "string"
+                }
+            }
+        },
         "response.ApiResponsePaginationCashier": {
             "type": "object",
             "properties": {
@@ -5960,6 +8331,26 @@ const docTemplate = `{
                     "type": "array",
                     "items": {
                         "$ref": "#/definitions/response.MerchantResponse"
+                    }
+                },
+                "message": {
+                    "type": "string"
+                },
+                "pagination": {
+                    "$ref": "#/definitions/response.PaginationMeta"
+                },
+                "status": {
+                    "type": "string"
+                }
+            }
+        },
+        "response.ApiResponsePaginationMerchantDeleteAt": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/response.MerchantResponseDeleteAt"
                     }
                 },
                 "message": {
@@ -6080,6 +8471,46 @@ const docTemplate = `{
                     "type": "array",
                     "items": {
                         "$ref": "#/definitions/response.ProductResponseDeleteAt"
+                    }
+                },
+                "message": {
+                    "type": "string"
+                },
+                "pagination": {
+                    "$ref": "#/definitions/response.PaginationMeta"
+                },
+                "status": {
+                    "type": "string"
+                }
+            }
+        },
+        "response.ApiResponsePaginationRole": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/response.RoleResponse"
+                    }
+                },
+                "message": {
+                    "type": "string"
+                },
+                "pagination": {
+                    "$ref": "#/definitions/response.PaginationMeta"
+                },
+                "status": {
+                    "type": "string"
+                }
+            }
+        },
+        "response.ApiResponsePaginationRoleDeleteAt": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/response.RoleResponseDeleteAt"
                     }
                 },
                 "message": {
@@ -6223,6 +8654,59 @@ const docTemplate = `{
                 }
             }
         },
+        "response.ApiResponseRefreshToken": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "$ref": "#/definitions/response.TokenResponse"
+                },
+                "messsage": {
+                    "type": "string"
+                },
+                "status": {
+                    "type": "string"
+                }
+            }
+        },
+        "response.ApiResponseRegister": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "$ref": "#/definitions/response.UserResponse"
+                },
+                "messsage": {
+                    "type": "string"
+                },
+                "status": {
+                    "type": "string"
+                }
+            }
+        },
+        "response.ApiResponseRole": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "$ref": "#/definitions/response.RoleResponse"
+                },
+                "message": {
+                    "type": "string"
+                },
+                "status": {
+                    "type": "string"
+                }
+            }
+        },
+        "response.ApiResponseRoleAll": {
+            "type": "object",
+            "properties": {
+                "message": {
+                    "type": "string"
+                },
+                "status": {
+                    "type": "string"
+                }
+            }
+        },
         "response.ApiResponseTransaction": {
             "type": "object",
             "properties": {
@@ -6287,6 +8771,28 @@ const docTemplate = `{
                 }
             }
         },
+        "response.ApiResponseUserAll": {
+            "type": "object",
+            "properties": {
+                "message": {
+                    "type": "string"
+                },
+                "status": {
+                    "type": "string"
+                }
+            }
+        },
+        "response.ApiResponseUserDelete": {
+            "type": "object",
+            "properties": {
+                "message": {
+                    "type": "string"
+                },
+                "status": {
+                    "type": "string"
+                }
+            }
+        },
         "response.ApiResponseUserDeleteAt": {
             "type": "object",
             "properties": {
@@ -6308,6 +8814,108 @@ const docTemplate = `{
                     "type": "array",
                     "items": {
                         "$ref": "#/definitions/response.OrderItemResponse"
+                    }
+                },
+                "message": {
+                    "type": "string"
+                },
+                "status": {
+                    "type": "string"
+                }
+            }
+        },
+        "response.ApiResponsesTransactionMonthFailed": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/response.TransactionMonthlyAmountFailedResponse"
+                    }
+                },
+                "message": {
+                    "type": "string"
+                },
+                "status": {
+                    "type": "string"
+                }
+            }
+        },
+        "response.ApiResponsesTransactionMonthMethod": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/response.TransactionMonthlyMethodResponse"
+                    }
+                },
+                "message": {
+                    "type": "string"
+                },
+                "status": {
+                    "type": "string"
+                }
+            }
+        },
+        "response.ApiResponsesTransactionMonthSuccess": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/response.TransactionMonthlyAmountSuccessResponse"
+                    }
+                },
+                "message": {
+                    "type": "string"
+                },
+                "status": {
+                    "type": "string"
+                }
+            }
+        },
+        "response.ApiResponsesTransactionYearFailed": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/response.TransactionYearlyAmountFailedResponse"
+                    }
+                },
+                "message": {
+                    "type": "string"
+                },
+                "status": {
+                    "type": "string"
+                }
+            }
+        },
+        "response.ApiResponsesTransactionYearMethod": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/response.TransactionYearlyMethodResponse"
+                    }
+                },
+                "message": {
+                    "type": "string"
+                },
+                "status": {
+                    "type": "string"
+                }
+            }
+        },
+        "response.ApiResponsesTransactionYearSuccess": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/response.TransactionYearlyAmountSuccessResponse"
                     }
                 },
                 "message": {
@@ -6358,6 +8966,69 @@ const docTemplate = `{
                 },
                 "updated_at": {
                     "type": "string"
+                }
+            }
+        },
+        "response.CashierResponseMonthSales": {
+            "type": "object",
+            "properties": {
+                "cashier_id": {
+                    "type": "integer"
+                },
+                "cashier_name": {
+                    "type": "string"
+                },
+                "month": {
+                    "type": "string"
+                },
+                "order_count": {
+                    "type": "integer"
+                },
+                "total_sales": {
+                    "type": "integer"
+                }
+            }
+        },
+        "response.CashierResponseYearSales": {
+            "type": "object",
+            "properties": {
+                "cashier_id": {
+                    "type": "integer"
+                },
+                "cashier_name": {
+                    "type": "string"
+                },
+                "order_count": {
+                    "type": "integer"
+                },
+                "total_sales": {
+                    "type": "integer"
+                },
+                "year": {
+                    "type": "string"
+                }
+            }
+        },
+        "response.CategoryMonthPriceResponse": {
+            "type": "object",
+            "properties": {
+                "category_id": {
+                    "type": "integer"
+                },
+                "category_name": {
+                    "type": "string"
+                },
+                "items_sold": {
+                    "type": "integer"
+                },
+                "month": {
+                    "type": "string"
+                },
+                "order_count": {
+                    "type": "integer"
+                },
+                "total_revenue": {
+                    "type": "integer"
                 }
             }
         },
@@ -6416,9 +9087,38 @@ const docTemplate = `{
                 }
             }
         },
+        "response.CategoryYearPriceResponse": {
+            "type": "object",
+            "properties": {
+                "category_id": {
+                    "type": "integer"
+                },
+                "category_name": {
+                    "type": "string"
+                },
+                "items_sold": {
+                    "type": "integer"
+                },
+                "order_count": {
+                    "type": "integer"
+                },
+                "total_revenue": {
+                    "type": "integer"
+                },
+                "unique_products_sold": {
+                    "type": "integer"
+                },
+                "year": {
+                    "type": "string"
+                }
+            }
+        },
         "response.ErrorResponse": {
             "type": "object",
             "properties": {
+                "code": {
+                    "type": "integer"
+                },
                 "message": {
                     "type": "string"
                 },
@@ -6555,6 +9255,23 @@ const docTemplate = `{
                 }
             }
         },
+        "response.OrderMonthlyResponse": {
+            "type": "object",
+            "properties": {
+                "month": {
+                    "type": "string"
+                },
+                "order_count": {
+                    "type": "integer"
+                },
+                "total_items_sold": {
+                    "type": "integer"
+                },
+                "total_revenue": {
+                    "type": "integer"
+                }
+            }
+        },
         "response.OrderResponse": {
             "type": "object",
             "properties": {
@@ -6600,6 +9317,29 @@ const docTemplate = `{
                     "type": "integer"
                 },
                 "updated_at": {
+                    "type": "string"
+                }
+            }
+        },
+        "response.OrderYearlyResponse": {
+            "type": "object",
+            "properties": {
+                "active_cashiers": {
+                    "type": "integer"
+                },
+                "order_count": {
+                    "type": "integer"
+                },
+                "total_items_sold": {
+                    "type": "integer"
+                },
+                "total_revenue": {
+                    "type": "integer"
+                },
+                "unique_products_sold": {
+                    "type": "integer"
+                },
+                "year": {
                     "type": "string"
                 }
             }
@@ -6657,9 +9397,6 @@ const docTemplate = `{
                 "price": {
                     "type": "integer"
                 },
-                "rating": {
-                    "type": "number"
-                },
                 "slug_product": {
                     "type": "string"
                 },
@@ -6710,9 +9447,6 @@ const docTemplate = `{
                 "price": {
                     "type": "integer"
                 },
-                "rating": {
-                    "type": "number"
-                },
                 "slug_product": {
                     "type": "string"
                 },
@@ -6720,6 +9454,105 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "weight": {
+                    "type": "integer"
+                }
+            }
+        },
+        "response.RoleResponse": {
+            "type": "object",
+            "properties": {
+                "created_at": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "updated_at": {
+                    "type": "string"
+                }
+            }
+        },
+        "response.RoleResponseDeleteAt": {
+            "type": "object",
+            "properties": {
+                "created_at": {
+                    "type": "string"
+                },
+                "deleted_at": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "updated_at": {
+                    "type": "string"
+                }
+            }
+        },
+        "response.TokenResponse": {
+            "type": "object",
+            "properties": {
+                "access_token": {
+                    "type": "string"
+                },
+                "refresh_token": {
+                    "type": "string"
+                }
+            }
+        },
+        "response.TransactionMonthlyAmountFailedResponse": {
+            "type": "object",
+            "properties": {
+                "month": {
+                    "type": "string"
+                },
+                "total_amount": {
+                    "type": "integer"
+                },
+                "total_failed": {
+                    "type": "integer"
+                },
+                "year": {
+                    "type": "string"
+                }
+            }
+        },
+        "response.TransactionMonthlyAmountSuccessResponse": {
+            "type": "object",
+            "properties": {
+                "month": {
+                    "type": "string"
+                },
+                "total_amount": {
+                    "type": "integer"
+                },
+                "total_success": {
+                    "type": "integer"
+                },
+                "year": {
+                    "type": "string"
+                }
+            }
+        },
+        "response.TransactionMonthlyMethodResponse": {
+            "type": "object",
+            "properties": {
+                "month": {
+                    "type": "string"
+                },
+                "payment_method": {
+                    "type": "string"
+                },
+                "total_amount": {
+                    "type": "integer"
+                },
+                "total_transactions": {
                     "type": "integer"
                 }
             }
@@ -6787,6 +9620,51 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "updated_at": {
+                    "type": "string"
+                }
+            }
+        },
+        "response.TransactionYearlyAmountFailedResponse": {
+            "type": "object",
+            "properties": {
+                "total_amount": {
+                    "type": "integer"
+                },
+                "total_failed": {
+                    "type": "integer"
+                },
+                "year": {
+                    "type": "string"
+                }
+            }
+        },
+        "response.TransactionYearlyAmountSuccessResponse": {
+            "type": "object",
+            "properties": {
+                "total_amount": {
+                    "type": "integer"
+                },
+                "total_success": {
+                    "type": "integer"
+                },
+                "year": {
+                    "type": "string"
+                }
+            }
+        },
+        "response.TransactionYearlyMethodResponse": {
+            "type": "object",
+            "properties": {
+                "payment_method": {
+                    "type": "string"
+                },
+                "total_amount": {
+                    "type": "integer"
+                },
+                "total_transactions": {
+                    "type": "integer"
+                },
+                "year": {
                     "type": "string"
                 }
             }

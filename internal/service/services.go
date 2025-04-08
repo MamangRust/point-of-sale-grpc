@@ -40,6 +40,6 @@ func NewService(deps Deps) *Service {
 		OrderItem:   NewOrderItemService(deps.Repositories.OrderItem, deps.Logger, deps.Mapper.OrderItemResponseMapper),
 		Order:       NewOrderServiceMapper(deps.Repositories.Order, deps.Repositories.OrderItem, deps.Repositories.Cashier, deps.Repositories.Merchant, deps.Repositories.Product, deps.Logger, deps.Mapper.OrderResponseMapper),
 		Product:     NewProductService(deps.Repositories.Category, deps.Repositories.Merchant, deps.Repositories.Product, deps.Logger, deps.Mapper.ProductResponseMapper),
-		Transaction: NewTransactionService(deps.Repositories.Merchant, deps.Repositories.Transaction, deps.Repositories.Order, deps.Repositories.OrderItem, deps.Logger, deps.Mapper.TransactionResponseMapper),
+		Transaction: NewTransactionService(deps.Repositories.Cashier, deps.Repositories.Merchant, deps.Repositories.Transaction, deps.Repositories.Order, deps.Repositories.OrderItem, deps.Logger, deps.Mapper.TransactionResponseMapper),
 	}
 }

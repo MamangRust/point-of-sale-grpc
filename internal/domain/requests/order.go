@@ -16,27 +16,23 @@ type UpdateOrderRecordRequest struct {
 type CreateOrderRequest struct {
 	MerchantID int                      `json:"merchant_id" validate:"required"`
 	CashierID  int                      `json:"cashier_id" validate:"required"`
-	TotalPrice int                      `json:"total_price" validate:"required"`
 	Items      []CreateOrderItemRequest `json:"items" validate:"required"`
 }
 
 type UpdateOrderRequest struct {
-	OrderID    int                      `json:"order_id" validate:"required"`
-	TotalPrice int                      `json:"total_price" validate:"required"`
-	Items      []UpdateOrderItemRequest `json:"items" validate:"required"`
+	OrderID *int                     `json:"order_id"`
+	Items   []UpdateOrderItemRequest `json:"items" validate:"required"`
 }
 
 type CreateOrderItemRequest struct {
 	ProductID int `json:"product_id" validate:"required"`
 	Quantity  int `json:"quantity" validate:"required"`
-	Price     int `json:"price" validate:"required"`
 }
 
 type UpdateOrderItemRequest struct {
 	OrderItemID int `json:"order_item_id" validate:"required"`
 	ProductID   int `json:"product_id" validate:"required"`
 	Quantity    int `json:"quantity" validate:"required"`
-	Price       int `json:"price" validate:"required"`
 }
 
 func (r *CreateOrderRequest) Validate() error {

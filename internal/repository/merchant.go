@@ -133,7 +133,7 @@ func (r *merchantRepository) CreateMerchant(request *requests.CreateMerchantRequ
 
 func (r *merchantRepository) UpdateMerchant(request *requests.UpdateMerchantRequest) (*record.MerchantRecord, error) {
 	req := db.UpdateMerchantParams{
-		MerchantID:   int32(request.MerchantID),
+		MerchantID:   int32(*request.MerchantID),
 		Name:         request.Name,
 		Description:  sql.NullString{String: request.Description, Valid: request.Description != ""},
 		Address:      sql.NullString{String: request.Address, Valid: request.Address != ""},
@@ -143,6 +143,7 @@ func (r *merchantRepository) UpdateMerchant(request *requests.UpdateMerchantRequ
 	}
 
 	res, err := r.db.UpdateMerchant(r.ctx, req)
+
 	if err != nil {
 		return nil, fmt.Errorf("failed to update Merchant: %w", err)
 	}

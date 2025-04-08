@@ -39,6 +39,34 @@ type RefreshTokenRecordMapping interface {
 }
 
 type CategoryRecordMapper interface {
+	ToCategoryMonthlyTotalPrice(c *db.GetMonthlyTotalPriceRow) *record.CategoriesMonthlyTotalPriceRecord
+	ToCategoryMonthlyTotalPrices(c []*db.GetMonthlyTotalPriceRow) []*record.CategoriesMonthlyTotalPriceRecord
+	ToCategoryYearlyTotalPrice(c *db.GetYearlyTotalPriceRow) *record.CategoriesYearlyTotalPriceRecord
+	ToCategoryYearlyTotalPrices(c []*db.GetYearlyTotalPriceRow) []*record.CategoriesYearlyTotalPriceRecord
+	ToCategoryMonthlyTotalPriceById(c *db.GetMonthlyTotalPriceByIdRow) *record.CategoriesMonthlyTotalPriceRecord
+	ToCategoryMonthlyTotalPricesById(c []*db.GetMonthlyTotalPriceByIdRow) []*record.CategoriesMonthlyTotalPriceRecord
+	ToCategoryYearlyTotalPriceById(c *db.GetYearlyTotalPriceByIdRow) *record.CategoriesYearlyTotalPriceRecord
+	ToCategoryYearlyTotalPricesById(c []*db.GetYearlyTotalPriceByIdRow) []*record.CategoriesYearlyTotalPriceRecord
+
+	ToCategoryMonthlyTotalPriceByMerchant(c *db.GetMonthlyTotalPriceByMerchantRow) *record.CategoriesMonthlyTotalPriceRecord
+	ToCategoryMonthlyTotalPricesByMerchant(c []*db.GetMonthlyTotalPriceByMerchantRow) []*record.CategoriesMonthlyTotalPriceRecord
+	ToCategoryYearlyTotalPriceByMerchant(c *db.GetYearlyTotalPriceByMerchantRow) *record.CategoriesYearlyTotalPriceRecord
+	ToCategoryYearlyTotalPricesByMerchant(c []*db.GetYearlyTotalPriceByMerchantRow) []*record.CategoriesYearlyTotalPriceRecord
+
+	ToCategoryMonthlyPriceById(category *db.GetMonthlyCategoryByIdRow) *record.CategoriesMonthPriceRecord
+	ToCategoryMonthlyPricesById(c []*db.GetMonthlyCategoryByIdRow) []*record.CategoriesMonthPriceRecord
+	ToCategoryYearlyPriceById(category *db.GetYearlyCategoryByIdRow) *record.CategoriesYearPriceRecord
+	ToCategoryYearlyPricesById(c []*db.GetYearlyCategoryByIdRow) []*record.CategoriesYearPriceRecord
+
+	ToCategoryMonthlyPrice(category *db.GetMonthlyCategoryRow) *record.CategoriesMonthPriceRecord
+	ToCategoryMonthlyPrices(c []*db.GetMonthlyCategoryRow) []*record.CategoriesMonthPriceRecord
+	ToCategoryYearlyPrice(category *db.GetYearlyCategoryRow) *record.CategoriesYearPriceRecord
+	ToCategoryYearlyPrices(c []*db.GetYearlyCategoryRow) []*record.CategoriesYearPriceRecord
+	ToCategoryMonthlyPriceByMerchant(category *db.GetMonthlyCategoryByMerchantRow) *record.CategoriesMonthPriceRecord
+	ToCategoryMonthlyPricesByMerchant(c []*db.GetMonthlyCategoryByMerchantRow) []*record.CategoriesMonthPriceRecord
+	ToCategoryYearlyPriceByMerchant(category *db.GetYearlyCategoryByMerchantRow) *record.CategoriesYearPriceRecord
+	ToCategoryYearlyPricesByMerchant(c []*db.GetYearlyCategoryByMerchantRow) []*record.CategoriesYearPriceRecord
+
 	ToCategoryRecord(category *db.Category) *record.CategoriesRecord
 	ToCategoryRecordPagination(category *db.GetCategoriesRow) *record.CategoriesRecord
 	ToCategoriesRecordPagination(categories []*db.GetCategoriesRow) []*record.CategoriesRecord
@@ -49,6 +77,34 @@ type CategoryRecordMapper interface {
 }
 
 type CashierRecordMapping interface {
+	ToCashierMonthlyTotalSale(c *db.GetMonthlyTotalSalesCashierRow) *record.CashierRecordMonthTotalSales
+	ToCashierMonthlyTotalSales(c []*db.GetMonthlyTotalSalesCashierRow) []*record.CashierRecordMonthTotalSales
+	ToCashierYearlyTotalSale(c *db.GetYearlyTotalSalesCashierRow) *record.CashierRecordYearTotalSales
+	ToCashierYearlyTotalSales(c []*db.GetYearlyTotalSalesCashierRow) []*record.CashierRecordYearTotalSales
+	ToCashierMonthlyTotalSaleById(c *db.GetMonthlyTotalSalesByIdRow) *record.CashierRecordMonthTotalSales
+	ToCashierMonthlyTotalSalesById(c []*db.GetMonthlyTotalSalesByIdRow) []*record.CashierRecordMonthTotalSales
+	ToCashierYearlyTotalSaleById(c *db.GetYearlyTotalSalesByIdRow) *record.CashierRecordYearTotalSales
+	ToCashierYearlyTotalSalesById(c []*db.GetYearlyTotalSalesByIdRow) []*record.CashierRecordYearTotalSales
+	ToCashierMonthlyTotalSaleByMerchant(c *db.GetMonthlyTotalSalesByMerchantRow) *record.CashierRecordMonthTotalSales
+	ToCashierMonthlyTotalSalesByMerchant(c []*db.GetMonthlyTotalSalesByMerchantRow) []*record.CashierRecordMonthTotalSales
+	ToCashierYearlyTotalSaleByMerchant(c *db.GetYearlyTotalSalesByMerchantRow) *record.CashierRecordYearTotalSales
+	ToCashierYearlyTotalSalesByMerchant(c []*db.GetYearlyTotalSalesByMerchantRow) []*record.CashierRecordYearTotalSales
+
+	ToCashierMonthlySaleById(cashier *db.GetMonthlyCashierByCashierIdRow) *record.CashierRecordMonthSales
+	ToCashierMonthlySalesById(c []*db.GetMonthlyCashierByCashierIdRow) []*record.CashierRecordMonthSales
+	ToCashierYearlySaleById(cashier *db.GetYearlyCashierByCashierIdRow) *record.CashierRecordYearSales
+	ToCashierYearlySalesById(c []*db.GetYearlyCashierByCashierIdRow) []*record.CashierRecordYearSales
+
+	ToCashierMonthlySale(cashier *db.GetMonthlyCashierRow) *record.CashierRecordMonthSales
+	ToCashierMonthlySales(c []*db.GetMonthlyCashierRow) []*record.CashierRecordMonthSales
+	ToCashierYearlySale(cashier *db.GetYearlyCashierRow) *record.CashierRecordYearSales
+	ToCashierYearlySales(c []*db.GetYearlyCashierRow) []*record.CashierRecordYearSales
+
+	ToCashierMonthlySaleByMerchant(cashier *db.GetMonthlyCashierByMerchantRow) *record.CashierRecordMonthSales
+	ToCashierMonthlySalesByMerchant(c []*db.GetMonthlyCashierByMerchantRow) []*record.CashierRecordMonthSales
+	ToCashierYearlySaleByMerchant(cashier *db.GetYearlyCashierByMerchantRow) *record.CashierRecordYearSales
+	ToCashierYearlySalesByMerchant(c []*db.GetYearlyCashierByMerchantRow) []*record.CashierRecordYearSales
+
 	ToCashierRecord(Cashier *db.Cashier) *record.CashierRecord
 
 	ToCashierRecordPagination(Cashier *db.GetCashiersRow) *record.CashierRecord
@@ -88,6 +144,28 @@ type OrderItemRecordMapping interface {
 }
 
 type OrderRecordMapping interface {
+	ToOrderMonthlyTotalRevenue(c *db.GetMonthlyTotalRevenueRow) *record.OrderMonthlyTotalRevenueRecord
+	ToOrderMonthlyTotalRevenues(c []*db.GetMonthlyTotalRevenueRow) []*record.OrderMonthlyTotalRevenueRecord
+	ToOrderYearlyTotalRevenue(c *db.GetYearlyTotalRevenueRow) *record.OrderYearlyTotalRevenueRecord
+	ToOrderYearlyTotalRevenues(c []*db.GetYearlyTotalRevenueRow) []*record.OrderYearlyTotalRevenueRecord
+	ToOrderMonthlyTotalRevenueById(c *db.GetMonthlyTotalRevenueByIdRow) *record.OrderMonthlyTotalRevenueRecord
+	ToOrderMonthlyTotalRevenuesById(c []*db.GetMonthlyTotalRevenueByIdRow) []*record.OrderMonthlyTotalRevenueRecord
+	ToOrderYearlyTotalRevenueById(c *db.GetYearlyTotalRevenueByIdRow) *record.OrderYearlyTotalRevenueRecord
+	ToOrderYearlyTotalRevenuesById(c []*db.GetYearlyTotalRevenueByIdRow) []*record.OrderYearlyTotalRevenueRecord
+	ToOrderMonthlyTotalRevenueByMerchant(c *db.GetMonthlyTotalRevenueByMerchantRow) *record.OrderMonthlyTotalRevenueRecord
+	ToOrderMonthlyTotalRevenuesByMerchant(c []*db.GetMonthlyTotalRevenueByMerchantRow) []*record.OrderMonthlyTotalRevenueRecord
+	ToOrderYearlyTotalRevenueByMerchant(c *db.GetYearlyTotalRevenueByMerchantRow) *record.OrderYearlyTotalRevenueRecord
+	ToOrderYearlyTotalRevenuesByMerchant(c []*db.GetYearlyTotalRevenueByMerchantRow) []*record.OrderYearlyTotalRevenueRecord
+
+	ToOrderMonthlyPrice(category *db.GetMonthlyOrderRow) *record.OrderMonthlyRecord
+	ToOrderMonthlyPrices(c []*db.GetMonthlyOrderRow) []*record.OrderMonthlyRecord
+	ToOrderYearlyPrice(category *db.GetYearlyOrderRow) *record.OrderYearlyRecord
+	ToOrderYearlyPrices(c []*db.GetYearlyOrderRow) []*record.OrderYearlyRecord
+	ToOrderMonthlyPriceByMerchant(category *db.GetMonthlyOrderByMerchantRow) *record.OrderMonthlyRecord
+	ToOrderMonthlyPricesByMerchant(c []*db.GetMonthlyOrderByMerchantRow) []*record.OrderMonthlyRecord
+	ToOrderYearlyPriceByMerchant(category *db.GetYearlyOrderByMerchantRow) *record.OrderYearlyRecord
+	ToOrderYearlyPricesByMerchant(c []*db.GetYearlyOrderByMerchantRow) []*record.OrderYearlyRecord
+
 	ToOrderRecord(order *db.Order) *record.OrderRecord
 	ToOrdersRecord(orders []*db.Order) []*record.OrderRecord
 	ToOrderRecordPagination(order *db.GetOrdersRow) *record.OrderRecord
@@ -119,6 +197,31 @@ type ProductRecordMapping interface {
 }
 
 type TransactionRecordMapping interface {
+	ToTransactionMonthAmountSuccess(row *db.GetMonthlyAmountTransactionSuccessRow) *record.TransactionMonthlyAmountSuccessRecord
+	ToTransactionMonthlyAmountSuccess(rows []*db.GetMonthlyAmountTransactionSuccessRow) []*record.TransactionMonthlyAmountSuccessRecord
+	ToTransactionYearAmountSuccess(row *db.GetYearlyAmountTransactionSuccessRow) *record.TransactionYearlyAmountSuccessRecord
+	ToTransactionYearlyAmountSuccess(rows []*db.GetYearlyAmountTransactionSuccessRow) []*record.TransactionYearlyAmountSuccessRecord
+	ToTransactionMonthAmountFailed(row *db.GetMonthlyAmountTransactionFailedRow) *record.TransactionMonthlyAmountFailedRecord
+	ToTransactionMonthlyAmountFailed(rows []*db.GetMonthlyAmountTransactionFailedRow) []*record.TransactionMonthlyAmountFailedRecord
+	ToTransactionYearAmountFailed(row *db.GetYearlyAmountTransactionFailedRow) *record.TransactionYearlyAmountFailedRecord
+	ToTransactionYearlyAmountFailed(rows []*db.GetYearlyAmountTransactionFailedRow) []*record.TransactionYearlyAmountFailedRecord
+	ToTransactionMonthAmountSuccessByMerchant(row *db.GetMonthlyAmountTransactionSuccessByMerchantRow) *record.TransactionMonthlyAmountSuccessRecord
+	ToTransactionMonthlyAmountSuccessByMerchant(rows []*db.GetMonthlyAmountTransactionSuccessByMerchantRow) []*record.TransactionMonthlyAmountSuccessRecord
+	ToTransactionYearAmountSuccessByMerchant(row *db.GetYearlyAmountTransactionSuccessByMerchantRow) *record.TransactionYearlyAmountSuccessRecord
+	ToTransactionYearlyAmountSuccessByMerchant(rows []*db.GetYearlyAmountTransactionSuccessByMerchantRow) []*record.TransactionYearlyAmountSuccessRecord
+	ToTransactionMonthAmountFailedByMerchant(row *db.GetMonthlyAmountTransactionFailedByMerchantRow) *record.TransactionMonthlyAmountFailedRecord
+	ToTransactionMonthlyAmountFailedByMerchant(rows []*db.GetMonthlyAmountTransactionFailedByMerchantRow) []*record.TransactionMonthlyAmountFailedRecord
+	ToTransactionYearAmountFailedByMerchant(row *db.GetYearlyAmountTransactionFailedByMerchantRow) *record.TransactionYearlyAmountFailedRecord
+	ToTransactionYearlyAmountFailedByMerchant(rows []*db.GetYearlyAmountTransactionFailedByMerchantRow) []*record.TransactionYearlyAmountFailedRecord
+	ToTransactionMonthMethod(row *db.GetMonthlyTransactionMethodsRow) *record.TransactionMonthlyMethodRecord
+	ToTransactionMonthlyMethod(rows []*db.GetMonthlyTransactionMethodsRow) []*record.TransactionMonthlyMethodRecord
+	ToTransactionYearMethod(row *db.GetYearlyTransactionMethodsRow) *record.TransactionYearlyMethodRecord
+	ToTransactionYearlyMethod(rows []*db.GetYearlyTransactionMethodsRow) []*record.TransactionYearlyMethodRecord
+	ToTransactionMonthMethodByMerchant(row *db.GetMonthlyTransactionMethodsByMerchantRow) *record.TransactionMonthlyMethodRecord
+	ToTransactionMonthlyByMerchantMethod(rows []*db.GetMonthlyTransactionMethodsByMerchantRow) []*record.TransactionMonthlyMethodRecord
+	ToTransactionYearMethodByMerchant(row *db.GetYearlyTransactionMethodsByMerchantRow) *record.TransactionYearlyMethodRecord
+	ToTransactionYearlyMethodByMerchant(rows []*db.GetYearlyTransactionMethodsByMerchantRow) []*record.TransactionYearlyMethodRecord
+
 	ToTransactionRecord(transaction *db.Transaction) *record.TransactionRecord
 	ToTransactionsRecord(transactions []*db.Transaction) []*record.TransactionRecord
 	ToTransactionRecordPagination(transaction *db.GetTransactionsRow) *record.TransactionRecord

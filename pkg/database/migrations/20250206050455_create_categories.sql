@@ -5,7 +5,6 @@ CREATE TABLE "categories" (
     "name" VARCHAR(100) NOT NULL,
     "description" TEXT,
     "slug_category" VARCHAR(100) UNIQUE,
-    "image_category" TEXT,
     "created_at" TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     "updated_at" TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     "deleted_at" TIMESTAMP DEFAULT NULL

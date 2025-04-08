@@ -7,7 +7,7 @@ type CreateRoleRequest struct {
 }
 
 type UpdateRoleRequest struct {
-	ID   int    `json:"id" validate:"required,min=1"`
+	ID   *int   `json:"id"`
 	Name string `json:"name" validate:"required"`
 }
 

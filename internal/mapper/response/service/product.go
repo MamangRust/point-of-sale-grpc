@@ -23,7 +23,6 @@ func (s *productResponseMapper) ToProductResponse(product *record.ProductRecord)
 		CountInStock: product.CountInStock,
 		Brand:        product.Brand,
 		Weight:       product.Weight,
-		Rating:       product.Rating,
 		SlugProduct:  product.SlugProduct,
 		ImageProduct: product.ImageProduct,
 		Barcode:      product.Barcode,
@@ -53,13 +52,12 @@ func (s *productResponseMapper) ToProductResponseDeleteAt(product *record.Produc
 		CountInStock: product.CountInStock,
 		Brand:        product.Brand,
 		Weight:       product.Weight,
-		Rating:       product.Rating,
 		SlugProduct:  product.SlugProduct,
 		ImageProduct: product.ImageProduct,
 		Barcode:      product.Barcode,
 		CreatedAt:    product.CreatedAt,
 		UpdatedAt:    product.UpdatedAt,
-		DeleteAt:     *product.DeletedAt,
+		DeleteAt:     product.DeletedAt,
 	}
 }
 

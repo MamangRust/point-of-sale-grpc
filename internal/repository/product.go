@@ -100,17 +100,20 @@ func (r *productRepository) FindByTrashed(search string, page, pageSize int) ([]
 	return r.mapping.ToProductsRecordTrashedPagination(res), totalCount, nil
 }
 
-func (r *productRepository) FindByMerchant(merchant_id int, search string, page, pageSize int) ([]*record.ProductRecord, int, error) {
-	offset := (page - 1) * pageSize
+func (r *productRepository) FindByMerchant(req *requests.ProductByMerchantRequest) ([]*record.ProductRecord, int, error) {
+	offset := (req.Page - 1) * req.PageSize
 
-	req := db.GetProductsByMerchantParams{
-		MerchantID: int32(merchant_id),
-		Column2:    search,
-		Limit:      int32(pageSize),
+	myReq := db.GetProductsByMerchantParams{
+		MerchantID: int32(req.MerchantID),
+		Column2:    sql.NullString{String: req.Search},
+		Column3:    int32(*req.CategoryID),
+		Column4:    int32(*req.MinPrice),
+		Column5:    int32(*req.MaxPrice),
+		Limit:      int32(req.PageSize),
 		Offset:     int32(offset),
 	}
 
-	res, err := r.db.GetProductsByMerchant(r.ctx, req)
+	res, err := r.db.GetProductsByMerchant(r.ctx, myReq)
 
 	if err != nil {
 		return nil, 0, fmt.Errorf("failed to find products: %w", err)
@@ -156,8 +159,16 @@ func (r *productRepository) FindById(user_id int) (*record.ProductRecord, error)
 	res, err := r.db.GetProductByID(r.ctx, int32(user_id))
 
 	if err != nil {
-		fmt.Printf("Error fetching products: %v\n", err)
+		return nil, fmt.Errorf("failed to find products: %w", err)
+	}
 
+	return r.mapping.ToProductRecord(res), nil
+}
+
+func (r *productRepository) FindByIdTrashed(id int) (*record.ProductRecord, error) {
+	res, err := r.db.GetProductByIdTrashed(r.ctx, int32(id))
+
+	if err != nil {
 		return nil, fmt.Errorf("failed to find products: %w", err)
 	}
 
@@ -173,13 +184,13 @@ func (r *productRepository) CreateProduct(request *requests.CreateProductRequest
 		Price:        int32(request.Price),
 		CountInStock: int32(request.CountInStock),
 		Brand:        sql.NullString{String: request.Brand, Valid: request.Brand != ""},
-		Weight:       sql.NullInt32{Int32: int32(request.Weight)},
-		Rating:       sql.NullFloat64{Float64: float64(request.Rating), Valid: request.Rating != 0},
+		Weight:       sql.NullInt32{Int32: int32(request.Weight), Valid: true},
 		SlugProduct: sql.NullString{
-			String: request.SlugProduct,
+			String: *request.SlugProduct,
+			Valid:  true,
 		},
 		ImageProduct: sql.NullString{String: request.ImageProduct, Valid: request.ImageProduct != ""},
-		Barcode:      sql.NullString{String: request.Barcode, Valid: request.Barcode != ""},
+		Barcode:      sql.NullString{String: *request.Barcode},
 	}
 
 	product, err := r.db.CreateProduct(r.ctx, req)
@@ -192,20 +203,16 @@ func (r *productRepository) CreateProduct(request *requests.CreateProductRequest
 
 func (r *productRepository) UpdateProduct(request *requests.UpdateProductRequest) (*record.ProductRecord, error) {
 	req := db.UpdateProductParams{
-		ProductID:    int32(request.ProductID),
+		ProductID:    int32(*request.ProductID),
 		CategoryID:   int32(request.CategoryID),
 		Name:         request.Name,
 		Description:  sql.NullString{String: request.Description, Valid: request.Description != ""},
 		Price:        int32(request.Price),
 		CountInStock: int32(request.CountInStock),
 		Brand:        sql.NullString{String: request.Brand, Valid: request.Brand != ""},
-		Weight:       sql.NullInt32{Int32: int32(request.Weight)},
-		Rating:       sql.NullFloat64{Float64: float64(request.Rating), Valid: request.Rating != 0},
-		SlugProduct: sql.NullString{
-			String: request.SlugProduct,
-		},
+		Weight:       sql.NullInt32{Int32: int32(request.Weight), Valid: true},
 		ImageProduct: sql.NullString{String: request.ImageProduct, Valid: request.ImageProduct != ""},
-		Barcode:      sql.NullString{String: request.Barcode, Valid: request.Barcode != ""},
+		Barcode:      sql.NullString{String: *request.Barcode, Valid: true},
 	}
 
 	res, err := r.db.UpdateProduct(r.ctx, req)

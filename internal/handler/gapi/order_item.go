@@ -41,19 +41,19 @@ func (s *orderItemHandleGrpc) FindAll(ctx context.Context, request *pb.FindAllOr
 
 	orderItems, totalRecords, err := s.orderItemService.FindAllOrderItems(search, page, pageSize)
 	if err != nil {
-		return nil, status.Errorf(codes.Internal, "%v", &pb.ErrorResponse{
-			Status:  "error",
-			Message: "Failed to fetch order items: ",
+		return nil, status.Errorf(codes.Code(err.Code), "%v", &pb.ErrorResponse{
+			Status:  err.Status,
+			Message: err.Message,
 		})
 	}
 
-	totalPages := int(math.Ceil(float64(totalRecords) / float64(pageSize)))
+	totalPages := int(math.Ceil(float64(*totalRecords) / float64(pageSize)))
 
 	paginationMeta := &pb.PaginationMeta{
 		CurrentPage:  int32(page),
 		PageSize:     int32(pageSize),
 		TotalPages:   int32(totalPages),
-		TotalRecords: int32(totalRecords),
+		TotalRecords: int32(*totalRecords),
 	}
 
 	so := s.mapping.ToProtoResponsePaginationOrderItem(paginationMeta, "success", "Successfully fetched order items", orderItems)
@@ -74,19 +74,19 @@ func (s *orderItemHandleGrpc) FindByActive(ctx context.Context, request *pb.Find
 
 	orderItems, totalRecords, err := s.orderItemService.FindByActive(search, page, pageSize)
 	if err != nil {
-		return nil, status.Errorf(codes.Internal, "%v", &pb.ErrorResponse{
-			Status:  "error",
-			Message: "Failed to fetch active order items: ",
+		return nil, status.Errorf(codes.Code(err.Code), "%v", &pb.ErrorResponse{
+			Status:  err.Status,
+			Message: err.Message,
 		})
 	}
 
-	totalPages := int(math.Ceil(float64(totalRecords) / float64(pageSize)))
+	totalPages := int(math.Ceil(float64(*totalRecords) / float64(pageSize)))
 
 	paginationMeta := &pb.PaginationMeta{
 		CurrentPage:  int32(page),
 		PageSize:     int32(pageSize),
 		TotalPages:   int32(totalPages),
-		TotalRecords: int32(totalRecords),
+		TotalRecords: int32(*totalRecords),
 	}
 
 	so := s.mapping.ToProtoResponsePaginationOrderItemDeleteAt(paginationMeta, "success", "Successfully fetched active order items", orderItems)
@@ -107,19 +107,19 @@ func (s *orderItemHandleGrpc) FindByTrashed(ctx context.Context, request *pb.Fin
 
 	orderItems, totalRecords, err := s.orderItemService.FindByTrashed(search, page, pageSize)
 	if err != nil {
-		return nil, status.Errorf(codes.Internal, "%v", &pb.ErrorResponse{
-			Status:  "error",
-			Message: "Failed to fetch trashed order items: ",
+		return nil, status.Errorf(codes.Code(err.Code), "%v", &pb.ErrorResponse{
+			Status:  err.Status,
+			Message: err.Message,
 		})
 	}
 
-	totalPages := int(math.Ceil(float64(totalRecords) / float64(pageSize)))
+	totalPages := int(math.Ceil(float64(*totalRecords) / float64(pageSize)))
 
 	paginationMeta := &pb.PaginationMeta{
 		CurrentPage:  int32(page),
 		PageSize:     int32(pageSize),
 		TotalPages:   int32(totalPages),
-		TotalRecords: int32(totalRecords),
+		TotalRecords: int32(*totalRecords),
 	}
 
 	so := s.mapping.ToProtoResponsePaginationOrderItemDeleteAt(paginationMeta, "success", "Successfully fetched trashed order items", orderItems)
@@ -136,9 +136,9 @@ func (s *orderItemHandleGrpc) FindOrderItemByOrder(ctx context.Context, request 
 
 	orderItems, err := s.orderItemService.FindOrderItemByOrder(int(request.GetId()))
 	if err != nil {
-		return nil, status.Errorf(codes.Internal, "%v", &pb.ErrorResponse{
-			Status:  "error",
-			Message: "Failed to fetch order items by order: ",
+		return nil, status.Errorf(codes.Code(err.Code), "%v", &pb.ErrorResponse{
+			Status:  err.Status,
+			Message: err.Message,
 		})
 	}
 

@@ -32,13 +32,18 @@ func (c *cashierResponseMapper) ToResponsesCashier(cashiers []*pb.CashierRespons
 }
 
 func (c *cashierResponseMapper) ToResponseCashierDeleteAt(cashier *pb.CashierResponseDeleteAt) *response.CashierResponseDeleteAt {
+	var deletedAt string
+	if cashier.DeletedAt != nil {
+		deletedAt = cashier.DeletedAt.Value
+	}
+
 	return &response.CashierResponseDeleteAt{
 		ID:         int(cashier.Id),
 		MerchantID: int(cashier.MerchantId),
 		Name:       cashier.Name,
 		CreatedAt:  cashier.CreatedAt,
 		UpdatedAt:  cashier.UpdatedAt,
-		DeletedAt:  cashier.DeletedAt,
+		DeletedAt:  &deletedAt,
 	}
 }
 
@@ -50,6 +55,81 @@ func (c *cashierResponseMapper) ToResponsesCashierDeleteAt(cashiers []*pb.Cashie
 	}
 
 	return mappedCashiers
+}
+
+func (s *cashierResponseMapper) ToResponseCashierMonthlySale(cashier *pb.CashierResponseMonthSales) *response.CashierResponseMonthSales {
+	return &response.CashierResponseMonthSales{
+		Month:       cashier.Month,
+		CashierID:   int(cashier.CashierId),
+		CashierName: cashier.CashierName,
+		OrderCount:  int(cashier.OrderCount),
+		TotalSales:  int(cashier.TotalSales),
+	}
+}
+
+func (s *cashierResponseMapper) ToResponseCashierMonthlySales(c []*pb.CashierResponseMonthSales) []*response.CashierResponseMonthSales {
+	var cashierRecords []*response.CashierResponseMonthSales
+
+	for _, cashier := range c {
+		cashierRecords = append(cashierRecords, s.ToResponseCashierMonthlySale(cashier))
+	}
+
+	return cashierRecords
+}
+
+func (s *cashierResponseMapper) ToResponseCashierYearlySale(cashier *pb.CashierResponseYearSales) *response.CashierResponseYearSales {
+	return &response.CashierResponseYearSales{
+		Year:        cashier.Year,
+		CashierID:   int(cashier.CashierId),
+		CashierName: cashier.CashierName,
+		OrderCount:  int(cashier.OrderCount),
+		TotalSales:  int(cashier.TotalSales),
+	}
+}
+
+func (s *cashierResponseMapper) ToResponseCashierYearlySales(c []*pb.CashierResponseYearSales) []*response.CashierResponseYearSales {
+	var cashierRecords []*response.CashierResponseYearSales
+
+	for _, cashier := range c {
+		cashierRecords = append(cashierRecords, s.ToResponseCashierYearlySale(cashier))
+	}
+
+	return cashierRecords
+}
+
+func (s *cashierResponseMapper) ToResponseCashierMonthlyTotalSale(c *pb.CashierResponseMonthTotalSales) *response.CashierResponseMonthTotalSales {
+	return &response.CashierResponseMonthTotalSales{
+		Year:       c.Year,
+		Month:      c.Month,
+		TotalSales: int(c.TotalSales),
+	}
+}
+
+func (s *cashierResponseMapper) ToResponseCashierMonthlyTotalSales(c []*pb.CashierResponseMonthTotalSales) []*response.CashierResponseMonthTotalSales {
+	var cashierRecords []*response.CashierResponseMonthTotalSales
+
+	for _, cashier := range c {
+		cashierRecords = append(cashierRecords, s.ToResponseCashierMonthlyTotalSale(cashier))
+	}
+
+	return cashierRecords
+}
+
+func (s *cashierResponseMapper) ToResponseCashierYearlyTotalSale(c *pb.CashierResponseYearTotalSales) *response.CashierResponseYearTotalSales {
+	return &response.CashierResponseYearTotalSales{
+		Year:       c.Year,
+		TotalSales: int(c.TotalSales),
+	}
+}
+
+func (s *cashierResponseMapper) ToResponseCashierYearlyTotalSales(c []*pb.CashierResponseYearTotalSales) []*response.CashierResponseYearTotalSales {
+	var cashierRecords []*response.CashierResponseYearTotalSales
+
+	for _, cashier := range c {
+		cashierRecords = append(cashierRecords, s.ToResponseCashierYearlyTotalSale(cashier))
+	}
+
+	return cashierRecords
 }
 
 func (c *cashierResponseMapper) ToApiResponseCashier(pbResponse *pb.ApiResponseCashier) *response.ApiResponseCashier {
@@ -104,5 +184,37 @@ func (c *cashierResponseMapper) ToApiResponsePaginationCashier(pbResponse *pb.Ap
 		Message:    pbResponse.Message,
 		Data:       c.ToResponsesCashier(pbResponse.Data),
 		Pagination: *mapPaginationMeta(pbResponse.Pagination),
+	}
+}
+
+func (c *cashierResponseMapper) ToApiResponseCashierMonthlySale(pbResponse *pb.ApiResponseCashierMonthSales) *response.ApiResponseCashierMonthSales {
+	return &response.ApiResponseCashierMonthSales{
+		Status:  pbResponse.Status,
+		Message: pbResponse.Message,
+		Data:    c.ToResponseCashierMonthlySales(pbResponse.Data),
+	}
+}
+
+func (c *cashierResponseMapper) ToApiResponseCashierYearlySale(pbResponse *pb.ApiResponseCashierYearSales) *response.ApiResponseCashierYearSales {
+	return &response.ApiResponseCashierYearSales{
+		Status:  pbResponse.Status,
+		Message: pbResponse.Message,
+		Data:    c.ToResponseCashierYearlySales(pbResponse.Data),
+	}
+}
+
+func (u *cashierResponseMapper) ToApiResponseMonthlyTotalSales(pbResponse *pb.ApiResponseCashierMonthlyTotalSales) *response.ApiResponseCashierMonthlyTotalSales {
+	return &response.ApiResponseCashierMonthlyTotalSales{
+		Status:  pbResponse.Status,
+		Message: pbResponse.Message,
+		Data:    u.ToResponseCashierMonthlyTotalSales(pbResponse.Data),
+	}
+}
+
+func (u *cashierResponseMapper) ToApiResponseYearlyTotalSales(pbResponse *pb.ApiResponseCashierYearlyTotalSales) *response.ApiResponseCashierYearlyTotalSales {
+	return &response.ApiResponseCashierYearlyTotalSales{
+		Status:  pbResponse.Status,
+		Message: pbResponse.Message,
+		Data:    u.ToResponseCashierYearlyTotalSales(pbResponse.Data),
 	}
 }

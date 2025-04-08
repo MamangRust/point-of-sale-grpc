@@ -20,25 +20,49 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	CategoryService_FindAll_FullMethodName                    = "/pb.CategoryService/FindAll"
-	CategoryService_FindById_FullMethodName                   = "/pb.CategoryService/FindById"
-	CategoryService_FindByActive_FullMethodName               = "/pb.CategoryService/FindByActive"
-	CategoryService_FindByTrashed_FullMethodName              = "/pb.CategoryService/FindByTrashed"
-	CategoryService_Create_FullMethodName                     = "/pb.CategoryService/Create"
-	CategoryService_Update_FullMethodName                     = "/pb.CategoryService/Update"
-	CategoryService_TrashedCategory_FullMethodName            = "/pb.CategoryService/TrashedCategory"
-	CategoryService_RestoreCategory_FullMethodName            = "/pb.CategoryService/RestoreCategory"
-	CategoryService_DeleteCategoryPermanent_FullMethodName    = "/pb.CategoryService/DeleteCategoryPermanent"
-	CategoryService_RestoreAllCategory_FullMethodName         = "/pb.CategoryService/RestoreAllCategory"
-	CategoryService_DeleteAllCategoryPermanent_FullMethodName = "/pb.CategoryService/DeleteAllCategoryPermanent"
+	CategoryService_FindMonthlyTotalPrices_FullMethodName           = "/pb.CategoryService/FindMonthlyTotalPrices"
+	CategoryService_FindYearlyTotalPrices_FullMethodName            = "/pb.CategoryService/FindYearlyTotalPrices"
+	CategoryService_FindMonthlyTotalPricesById_FullMethodName       = "/pb.CategoryService/FindMonthlyTotalPricesById"
+	CategoryService_FindYearlyTotalPricesById_FullMethodName        = "/pb.CategoryService/FindYearlyTotalPricesById"
+	CategoryService_FindMonthlyTotalPricesByMerchant_FullMethodName = "/pb.CategoryService/FindMonthlyTotalPricesByMerchant"
+	CategoryService_FindYearlyTotalPricesByMerchant_FullMethodName  = "/pb.CategoryService/FindYearlyTotalPricesByMerchant"
+	CategoryService_FindAll_FullMethodName                          = "/pb.CategoryService/FindAll"
+	CategoryService_FindById_FullMethodName                         = "/pb.CategoryService/FindById"
+	CategoryService_FindMonthPrice_FullMethodName                   = "/pb.CategoryService/FindMonthPrice"
+	CategoryService_FindYearPrice_FullMethodName                    = "/pb.CategoryService/FindYearPrice"
+	CategoryService_FindMonthPriceByMerchant_FullMethodName         = "/pb.CategoryService/FindMonthPriceByMerchant"
+	CategoryService_FindYearPriceByMerchant_FullMethodName          = "/pb.CategoryService/FindYearPriceByMerchant"
+	CategoryService_FindMonthPriceById_FullMethodName               = "/pb.CategoryService/FindMonthPriceById"
+	CategoryService_FindYearPriceById_FullMethodName                = "/pb.CategoryService/FindYearPriceById"
+	CategoryService_FindByActive_FullMethodName                     = "/pb.CategoryService/FindByActive"
+	CategoryService_FindByTrashed_FullMethodName                    = "/pb.CategoryService/FindByTrashed"
+	CategoryService_Create_FullMethodName                           = "/pb.CategoryService/Create"
+	CategoryService_Update_FullMethodName                           = "/pb.CategoryService/Update"
+	CategoryService_TrashedCategory_FullMethodName                  = "/pb.CategoryService/TrashedCategory"
+	CategoryService_RestoreCategory_FullMethodName                  = "/pb.CategoryService/RestoreCategory"
+	CategoryService_DeleteCategoryPermanent_FullMethodName          = "/pb.CategoryService/DeleteCategoryPermanent"
+	CategoryService_RestoreAllCategory_FullMethodName               = "/pb.CategoryService/RestoreAllCategory"
+	CategoryService_DeleteAllCategoryPermanent_FullMethodName       = "/pb.CategoryService/DeleteAllCategoryPermanent"
 )
 
 // CategoryServiceClient is the client API for CategoryService service.
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type CategoryServiceClient interface {
+	FindMonthlyTotalPrices(ctx context.Context, in *FindYearMonthTotalPrices, opts ...grpc.CallOption) (*ApiResponseCategoryMonthlyTotalPrice, error)
+	FindYearlyTotalPrices(ctx context.Context, in *FindYearTotalPrices, opts ...grpc.CallOption) (*ApiResponseCategoryYearlyTotalPrice, error)
+	FindMonthlyTotalPricesById(ctx context.Context, in *FindYearMonthTotalPriceById, opts ...grpc.CallOption) (*ApiResponseCategoryMonthlyTotalPrice, error)
+	FindYearlyTotalPricesById(ctx context.Context, in *FindYearTotalPriceById, opts ...grpc.CallOption) (*ApiResponseCategoryYearlyTotalPrice, error)
+	FindMonthlyTotalPricesByMerchant(ctx context.Context, in *FindYearMonthTotalPriceByMerchant, opts ...grpc.CallOption) (*ApiResponseCategoryMonthlyTotalPrice, error)
+	FindYearlyTotalPricesByMerchant(ctx context.Context, in *FindYearTotalPriceByMerchant, opts ...grpc.CallOption) (*ApiResponseCategoryYearlyTotalPrice, error)
 	FindAll(ctx context.Context, in *FindAllCategoryRequest, opts ...grpc.CallOption) (*ApiResponsePaginationCategory, error)
 	FindById(ctx context.Context, in *FindByIdCategoryRequest, opts ...grpc.CallOption) (*ApiResponseCategory, error)
+	FindMonthPrice(ctx context.Context, in *FindYearCategory, opts ...grpc.CallOption) (*ApiResponseCategoryMonthPrice, error)
+	FindYearPrice(ctx context.Context, in *FindYearCategory, opts ...grpc.CallOption) (*ApiResponseCategoryYearPrice, error)
+	FindMonthPriceByMerchant(ctx context.Context, in *FindYearCategoryByMerchant, opts ...grpc.CallOption) (*ApiResponseCategoryMonthPrice, error)
+	FindYearPriceByMerchant(ctx context.Context, in *FindYearCategoryByMerchant, opts ...grpc.CallOption) (*ApiResponseCategoryYearPrice, error)
+	FindMonthPriceById(ctx context.Context, in *FindYearCategoryById, opts ...grpc.CallOption) (*ApiResponseCategoryMonthPrice, error)
+	FindYearPriceById(ctx context.Context, in *FindYearCategoryById, opts ...grpc.CallOption) (*ApiResponseCategoryYearPrice, error)
 	FindByActive(ctx context.Context, in *FindAllCategoryRequest, opts ...grpc.CallOption) (*ApiResponsePaginationCategoryDeleteAt, error)
 	FindByTrashed(ctx context.Context, in *FindAllCategoryRequest, opts ...grpc.CallOption) (*ApiResponsePaginationCategoryDeleteAt, error)
 	Create(ctx context.Context, in *CreateCategoryRequest, opts ...grpc.CallOption) (*ApiResponseCategory, error)
@@ -58,6 +82,66 @@ func NewCategoryServiceClient(cc grpc.ClientConnInterface) CategoryServiceClient
 	return &categoryServiceClient{cc}
 }
 
+func (c *categoryServiceClient) FindMonthlyTotalPrices(ctx context.Context, in *FindYearMonthTotalPrices, opts ...grpc.CallOption) (*ApiResponseCategoryMonthlyTotalPrice, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ApiResponseCategoryMonthlyTotalPrice)
+	err := c.cc.Invoke(ctx, CategoryService_FindMonthlyTotalPrices_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *categoryServiceClient) FindYearlyTotalPrices(ctx context.Context, in *FindYearTotalPrices, opts ...grpc.CallOption) (*ApiResponseCategoryYearlyTotalPrice, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ApiResponseCategoryYearlyTotalPrice)
+	err := c.cc.Invoke(ctx, CategoryService_FindYearlyTotalPrices_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *categoryServiceClient) FindMonthlyTotalPricesById(ctx context.Context, in *FindYearMonthTotalPriceById, opts ...grpc.CallOption) (*ApiResponseCategoryMonthlyTotalPrice, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ApiResponseCategoryMonthlyTotalPrice)
+	err := c.cc.Invoke(ctx, CategoryService_FindMonthlyTotalPricesById_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *categoryServiceClient) FindYearlyTotalPricesById(ctx context.Context, in *FindYearTotalPriceById, opts ...grpc.CallOption) (*ApiResponseCategoryYearlyTotalPrice, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ApiResponseCategoryYearlyTotalPrice)
+	err := c.cc.Invoke(ctx, CategoryService_FindYearlyTotalPricesById_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *categoryServiceClient) FindMonthlyTotalPricesByMerchant(ctx context.Context, in *FindYearMonthTotalPriceByMerchant, opts ...grpc.CallOption) (*ApiResponseCategoryMonthlyTotalPrice, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ApiResponseCategoryMonthlyTotalPrice)
+	err := c.cc.Invoke(ctx, CategoryService_FindMonthlyTotalPricesByMerchant_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *categoryServiceClient) FindYearlyTotalPricesByMerchant(ctx context.Context, in *FindYearTotalPriceByMerchant, opts ...grpc.CallOption) (*ApiResponseCategoryYearlyTotalPrice, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ApiResponseCategoryYearlyTotalPrice)
+	err := c.cc.Invoke(ctx, CategoryService_FindYearlyTotalPricesByMerchant_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *categoryServiceClient) FindAll(ctx context.Context, in *FindAllCategoryRequest, opts ...grpc.CallOption) (*ApiResponsePaginationCategory, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(ApiResponsePaginationCategory)
@@ -72,6 +156,66 @@ func (c *categoryServiceClient) FindById(ctx context.Context, in *FindByIdCatego
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(ApiResponseCategory)
 	err := c.cc.Invoke(ctx, CategoryService_FindById_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *categoryServiceClient) FindMonthPrice(ctx context.Context, in *FindYearCategory, opts ...grpc.CallOption) (*ApiResponseCategoryMonthPrice, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ApiResponseCategoryMonthPrice)
+	err := c.cc.Invoke(ctx, CategoryService_FindMonthPrice_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *categoryServiceClient) FindYearPrice(ctx context.Context, in *FindYearCategory, opts ...grpc.CallOption) (*ApiResponseCategoryYearPrice, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ApiResponseCategoryYearPrice)
+	err := c.cc.Invoke(ctx, CategoryService_FindYearPrice_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *categoryServiceClient) FindMonthPriceByMerchant(ctx context.Context, in *FindYearCategoryByMerchant, opts ...grpc.CallOption) (*ApiResponseCategoryMonthPrice, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ApiResponseCategoryMonthPrice)
+	err := c.cc.Invoke(ctx, CategoryService_FindMonthPriceByMerchant_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *categoryServiceClient) FindYearPriceByMerchant(ctx context.Context, in *FindYearCategoryByMerchant, opts ...grpc.CallOption) (*ApiResponseCategoryYearPrice, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ApiResponseCategoryYearPrice)
+	err := c.cc.Invoke(ctx, CategoryService_FindYearPriceByMerchant_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *categoryServiceClient) FindMonthPriceById(ctx context.Context, in *FindYearCategoryById, opts ...grpc.CallOption) (*ApiResponseCategoryMonthPrice, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ApiResponseCategoryMonthPrice)
+	err := c.cc.Invoke(ctx, CategoryService_FindMonthPriceById_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *categoryServiceClient) FindYearPriceById(ctx context.Context, in *FindYearCategoryById, opts ...grpc.CallOption) (*ApiResponseCategoryYearPrice, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ApiResponseCategoryYearPrice)
+	err := c.cc.Invoke(ctx, CategoryService_FindYearPriceById_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -172,8 +316,20 @@ func (c *categoryServiceClient) DeleteAllCategoryPermanent(ctx context.Context, 
 // All implementations must embed UnimplementedCategoryServiceServer
 // for forward compatibility.
 type CategoryServiceServer interface {
+	FindMonthlyTotalPrices(context.Context, *FindYearMonthTotalPrices) (*ApiResponseCategoryMonthlyTotalPrice, error)
+	FindYearlyTotalPrices(context.Context, *FindYearTotalPrices) (*ApiResponseCategoryYearlyTotalPrice, error)
+	FindMonthlyTotalPricesById(context.Context, *FindYearMonthTotalPriceById) (*ApiResponseCategoryMonthlyTotalPrice, error)
+	FindYearlyTotalPricesById(context.Context, *FindYearTotalPriceById) (*ApiResponseCategoryYearlyTotalPrice, error)
+	FindMonthlyTotalPricesByMerchant(context.Context, *FindYearMonthTotalPriceByMerchant) (*ApiResponseCategoryMonthlyTotalPrice, error)
+	FindYearlyTotalPricesByMerchant(context.Context, *FindYearTotalPriceByMerchant) (*ApiResponseCategoryYearlyTotalPrice, error)
 	FindAll(context.Context, *FindAllCategoryRequest) (*ApiResponsePaginationCategory, error)
 	FindById(context.Context, *FindByIdCategoryRequest) (*ApiResponseCategory, error)
+	FindMonthPrice(context.Context, *FindYearCategory) (*ApiResponseCategoryMonthPrice, error)
+	FindYearPrice(context.Context, *FindYearCategory) (*ApiResponseCategoryYearPrice, error)
+	FindMonthPriceByMerchant(context.Context, *FindYearCategoryByMerchant) (*ApiResponseCategoryMonthPrice, error)
+	FindYearPriceByMerchant(context.Context, *FindYearCategoryByMerchant) (*ApiResponseCategoryYearPrice, error)
+	FindMonthPriceById(context.Context, *FindYearCategoryById) (*ApiResponseCategoryMonthPrice, error)
+	FindYearPriceById(context.Context, *FindYearCategoryById) (*ApiResponseCategoryYearPrice, error)
 	FindByActive(context.Context, *FindAllCategoryRequest) (*ApiResponsePaginationCategoryDeleteAt, error)
 	FindByTrashed(context.Context, *FindAllCategoryRequest) (*ApiResponsePaginationCategoryDeleteAt, error)
 	Create(context.Context, *CreateCategoryRequest) (*ApiResponseCategory, error)
@@ -193,11 +349,47 @@ type CategoryServiceServer interface {
 // pointer dereference when methods are called.
 type UnimplementedCategoryServiceServer struct{}
 
+func (UnimplementedCategoryServiceServer) FindMonthlyTotalPrices(context.Context, *FindYearMonthTotalPrices) (*ApiResponseCategoryMonthlyTotalPrice, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method FindMonthlyTotalPrices not implemented")
+}
+func (UnimplementedCategoryServiceServer) FindYearlyTotalPrices(context.Context, *FindYearTotalPrices) (*ApiResponseCategoryYearlyTotalPrice, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method FindYearlyTotalPrices not implemented")
+}
+func (UnimplementedCategoryServiceServer) FindMonthlyTotalPricesById(context.Context, *FindYearMonthTotalPriceById) (*ApiResponseCategoryMonthlyTotalPrice, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method FindMonthlyTotalPricesById not implemented")
+}
+func (UnimplementedCategoryServiceServer) FindYearlyTotalPricesById(context.Context, *FindYearTotalPriceById) (*ApiResponseCategoryYearlyTotalPrice, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method FindYearlyTotalPricesById not implemented")
+}
+func (UnimplementedCategoryServiceServer) FindMonthlyTotalPricesByMerchant(context.Context, *FindYearMonthTotalPriceByMerchant) (*ApiResponseCategoryMonthlyTotalPrice, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method FindMonthlyTotalPricesByMerchant not implemented")
+}
+func (UnimplementedCategoryServiceServer) FindYearlyTotalPricesByMerchant(context.Context, *FindYearTotalPriceByMerchant) (*ApiResponseCategoryYearlyTotalPrice, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method FindYearlyTotalPricesByMerchant not implemented")
+}
 func (UnimplementedCategoryServiceServer) FindAll(context.Context, *FindAllCategoryRequest) (*ApiResponsePaginationCategory, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method FindAll not implemented")
 }
 func (UnimplementedCategoryServiceServer) FindById(context.Context, *FindByIdCategoryRequest) (*ApiResponseCategory, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method FindById not implemented")
+}
+func (UnimplementedCategoryServiceServer) FindMonthPrice(context.Context, *FindYearCategory) (*ApiResponseCategoryMonthPrice, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method FindMonthPrice not implemented")
+}
+func (UnimplementedCategoryServiceServer) FindYearPrice(context.Context, *FindYearCategory) (*ApiResponseCategoryYearPrice, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method FindYearPrice not implemented")
+}
+func (UnimplementedCategoryServiceServer) FindMonthPriceByMerchant(context.Context, *FindYearCategoryByMerchant) (*ApiResponseCategoryMonthPrice, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method FindMonthPriceByMerchant not implemented")
+}
+func (UnimplementedCategoryServiceServer) FindYearPriceByMerchant(context.Context, *FindYearCategoryByMerchant) (*ApiResponseCategoryYearPrice, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method FindYearPriceByMerchant not implemented")
+}
+func (UnimplementedCategoryServiceServer) FindMonthPriceById(context.Context, *FindYearCategoryById) (*ApiResponseCategoryMonthPrice, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method FindMonthPriceById not implemented")
+}
+func (UnimplementedCategoryServiceServer) FindYearPriceById(context.Context, *FindYearCategoryById) (*ApiResponseCategoryYearPrice, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method FindYearPriceById not implemented")
 }
 func (UnimplementedCategoryServiceServer) FindByActive(context.Context, *FindAllCategoryRequest) (*ApiResponsePaginationCategoryDeleteAt, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method FindByActive not implemented")
@@ -247,6 +439,114 @@ func RegisterCategoryServiceServer(s grpc.ServiceRegistrar, srv CategoryServiceS
 	s.RegisterService(&CategoryService_ServiceDesc, srv)
 }
 
+func _CategoryService_FindMonthlyTotalPrices_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(FindYearMonthTotalPrices)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(CategoryServiceServer).FindMonthlyTotalPrices(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: CategoryService_FindMonthlyTotalPrices_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(CategoryServiceServer).FindMonthlyTotalPrices(ctx, req.(*FindYearMonthTotalPrices))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _CategoryService_FindYearlyTotalPrices_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(FindYearTotalPrices)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(CategoryServiceServer).FindYearlyTotalPrices(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: CategoryService_FindYearlyTotalPrices_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(CategoryServiceServer).FindYearlyTotalPrices(ctx, req.(*FindYearTotalPrices))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _CategoryService_FindMonthlyTotalPricesById_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(FindYearMonthTotalPriceById)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(CategoryServiceServer).FindMonthlyTotalPricesById(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: CategoryService_FindMonthlyTotalPricesById_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(CategoryServiceServer).FindMonthlyTotalPricesById(ctx, req.(*FindYearMonthTotalPriceById))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _CategoryService_FindYearlyTotalPricesById_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(FindYearTotalPriceById)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(CategoryServiceServer).FindYearlyTotalPricesById(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: CategoryService_FindYearlyTotalPricesById_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(CategoryServiceServer).FindYearlyTotalPricesById(ctx, req.(*FindYearTotalPriceById))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _CategoryService_FindMonthlyTotalPricesByMerchant_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(FindYearMonthTotalPriceByMerchant)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(CategoryServiceServer).FindMonthlyTotalPricesByMerchant(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: CategoryService_FindMonthlyTotalPricesByMerchant_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(CategoryServiceServer).FindMonthlyTotalPricesByMerchant(ctx, req.(*FindYearMonthTotalPriceByMerchant))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _CategoryService_FindYearlyTotalPricesByMerchant_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(FindYearTotalPriceByMerchant)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(CategoryServiceServer).FindYearlyTotalPricesByMerchant(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: CategoryService_FindYearlyTotalPricesByMerchant_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(CategoryServiceServer).FindYearlyTotalPricesByMerchant(ctx, req.(*FindYearTotalPriceByMerchant))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _CategoryService_FindAll_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(FindAllCategoryRequest)
 	if err := dec(in); err != nil {
@@ -279,6 +579,114 @@ func _CategoryService_FindById_Handler(srv interface{}, ctx context.Context, dec
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(CategoryServiceServer).FindById(ctx, req.(*FindByIdCategoryRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _CategoryService_FindMonthPrice_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(FindYearCategory)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(CategoryServiceServer).FindMonthPrice(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: CategoryService_FindMonthPrice_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(CategoryServiceServer).FindMonthPrice(ctx, req.(*FindYearCategory))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _CategoryService_FindYearPrice_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(FindYearCategory)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(CategoryServiceServer).FindYearPrice(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: CategoryService_FindYearPrice_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(CategoryServiceServer).FindYearPrice(ctx, req.(*FindYearCategory))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _CategoryService_FindMonthPriceByMerchant_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(FindYearCategoryByMerchant)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(CategoryServiceServer).FindMonthPriceByMerchant(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: CategoryService_FindMonthPriceByMerchant_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(CategoryServiceServer).FindMonthPriceByMerchant(ctx, req.(*FindYearCategoryByMerchant))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _CategoryService_FindYearPriceByMerchant_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(FindYearCategoryByMerchant)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(CategoryServiceServer).FindYearPriceByMerchant(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: CategoryService_FindYearPriceByMerchant_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(CategoryServiceServer).FindYearPriceByMerchant(ctx, req.(*FindYearCategoryByMerchant))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _CategoryService_FindMonthPriceById_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(FindYearCategoryById)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(CategoryServiceServer).FindMonthPriceById(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: CategoryService_FindMonthPriceById_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(CategoryServiceServer).FindMonthPriceById(ctx, req.(*FindYearCategoryById))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _CategoryService_FindYearPriceById_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(FindYearCategoryById)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(CategoryServiceServer).FindYearPriceById(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: CategoryService_FindYearPriceById_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(CategoryServiceServer).FindYearPriceById(ctx, req.(*FindYearCategoryById))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -453,12 +861,60 @@ var CategoryService_ServiceDesc = grpc.ServiceDesc{
 	HandlerType: (*CategoryServiceServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
+			MethodName: "FindMonthlyTotalPrices",
+			Handler:    _CategoryService_FindMonthlyTotalPrices_Handler,
+		},
+		{
+			MethodName: "FindYearlyTotalPrices",
+			Handler:    _CategoryService_FindYearlyTotalPrices_Handler,
+		},
+		{
+			MethodName: "FindMonthlyTotalPricesById",
+			Handler:    _CategoryService_FindMonthlyTotalPricesById_Handler,
+		},
+		{
+			MethodName: "FindYearlyTotalPricesById",
+			Handler:    _CategoryService_FindYearlyTotalPricesById_Handler,
+		},
+		{
+			MethodName: "FindMonthlyTotalPricesByMerchant",
+			Handler:    _CategoryService_FindMonthlyTotalPricesByMerchant_Handler,
+		},
+		{
+			MethodName: "FindYearlyTotalPricesByMerchant",
+			Handler:    _CategoryService_FindYearlyTotalPricesByMerchant_Handler,
+		},
+		{
 			MethodName: "FindAll",
 			Handler:    _CategoryService_FindAll_Handler,
 		},
 		{
 			MethodName: "FindById",
 			Handler:    _CategoryService_FindById_Handler,
+		},
+		{
+			MethodName: "FindMonthPrice",
+			Handler:    _CategoryService_FindMonthPrice_Handler,
+		},
+		{
+			MethodName: "FindYearPrice",
+			Handler:    _CategoryService_FindYearPrice_Handler,
+		},
+		{
+			MethodName: "FindMonthPriceByMerchant",
+			Handler:    _CategoryService_FindMonthPriceByMerchant_Handler,
+		},
+		{
+			MethodName: "FindYearPriceByMerchant",
+			Handler:    _CategoryService_FindYearPriceByMerchant_Handler,
+		},
+		{
+			MethodName: "FindMonthPriceById",
+			Handler:    _CategoryService_FindMonthPriceById_Handler,
+		},
+		{
+			MethodName: "FindYearPriceById",
+			Handler:    _CategoryService_FindYearPriceById_Handler,
 		},
 		{
 			MethodName: "FindByActive",

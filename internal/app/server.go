@@ -86,8 +86,8 @@ func NewServer() (*Server, error) {
 	mapperProto := protomapper.NewProtoMapper()
 
 	handlers := gapi.NewHandler(gapi.Deps{
-		Service: *services,
-		Mapper:  *mapperProto,
+		Service: services,
+		Mapper:  mapperProto,
 	})
 
 	db_seeder := viper.GetString("DB_SEEDER")
@@ -105,7 +105,6 @@ func NewServer() (*Server, error) {
 		if err := seeder.Run(); err != nil {
 			logger.Fatal("Failed to run seeder", zap.Error(err))
 		}
-
 	}
 
 	return &Server{
@@ -129,6 +128,13 @@ func (s *Server) Run() {
 	pb.RegisterAuthServiceServer(grpcServer, s.Handlers.Auth)
 	pb.RegisterUserServiceServer(grpcServer, s.Handlers.User)
 	pb.RegisterRoleServiceServer(grpcServer, s.Handlers.Role)
+	pb.RegisterCashierServiceServer(grpcServer, s.Handlers.Cashier)
+	pb.RegisterCategoryServiceServer(grpcServer, s.Handlers.Category)
+	pb.RegisterMerchantServiceServer(grpcServer, s.Handlers.Merchant)
+	pb.RegisterOrderServiceServer(grpcServer, s.Handlers.Order)
+	pb.RegisterOrderItemServiceServer(grpcServer, s.Handlers.OrderItem)
+	pb.RegisterProductServiceServer(grpcServer, s.Handlers.Product)
+	pb.RegisterTransactionServiceServer(grpcServer, s.Handlers.Transaction)
 
 	s.Logger.Info(fmt.Sprintf("Server running on port %d", *port))
 

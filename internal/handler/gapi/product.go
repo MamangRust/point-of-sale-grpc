@@ -44,19 +44,19 @@ func (s *productHandleGrpc) FindAll(ctx context.Context, request *pb.FindAllProd
 	product, totalRecords, err := s.productService.FindAll(page, pageSize, search)
 
 	if err != nil {
-		return nil, status.Errorf(codes.Internal, "%v", &pb.ErrorResponse{
-			Status:  "error",
-			Message: "Failed to fetch product: ",
+		return nil, status.Errorf(codes.Code(err.Code), "%v", &pb.ErrorResponse{
+			Status:  err.Status,
+			Message: err.Message,
 		})
 	}
 
-	totalPages := int(math.Ceil(float64(totalRecords) / float64(pageSize)))
+	totalPages := int(math.Ceil(float64(*totalRecords) / float64(pageSize)))
 
 	paginationMeta := &pb.PaginationMeta{
 		CurrentPage:  int32(page),
 		PageSize:     int32(pageSize),
 		TotalPages:   int32(totalPages),
-		TotalRecords: int32(totalRecords),
+		TotalRecords: int32(*totalRecords),
 	}
 
 	so := s.mapping.ToProtoResponsePaginationProduct(paginationMeta, "success", "Successfully fetched product", product)
@@ -64,38 +64,57 @@ func (s *productHandleGrpc) FindAll(ctx context.Context, request *pb.FindAllProd
 }
 
 func (s *productHandleGrpc) FindByMerchant(ctx context.Context, request *pb.FindAllProductMerchantRequest) (*pb.ApiResponsePaginationProduct, error) {
-	page := int(request.GetPage())
-	pageSize := int(request.GetPageSize())
-	search := request.GetSearch()
-	merchant_id := int(request.GetMerchantId())
-
-	if page <= 0 {
-		page = 1
-	}
-	if pageSize <= 0 {
-		pageSize = 10
+	req := requests.ProductByMerchantRequest{
+		MerchantID: int(request.GetMerchantId()),
+		Search:     request.GetSearch(),
+		Page:       int(request.GetPage()),
+		PageSize:   int(request.GetPageSize()),
 	}
 
-	product, totalRecords, err := s.productService.FindByMerchant(merchant_id, page, pageSize, search)
+	if request.CategoryId != nil {
+		catID := int(request.GetCategoryId().Value)
+		req.CategoryID = &catID
+	}
+	if request.MinPrice != nil {
+		minPrice := int(request.GetMinPrice().Value)
+		req.MinPrice = &minPrice
+	}
+	if request.MaxPrice != nil {
+		maxPrice := int(request.GetMaxPrice().Value)
+		req.MaxPrice = &maxPrice
+	}
+
+	if req.Page <= 0 {
+		req.Page = 1
+	}
+	if req.PageSize <= 0 {
+		req.PageSize = 10
+	}
+
+	products, totalRecords, err := s.productService.FindByMerchant(&req)
 
 	if err != nil {
-		return nil, status.Errorf(codes.Internal, "%v", &pb.ErrorResponse{
-			Status:  "error",
-			Message: "Failed to fetch product: ",
+		return nil, status.Errorf(codes.Code(err.Code), "%v", &pb.ErrorResponse{
+			Status:  err.Status,
+			Message: err.Message,
 		})
 	}
 
-	totalPages := int(math.Ceil(float64(totalRecords) / float64(pageSize)))
+	totalPages := int(math.Ceil(float64(*totalRecords) / float64(req.PageSize)))
 
 	paginationMeta := &pb.PaginationMeta{
-		CurrentPage:  int32(page),
-		PageSize:     int32(pageSize),
+		CurrentPage:  int32(req.Page),
+		PageSize:     int32(req.PageSize),
 		TotalPages:   int32(totalPages),
-		TotalRecords: int32(totalRecords),
+		TotalRecords: int32(*totalRecords),
 	}
 
-	so := s.mapping.ToProtoResponsePaginationProduct(paginationMeta, "success", "Successfully fetched product", product)
-	return so, nil
+	return s.mapping.ToProtoResponsePaginationProduct(
+		paginationMeta,
+		"success",
+		"Successfully fetched products",
+		products,
+	), nil
 }
 
 func (s *productHandleGrpc) FindByCategory(ctx context.Context, request *pb.FindAllProductCategoryRequest) (*pb.ApiResponsePaginationProduct, error) {
@@ -114,19 +133,19 @@ func (s *productHandleGrpc) FindByCategory(ctx context.Context, request *pb.Find
 	product, totalRecords, err := s.productService.FindByCategory(category_name, page, pageSize, search)
 
 	if err != nil {
-		return nil, status.Errorf(codes.Internal, "%v", &pb.ErrorResponse{
-			Status:  "error",
-			Message: "Failed to fetch product: ",
+		return nil, status.Errorf(codes.Code(err.Code), "%v", &pb.ErrorResponse{
+			Status:  err.Status,
+			Message: err.Message,
 		})
 	}
 
-	totalPages := int(math.Ceil(float64(totalRecords) / float64(pageSize)))
+	totalPages := int(math.Ceil(float64(*totalRecords) / float64(pageSize)))
 
 	paginationMeta := &pb.PaginationMeta{
 		CurrentPage:  int32(page),
 		PageSize:     int32(pageSize),
 		TotalPages:   int32(totalPages),
-		TotalRecords: int32(totalRecords),
+		TotalRecords: int32(*totalRecords),
 	}
 
 	so := s.mapping.ToProtoResponsePaginationProduct(paginationMeta, "success", "Successfully fetched product", product)
@@ -136,17 +155,17 @@ func (s *productHandleGrpc) FindByCategory(ctx context.Context, request *pb.Find
 func (s *productHandleGrpc) FindById(ctx context.Context, request *pb.FindByIdProductRequest) (*pb.ApiResponseProduct, error) {
 	if request.GetId() == 0 {
 		return nil, status.Errorf(codes.InvalidArgument, "%v", &pb.ErrorResponse{
-			Status:  "error",
-			Message: "Invalid product id",
+			Status:  "validation_error",
+			Message: "Product ID parameter cannot be empty and must be a positive number",
 		})
 	}
 
 	product, err := s.productService.FindById(int(request.GetId()))
 
 	if err != nil {
-		return nil, status.Errorf(codes.Internal, "%v", &pb.ErrorResponse{
-			Status:  "error",
-			Message: "Failed to fetch product: " + err.Message,
+		return nil, status.Errorf(codes.Code(err.Code), "%v", &pb.ErrorResponse{
+			Status:  err.Status,
+			Message: err.Message,
 		})
 	}
 
@@ -171,13 +190,13 @@ func (s *productHandleGrpc) FindByActive(ctx context.Context, request *pb.FindAl
 	product, totalRecords, err := s.productService.FindByActive(search, page, pageSize)
 
 	if err != nil {
-		return nil, status.Errorf(codes.Internal, "%v", &pb.ErrorResponse{
-			Status:  "error",
-			Message: "Failed to fetch active product: " + err.Message,
+		return nil, status.Errorf(codes.Code(err.Code), "%v", &pb.ErrorResponse{
+			Status:  err.Status,
+			Message: err.Message,
 		})
 	}
 
-	totalPages := int(math.Ceil(float64(totalRecords) / float64(pageSize)))
+	totalPages := int(math.Ceil(float64(*totalRecords) / float64(pageSize)))
 
 	paginationMeta := &pb.PaginationMeta{
 		CurrentPage:  int32(page),
@@ -205,13 +224,13 @@ func (s *productHandleGrpc) FindByTrashed(ctx context.Context, request *pb.FindA
 	users, totalRecords, err := s.productService.FindByTrashed(search, page, pageSize)
 
 	if err != nil {
-		return nil, status.Errorf(codes.Internal, "%v", &pb.ErrorResponse{
-			Status:  "error",
-			Message: "Failed to fetch trashed product: " + err.Message,
+		return nil, status.Errorf(codes.Code(err.Code), "%v", &pb.ErrorResponse{
+			Status:  err.Status,
+			Message: err.Message,
 		})
 	}
 
-	totalPages := int(math.Ceil(float64(totalRecords) / float64(pageSize)))
+	totalPages := int(math.Ceil(float64(*totalRecords) / float64(pageSize)))
 
 	paginationMeta := &pb.PaginationMeta{
 		CurrentPage:  int32(page),
@@ -235,24 +254,21 @@ func (s *productHandleGrpc) Create(ctx context.Context, request *pb.CreateProduc
 		CountInStock: int(request.GetCountInStock()),
 		Brand:        request.GetBrand(),
 		Weight:       int(request.GetWeight()),
-		Rating:       int(request.GetRating()),
-		SlugProduct:  request.GetSlugProduct(),
 		ImageProduct: request.GetImageProduct(),
-		Barcode:      request.GetBarcode(),
 	}
 
 	if err := req.Validate(); err != nil {
 		return nil, status.Errorf(codes.InvalidArgument, "%v", &pb.ErrorResponse{
-			Status:  "error",
-			Message: "Failed to create product: " + err.Error(),
+			Status:  "validation_error",
+			Message: "Invalid product data. Please check all required fields.",
 		})
 	}
 
 	product, err := s.productService.CreateProduct(req)
 	if err != nil {
-		return nil, status.Errorf(codes.Internal, "%v", &pb.ErrorResponse{
-			Status:  "error",
-			Message: "Failed to create product: ",
+		return nil, status.Errorf(codes.Code(err.Code), "%v", &pb.ErrorResponse{
+			Status:  err.Status,
+			Message: err.Message,
 		})
 	}
 
@@ -261,15 +277,17 @@ func (s *productHandleGrpc) Create(ctx context.Context, request *pb.CreateProduc
 }
 
 func (s *productHandleGrpc) Update(ctx context.Context, request *pb.UpdateProductRequest) (*pb.ApiResponseProduct, error) {
+	id := int(request.GetProductId())
+
 	if request.GetProductId() == 0 {
 		return nil, status.Errorf(codes.InvalidArgument, "%v", &pb.ErrorResponse{
-			Status:  "error",
-			Message: "Invalid product id",
+			Status:  "validation_error",
+			Message: "Product ID parameter cannot be empty and must be a positive number",
 		})
 	}
 
 	req := &requests.UpdateProductRequest{
-		ProductID:    int(request.GetProductId()),
+		ProductID:    &id,
 		MerchantID:   int(request.GetMerchantId()),
 		CategoryID:   int(request.GetCategoryId()),
 		Name:         request.GetName(),
@@ -278,24 +296,21 @@ func (s *productHandleGrpc) Update(ctx context.Context, request *pb.UpdateProduc
 		CountInStock: int(request.GetCountInStock()),
 		Brand:        request.GetBrand(),
 		Weight:       int(request.GetWeight()),
-		Rating:       int(request.GetRating()),
-		SlugProduct:  request.GetSlugProduct(),
 		ImageProduct: request.GetImageProduct(),
-		Barcode:      request.GetBarcode(),
 	}
 
 	if err := req.Validate(); err != nil {
 		return nil, status.Errorf(codes.InvalidArgument, "%v", &pb.ErrorResponse{
-			Status:  "error",
-			Message: "Failed to update product: " + err.Error(),
+			Status:  "validation_error",
+			Message: "Invalid product update. Please verify your changes.",
 		})
 	}
 
 	product, err := s.productService.UpdateProduct(req)
 	if err != nil {
-		return nil, status.Errorf(codes.Internal, "%v", &pb.ErrorResponse{
-			Status:  "error",
-			Message: "Failed to update product: ",
+		return nil, status.Errorf(codes.Code(err.Code), "%v", &pb.ErrorResponse{
+			Status:  err.Status,
+			Message: err.Message,
 		})
 	}
 
@@ -306,17 +321,17 @@ func (s *productHandleGrpc) Update(ctx context.Context, request *pb.UpdateProduc
 func (s *productHandleGrpc) TrashedProduct(ctx context.Context, request *pb.FindByIdProductRequest) (*pb.ApiResponseProductDeleteAt, error) {
 	if request.GetId() == 0 {
 		return nil, status.Errorf(codes.InvalidArgument, "%v", &pb.ErrorResponse{
-			Status:  "error",
-			Message: "Invalid product id",
+			Status:  "validation_error",
+			Message: "Product ID parameter cannot be empty and must be a positive number",
 		})
 	}
 
 	product, err := s.productService.TrashProduct(int(request.GetId()))
 
 	if err != nil {
-		return nil, status.Errorf(codes.Internal, "%v", &pb.ErrorResponse{
-			Status:  "error",
-			Message: "Failed to trashed product: " + err.Message,
+		return nil, status.Errorf(codes.Code(err.Code), "%v", &pb.ErrorResponse{
+			Status:  err.Status,
+			Message: err.Message,
 		})
 	}
 
@@ -328,17 +343,17 @@ func (s *productHandleGrpc) TrashedProduct(ctx context.Context, request *pb.Find
 func (s *productHandleGrpc) RestoreProduct(ctx context.Context, request *pb.FindByIdProductRequest) (*pb.ApiResponseProductDeleteAt, error) {
 	if request.GetId() == 0 {
 		return nil, status.Errorf(codes.InvalidArgument, "%v", &pb.ErrorResponse{
-			Status:  "error",
-			Message: "Invalid product id",
+			Status:  "validation_error",
+			Message: "Product ID parameter cannot be empty and must be a positive number",
 		})
 	}
 
 	product, err := s.productService.RestoreProduct(int(request.GetId()))
 
 	if err != nil {
-		return nil, status.Errorf(codes.Internal, "%v", &pb.ErrorResponse{
-			Status:  "error",
-			Message: "Failed to restore product: " + err.Message,
+		return nil, status.Errorf(codes.Code(err.Code), "%v", &pb.ErrorResponse{
+			Status:  err.Status,
+			Message: err.Message,
 		})
 	}
 
@@ -350,17 +365,17 @@ func (s *productHandleGrpc) RestoreProduct(ctx context.Context, request *pb.Find
 func (s *productHandleGrpc) DeleteProductPermanent(ctx context.Context, request *pb.FindByIdProductRequest) (*pb.ApiResponseProductDelete, error) {
 	if request.GetId() == 0 {
 		return nil, status.Errorf(codes.InvalidArgument, "%v", &pb.ErrorResponse{
-			Status:  "error",
-			Message: "Invalid Product id",
+			Status:  "validation_error",
+			Message: "Product ID parameter cannot be empty and must be a positive number",
 		})
 	}
 
 	_, err := s.productService.DeleteProductPermanent(int(request.GetId()))
 
 	if err != nil {
-		return nil, status.Errorf(codes.Internal, "%v", &pb.ErrorResponse{
-			Status:  "error",
-			Message: "Failed to delete Product permanently: " + err.Message,
+		return nil, status.Errorf(codes.Code(err.Code), "%v", &pb.ErrorResponse{
+			Status:  err.Status,
+			Message: err.Message,
 		})
 	}
 
@@ -373,9 +388,9 @@ func (s *productHandleGrpc) RestoreAllProduct(ctx context.Context, _ *emptypb.Em
 	_, err := s.productService.RestoreAllProducts()
 
 	if err != nil {
-		return nil, status.Errorf(codes.Internal, "%v", &pb.ErrorResponse{
-			Status:  "error",
-			Message: "Failed to restore all Product: ",
+		return nil, status.Errorf(codes.Code(err.Code), "%v", &pb.ErrorResponse{
+			Status:  err.Status,
+			Message: err.Message,
 		})
 	}
 
@@ -388,9 +403,9 @@ func (s *productHandleGrpc) DeleteAllProductPermanent(ctx context.Context, _ *em
 	_, err := s.productService.DeleteAllProductsPermanent()
 
 	if err != nil {
-		return nil, status.Errorf(codes.Internal, "%v", &pb.ErrorResponse{
-			Status:  "error",
-			Message: "Failed to delete Product permanent: ",
+		return nil, status.Errorf(codes.Code(err.Code), "%v", &pb.ErrorResponse{
+			Status:  err.Status,
+			Message: err.Message,
 		})
 	}
 

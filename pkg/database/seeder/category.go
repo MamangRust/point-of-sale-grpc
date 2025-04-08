@@ -37,22 +37,15 @@ func (r *categorySeeder) Seed() error {
 		"Outdoor sports equipment", "Automotive accessories", "Stylish furniture",
 	}
 
-	categoryImages := []string{
-		"image1.jpg", "image2.jpg", "image3.jpg", "image4.jpg", "image5.jpg",
-		"image6.jpg", "image7.jpg", "image8.jpg", "image9.jpg", "image10.jpg",
-	}
-
 	for i := 0; i < 10; i++ {
 		name := categoryNames[i%len(categoryNames)]
 		description := sql.NullString{String: categoryDescriptions[i%len(categoryDescriptions)], Valid: true}
-		slugCategory := sql.NullString{String: fmt.Sprintf("%s-%d", name, i+1), Valid: true} // Pastikan slug unik
-		imageCategory := sql.NullString{String: categoryImages[i%len(categoryImages)], Valid: true}
+		slugCategory := sql.NullString{String: fmt.Sprintf("%s-%d", name, i+1), Valid: true}
 
 		_, err := r.db.CreateCategory(r.ctx, db.CreateCategoryParams{
-			Name:          name,
-			Description:   description,
-			SlugCategory:  slugCategory,
-			ImageCategory: imageCategory,
+			Name:         name,
+			Description:  description,
+			SlugCategory: slugCategory,
 		})
 		if err != nil {
 			r.logger.Error("Failed to create category:", zap.Any("error", err))

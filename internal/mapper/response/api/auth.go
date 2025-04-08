@@ -13,6 +13,32 @@ func NewAuthResponseMapper() *authResponseMapper {
 }
 
 func (s *authResponseMapper) ToResponseLogin(res *pb.ApiResponseLogin) *response.ApiResponseLogin {
+	defaultErrorResponse := &response.ApiResponseLogin{
+		Status:  "error",
+		Message: "authentication failed",
+		Data:    nil,
+	}
+
+	if res == nil {
+		return defaultErrorResponse
+	}
+
+	if res.Status == "" {
+		res.Status = "error"
+	}
+
+	if res.Message == "" {
+		res.Message = "authentication processed with empty response"
+	}
+
+	if res.Data == nil || res.Data.AccessToken == "" {
+		return &response.ApiResponseLogin{
+			Status:  res.Status,
+			Message: res.Message,
+			Data:    nil,
+		}
+	}
+
 	return &response.ApiResponseLogin{
 		Status:  res.Status,
 		Message: res.Message,

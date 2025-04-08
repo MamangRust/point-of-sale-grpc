@@ -55,6 +55,7 @@ SELECT *
 FROM order_items
 WHERE order_id = $1
   AND deleted_at IS NULL;
+  
 
 -- name: UpdateOrderItem :one
 UPDATE order_items
@@ -65,15 +66,14 @@ WHERE order_item_id = $1
   AND deleted_at IS NULL
   RETURNING *;
 
--- Trash Order Item
+
+-- Correct query to trash a specific order item
 -- name: TrashOrderItem :one
 UPDATE order_items
-SET
-    deleted_at = current_timestamp
-WHERE
-    order_id = $1
-    AND deleted_at IS NULL
-    RETURNING *;    
+SET deleted_at = current_timestamp
+WHERE order_item_id = $1  
+AND deleted_at IS NULL
+RETURNING *;
 
 
 -- Restore Trashed Order Item
@@ -82,14 +82,14 @@ UPDATE order_items
 SET
     deleted_at = NULL
 WHERE
-    order_id = $1
+    order_item_id = $1
     AND deleted_at IS NOT NULL
   RETURNING *;
 
 
 -- Delete Order Item Permanently
 -- name: DeleteOrderItemPermanently :exec
-DELETE FROM order_items WHERE order_id = $1 AND deleted_at IS NOT NULL;
+DELETE FROM order_items WHERE order_item_id = $1 AND deleted_at IS NOT NULL;
 
 
 -- Restore All Trashed Order Item
@@ -106,3 +106,10 @@ WHERE
 DELETE FROM order_items 
 WHERE
     deleted_at IS NOT NULL;
+
+
+-- ALTER TABLE order_items
+-- DROP CONSTRAINT order_items_order_id_fkey,
+-- ADD CONSTRAINT order_items_order_id_fkey
+-- FOREIGN KEY (order_id) REFERENCES orders(order_id)
+-- ON DELETE CASCADE;

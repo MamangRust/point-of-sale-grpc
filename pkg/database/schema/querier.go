@@ -6,6 +6,7 @@ package db
 
 import (
 	"context"
+	"time"
 )
 
 type Querier interface {
@@ -48,7 +49,7 @@ type Querier interface {
 	// Delete Merchant Permanently
 	DeleteMerchantPermanently(ctx context.Context, merchantID int32) error
 	// Delete Order Item Permanently
-	DeleteOrderItemPermanently(ctx context.Context, orderID int32) error
+	DeleteOrderItemPermanently(ctx context.Context, orderItemID int32) error
 	// Delete Order Permanently
 	DeleteOrderPermanently(ctx context.Context, orderID int32) error
 	DeletePermanentRole(ctx context.Context, roleID int32) error
@@ -82,6 +83,29 @@ type Querier interface {
 	GetMerchantsActive(ctx context.Context, arg GetMerchantsActiveParams) ([]*GetMerchantsActiveRow, error)
 	// Get Trashed Merchants with Pagination and Total Count
 	GetMerchantsTrashed(ctx context.Context, arg GetMerchantsTrashedParams) ([]*GetMerchantsTrashedRow, error)
+	GetMonthlyAmountTransactionFailed(ctx context.Context, arg GetMonthlyAmountTransactionFailedParams) ([]*GetMonthlyAmountTransactionFailedRow, error)
+	GetMonthlyAmountTransactionFailedByMerchant(ctx context.Context, arg GetMonthlyAmountTransactionFailedByMerchantParams) ([]*GetMonthlyAmountTransactionFailedByMerchantRow, error)
+	GetMonthlyAmountTransactionSuccess(ctx context.Context, arg GetMonthlyAmountTransactionSuccessParams) ([]*GetMonthlyAmountTransactionSuccessRow, error)
+	GetMonthlyAmountTransactionSuccessByMerchant(ctx context.Context, arg GetMonthlyAmountTransactionSuccessByMerchantParams) ([]*GetMonthlyAmountTransactionSuccessByMerchantRow, error)
+	GetMonthlyCashier(ctx context.Context, dollar_1 time.Time) ([]*GetMonthlyCashierRow, error)
+	GetMonthlyCashierByCashierId(ctx context.Context, arg GetMonthlyCashierByCashierIdParams) ([]*GetMonthlyCashierByCashierIdRow, error)
+	GetMonthlyCashierByMerchant(ctx context.Context, arg GetMonthlyCashierByMerchantParams) ([]*GetMonthlyCashierByMerchantRow, error)
+	GetMonthlyCategory(ctx context.Context, dollar_1 time.Time) ([]*GetMonthlyCategoryRow, error)
+	GetMonthlyCategoryById(ctx context.Context, arg GetMonthlyCategoryByIdParams) ([]*GetMonthlyCategoryByIdRow, error)
+	GetMonthlyCategoryByMerchant(ctx context.Context, arg GetMonthlyCategoryByMerchantParams) ([]*GetMonthlyCategoryByMerchantRow, error)
+	GetMonthlyOrder(ctx context.Context, dollar_1 time.Time) ([]*GetMonthlyOrderRow, error)
+	GetMonthlyOrderByMerchant(ctx context.Context, arg GetMonthlyOrderByMerchantParams) ([]*GetMonthlyOrderByMerchantRow, error)
+	GetMonthlyTotalPrice(ctx context.Context, arg GetMonthlyTotalPriceParams) ([]*GetMonthlyTotalPriceRow, error)
+	GetMonthlyTotalPriceById(ctx context.Context, arg GetMonthlyTotalPriceByIdParams) ([]*GetMonthlyTotalPriceByIdRow, error)
+	GetMonthlyTotalPriceByMerchant(ctx context.Context, arg GetMonthlyTotalPriceByMerchantParams) ([]*GetMonthlyTotalPriceByMerchantRow, error)
+	GetMonthlyTotalRevenue(ctx context.Context, arg GetMonthlyTotalRevenueParams) ([]*GetMonthlyTotalRevenueRow, error)
+	GetMonthlyTotalRevenueById(ctx context.Context, arg GetMonthlyTotalRevenueByIdParams) ([]*GetMonthlyTotalRevenueByIdRow, error)
+	GetMonthlyTotalRevenueByMerchant(ctx context.Context, arg GetMonthlyTotalRevenueByMerchantParams) ([]*GetMonthlyTotalRevenueByMerchantRow, error)
+	GetMonthlyTotalSalesById(ctx context.Context, arg GetMonthlyTotalSalesByIdParams) ([]*GetMonthlyTotalSalesByIdRow, error)
+	GetMonthlyTotalSalesByMerchant(ctx context.Context, arg GetMonthlyTotalSalesByMerchantParams) ([]*GetMonthlyTotalSalesByMerchantRow, error)
+	GetMonthlyTotalSalesCashier(ctx context.Context, arg GetMonthlyTotalSalesCashierParams) ([]*GetMonthlyTotalSalesCashierRow, error)
+	GetMonthlyTransactionMethods(ctx context.Context, dollar_1 time.Time) ([]*GetMonthlyTransactionMethodsRow, error)
+	GetMonthlyTransactionMethodsByMerchant(ctx context.Context, arg GetMonthlyTransactionMethodsByMerchantParams) ([]*GetMonthlyTransactionMethodsByMerchantRow, error)
 	GetOrderByID(ctx context.Context, orderID int32) (*Order, error)
 	// Get Order Items  with Pagination and Total Count
 	GetOrderItems(ctx context.Context, arg GetOrderItemsParams) ([]*GetOrderItemsRow, error)
@@ -99,6 +123,7 @@ type Querier interface {
 	// Get Trashed Orders with Pagination and Total Count
 	GetOrdersTrashed(ctx context.Context, arg GetOrdersTrashedParams) ([]*GetOrdersTrashedRow, error)
 	GetProductByID(ctx context.Context, productID int32) (*Product, error)
+	GetProductByIdTrashed(ctx context.Context, productID int32) (*Product, error)
 	GetProducts(ctx context.Context, arg GetProductsParams) ([]*GetProductsRow, error)
 	// Get Active Products with Pagination and Total Count
 	GetProductsActive(ctx context.Context, arg GetProductsActiveParams) ([]*GetProductsActiveRow, error)
@@ -132,6 +157,29 @@ type Querier interface {
 	GetUsers(ctx context.Context, arg GetUsersParams) ([]*GetUsersRow, error)
 	// Get Active Users with Pagination and Total Count
 	GetUsersActive(ctx context.Context, arg GetUsersActiveParams) ([]*GetUsersActiveRow, error)
+	GetYearlyAmountTransactionFailed(ctx context.Context, dollar_1 int32) ([]*GetYearlyAmountTransactionFailedRow, error)
+	GetYearlyAmountTransactionFailedByMerchant(ctx context.Context, arg GetYearlyAmountTransactionFailedByMerchantParams) ([]*GetYearlyAmountTransactionFailedByMerchantRow, error)
+	GetYearlyAmountTransactionSuccess(ctx context.Context, dollar_1 int32) ([]*GetYearlyAmountTransactionSuccessRow, error)
+	GetYearlyAmountTransactionSuccessByMerchant(ctx context.Context, arg GetYearlyAmountTransactionSuccessByMerchantParams) ([]*GetYearlyAmountTransactionSuccessByMerchantRow, error)
+	GetYearlyCashier(ctx context.Context, dollar_1 time.Time) ([]*GetYearlyCashierRow, error)
+	GetYearlyCashierByCashierId(ctx context.Context, arg GetYearlyCashierByCashierIdParams) ([]*GetYearlyCashierByCashierIdRow, error)
+	GetYearlyCashierByMerchant(ctx context.Context, arg GetYearlyCashierByMerchantParams) ([]*GetYearlyCashierByMerchantRow, error)
+	GetYearlyCategory(ctx context.Context, dollar_1 time.Time) ([]*GetYearlyCategoryRow, error)
+	GetYearlyCategoryById(ctx context.Context, arg GetYearlyCategoryByIdParams) ([]*GetYearlyCategoryByIdRow, error)
+	GetYearlyCategoryByMerchant(ctx context.Context, arg GetYearlyCategoryByMerchantParams) ([]*GetYearlyCategoryByMerchantRow, error)
+	GetYearlyOrder(ctx context.Context, dollar_1 time.Time) ([]*GetYearlyOrderRow, error)
+	GetYearlyOrderByMerchant(ctx context.Context, arg GetYearlyOrderByMerchantParams) ([]*GetYearlyOrderByMerchantRow, error)
+	GetYearlyTotalPrice(ctx context.Context, dollar_1 int32) ([]*GetYearlyTotalPriceRow, error)
+	GetYearlyTotalPriceById(ctx context.Context, arg GetYearlyTotalPriceByIdParams) ([]*GetYearlyTotalPriceByIdRow, error)
+	GetYearlyTotalPriceByMerchant(ctx context.Context, arg GetYearlyTotalPriceByMerchantParams) ([]*GetYearlyTotalPriceByMerchantRow, error)
+	GetYearlyTotalRevenue(ctx context.Context, dollar_1 int32) ([]*GetYearlyTotalRevenueRow, error)
+	GetYearlyTotalRevenueById(ctx context.Context, arg GetYearlyTotalRevenueByIdParams) ([]*GetYearlyTotalRevenueByIdRow, error)
+	GetYearlyTotalRevenueByMerchant(ctx context.Context, arg GetYearlyTotalRevenueByMerchantParams) ([]*GetYearlyTotalRevenueByMerchantRow, error)
+	GetYearlyTotalSalesById(ctx context.Context, arg GetYearlyTotalSalesByIdParams) ([]*GetYearlyTotalSalesByIdRow, error)
+	GetYearlyTotalSalesByMerchant(ctx context.Context, arg GetYearlyTotalSalesByMerchantParams) ([]*GetYearlyTotalSalesByMerchantRow, error)
+	GetYearlyTotalSalesCashier(ctx context.Context, dollar_1 int32) ([]*GetYearlyTotalSalesCashierRow, error)
+	GetYearlyTransactionMethods(ctx context.Context, dollar_1 time.Time) ([]*GetYearlyTransactionMethodsRow, error)
+	GetYearlyTransactionMethodsByMerchant(ctx context.Context, arg GetYearlyTransactionMethodsByMerchantParams) ([]*GetYearlyTransactionMethodsByMerchantRow, error)
 	RemoveRoleFromUser(ctx context.Context, arg RemoveRoleFromUserParams) error
 	// Restore All Trashed Cashier
 	RestoreAllCashiers(ctx context.Context) error
@@ -160,7 +208,7 @@ type Querier interface {
 	// Restore Trashed Order
 	RestoreOrder(ctx context.Context, orderID int32) (*Order, error)
 	// Restore Trashed Order Item
-	RestoreOrderItem(ctx context.Context, orderID int32) (*OrderItem, error)
+	RestoreOrderItem(ctx context.Context, orderItemID int32) (*OrderItem, error)
 	// Restore Trashed Product
 	RestoreProduct(ctx context.Context, productID int32) (*Product, error)
 	RestoreRole(ctx context.Context, roleID int32) error
@@ -175,8 +223,8 @@ type Querier interface {
 	TrashCategory(ctx context.Context, categoryID int32) (*Category, error)
 	// Trash Merchant
 	TrashMerchant(ctx context.Context, merchantID int32) (*Merchant, error)
-	// Trash Order Item
-	TrashOrderItem(ctx context.Context, orderID int32) (*OrderItem, error)
+	// Correct query to trash a specific order item
+	TrashOrderItem(ctx context.Context, orderItemID int32) (*OrderItem, error)
 	// Trash Product
 	TrashProduct(ctx context.Context, productID int32) (*Product, error)
 	TrashRole(ctx context.Context, roleID int32) error

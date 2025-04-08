@@ -139,8 +139,10 @@ func (r *userRepository) CreateUser(request *requests.CreateUserRequest) (*recor
 }
 
 func (r *userRepository) UpdateUser(request *requests.UpdateUserRequest) (*record.UserRecord, error) {
+	id := request.UserID
+
 	req := db.UpdateUserParams{
-		UserID:    int32(request.UserID),
+		UserID:    int32(*id),
 		Firstname: request.FirstName,
 		Lastname:  request.LastName,
 		Email:     request.Email,

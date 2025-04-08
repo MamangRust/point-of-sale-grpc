@@ -10,7 +10,6 @@ CREATE TABLE "products" (
     "count_in_stock" INT NOT NULL DEFAULT 0,
     "brand" VARCHAR(100),
     "weight" INT,
-    "rating" FLOAT DEFAULT 0.0,
     "slug_product" VARCHAR(100) UNIQUE,
     "image_product" TEXT,
     "barcode" VARCHAR(50) UNIQUE,

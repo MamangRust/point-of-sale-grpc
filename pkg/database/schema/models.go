@@ -20,14 +20,13 @@ type Cashier struct {
 }
 
 type Category struct {
-	CategoryID    int32          `json:"category_id"`
-	Name          string         `json:"name"`
-	Description   sql.NullString `json:"description"`
-	SlugCategory  sql.NullString `json:"slug_category"`
-	ImageCategory sql.NullString `json:"image_category"`
-	CreatedAt     sql.NullTime   `json:"created_at"`
-	UpdatedAt     sql.NullTime   `json:"updated_at"`
-	DeletedAt     sql.NullTime   `json:"deleted_at"`
+	CategoryID   int32          `json:"category_id"`
+	Name         string         `json:"name"`
+	Description  sql.NullString `json:"description"`
+	SlugCategory sql.NullString `json:"slug_category"`
+	CreatedAt    sql.NullTime   `json:"created_at"`
+	UpdatedAt    sql.NullTime   `json:"updated_at"`
+	DeletedAt    sql.NullTime   `json:"deleted_at"`
 }
 
 type Merchant struct {
@@ -48,7 +47,7 @@ type Order struct {
 	OrderID    int32        `json:"order_id"`
 	MerchantID int32        `json:"merchant_id"`
 	CashierID  int32        `json:"cashier_id"`
-	TotalPrice int32        `json:"total_price"`
+	TotalPrice int64        `json:"total_price"`
 	CreatedAt  sql.NullTime `json:"created_at"`
 	UpdatedAt  sql.NullTime `json:"updated_at"`
 	DeletedAt  sql.NullTime `json:"deleted_at"`
@@ -66,22 +65,21 @@ type OrderItem struct {
 }
 
 type Product struct {
-	ProductID    int32           `json:"product_id"`
-	MerchantID   int32           `json:"merchant_id"`
-	CategoryID   int32           `json:"category_id"`
-	Name         string          `json:"name"`
-	Description  sql.NullString  `json:"description"`
-	Price        int32           `json:"price"`
-	CountInStock int32           `json:"count_in_stock"`
-	Brand        sql.NullString  `json:"brand"`
-	Weight       sql.NullInt32   `json:"weight"`
-	Rating       sql.NullFloat64 `json:"rating"`
-	SlugProduct  sql.NullString  `json:"slug_product"`
-	ImageProduct sql.NullString  `json:"image_product"`
-	Barcode      sql.NullString  `json:"barcode"`
-	CreatedAt    sql.NullTime    `json:"created_at"`
-	UpdatedAt    sql.NullTime    `json:"updated_at"`
-	DeletedAt    sql.NullTime    `json:"deleted_at"`
+	ProductID    int32          `json:"product_id"`
+	MerchantID   int32          `json:"merchant_id"`
+	CategoryID   int32          `json:"category_id"`
+	Name         string         `json:"name"`
+	Description  sql.NullString `json:"description"`
+	Price        int32          `json:"price"`
+	CountInStock int32          `json:"count_in_stock"`
+	Brand        sql.NullString `json:"brand"`
+	Weight       sql.NullInt32  `json:"weight"`
+	SlugProduct  sql.NullString `json:"slug_product"`
+	ImageProduct sql.NullString `json:"image_product"`
+	Barcode      sql.NullString `json:"barcode"`
+	CreatedAt    sql.NullTime   `json:"created_at"`
+	UpdatedAt    sql.NullTime   `json:"updated_at"`
+	DeletedAt    sql.NullTime   `json:"deleted_at"`
 }
 
 type RefreshToken struct {

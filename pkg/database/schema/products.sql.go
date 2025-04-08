@@ -11,24 +11,23 @@ import (
 )
 
 const createProduct = `-- name: CreateProduct :one
-INSERT INTO products (merchant_id, category_id, name, description, price, count_in_stock, brand, weight, rating, slug_product, image_product, barcode)
-VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
-RETURNING product_id, merchant_id, category_id, name, description, price, count_in_stock, brand, weight, rating, slug_product, image_product, barcode, created_at, updated_at, deleted_at
+INSERT INTO products (merchant_id, category_id, name, description, price, count_in_stock, brand, weight, slug_product, image_product, barcode)
+VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+RETURNING product_id, merchant_id, category_id, name, description, price, count_in_stock, brand, weight, slug_product, image_product, barcode, created_at, updated_at, deleted_at
 `
 
 type CreateProductParams struct {
-	MerchantID   int32           `json:"merchant_id"`
-	CategoryID   int32           `json:"category_id"`
-	Name         string          `json:"name"`
-	Description  sql.NullString  `json:"description"`
-	Price        int32           `json:"price"`
-	CountInStock int32           `json:"count_in_stock"`
-	Brand        sql.NullString  `json:"brand"`
-	Weight       sql.NullInt32   `json:"weight"`
-	Rating       sql.NullFloat64 `json:"rating"`
-	SlugProduct  sql.NullString  `json:"slug_product"`
-	ImageProduct sql.NullString  `json:"image_product"`
-	Barcode      sql.NullString  `json:"barcode"`
+	MerchantID   int32          `json:"merchant_id"`
+	CategoryID   int32          `json:"category_id"`
+	Name         string         `json:"name"`
+	Description  sql.NullString `json:"description"`
+	Price        int32          `json:"price"`
+	CountInStock int32          `json:"count_in_stock"`
+	Brand        sql.NullString `json:"brand"`
+	Weight       sql.NullInt32  `json:"weight"`
+	SlugProduct  sql.NullString `json:"slug_product"`
+	ImageProduct sql.NullString `json:"image_product"`
+	Barcode      sql.NullString `json:"barcode"`
 }
 
 func (q *Queries) CreateProduct(ctx context.Context, arg CreateProductParams) (*Product, error) {
@@ -41,7 +40,6 @@ func (q *Queries) CreateProduct(ctx context.Context, arg CreateProductParams) (*
 		arg.CountInStock,
 		arg.Brand,
 		arg.Weight,
-		arg.Rating,
 		arg.SlugProduct,
 		arg.ImageProduct,
 		arg.Barcode,
@@ -57,7 +55,6 @@ func (q *Queries) CreateProduct(ctx context.Context, arg CreateProductParams) (*
 		&i.CountInStock,
 		&i.Brand,
 		&i.Weight,
-		&i.Rating,
 		&i.SlugProduct,
 		&i.ImageProduct,
 		&i.Barcode,
@@ -91,7 +88,7 @@ func (q *Queries) DeleteProductPermanently(ctx context.Context, productID int32)
 }
 
 const getProductByID = `-- name: GetProductByID :one
-SELECT product_id, merchant_id, category_id, name, description, price, count_in_stock, brand, weight, rating, slug_product, image_product, barcode, created_at, updated_at, deleted_at
+SELECT product_id, merchant_id, category_id, name, description, price, count_in_stock, brand, weight, slug_product, image_product, barcode, created_at, updated_at, deleted_at
 FROM products
 WHERE product_id = $1
   AND deleted_at IS NULL
@@ -110,7 +107,33 @@ func (q *Queries) GetProductByID(ctx context.Context, productID int32) (*Product
 		&i.CountInStock,
 		&i.Brand,
 		&i.Weight,
-		&i.Rating,
+		&i.SlugProduct,
+		&i.ImageProduct,
+		&i.Barcode,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.DeletedAt,
+	)
+	return &i, err
+}
+
+const getProductByIdTrashed = `-- name: GetProductByIdTrashed :one
+SELECT product_id, merchant_id, category_id, name, description, price, count_in_stock, brand, weight, slug_product, image_product, barcode, created_at, updated_at, deleted_at FROM products WHERE product_id = $1
+`
+
+func (q *Queries) GetProductByIdTrashed(ctx context.Context, productID int32) (*Product, error) {
+	row := q.db.QueryRowContext(ctx, getProductByIdTrashed, productID)
+	var i Product
+	err := row.Scan(
+		&i.ProductID,
+		&i.MerchantID,
+		&i.CategoryID,
+		&i.Name,
+		&i.Description,
+		&i.Price,
+		&i.CountInStock,
+		&i.Brand,
+		&i.Weight,
 		&i.SlugProduct,
 		&i.ImageProduct,
 		&i.Barcode,
@@ -123,9 +146,9 @@ func (q *Queries) GetProductByID(ctx context.Context, productID int32) (*Product
 
 const getProducts = `-- name: GetProducts :many
 SELECT
-    product_id, merchant_id, category_id, name, description, price, count_in_stock, brand, weight, rating, slug_product, image_product, barcode, created_at, updated_at, deleted_at,
+    product_id, merchant_id, category_id, name, description, price, count_in_stock, brand, weight, slug_product, image_product, barcode, created_at, updated_at, deleted_at,
     COUNT(*) OVER() AS total_count
-FROM products
+FROM products as p
 WHERE deleted_at IS NULL
 AND ($1::TEXT IS NULL 
        OR p.name ILIKE '%' || $1 || '%'
@@ -144,23 +167,22 @@ type GetProductsParams struct {
 }
 
 type GetProductsRow struct {
-	ProductID    int32           `json:"product_id"`
-	MerchantID   int32           `json:"merchant_id"`
-	CategoryID   int32           `json:"category_id"`
-	Name         string          `json:"name"`
-	Description  sql.NullString  `json:"description"`
-	Price        int32           `json:"price"`
-	CountInStock int32           `json:"count_in_stock"`
-	Brand        sql.NullString  `json:"brand"`
-	Weight       sql.NullInt32   `json:"weight"`
-	Rating       sql.NullFloat64 `json:"rating"`
-	SlugProduct  sql.NullString  `json:"slug_product"`
-	ImageProduct sql.NullString  `json:"image_product"`
-	Barcode      sql.NullString  `json:"barcode"`
-	CreatedAt    sql.NullTime    `json:"created_at"`
-	UpdatedAt    sql.NullTime    `json:"updated_at"`
-	DeletedAt    sql.NullTime    `json:"deleted_at"`
-	TotalCount   int64           `json:"total_count"`
+	ProductID    int32          `json:"product_id"`
+	MerchantID   int32          `json:"merchant_id"`
+	CategoryID   int32          `json:"category_id"`
+	Name         string         `json:"name"`
+	Description  sql.NullString `json:"description"`
+	Price        int32          `json:"price"`
+	CountInStock int32          `json:"count_in_stock"`
+	Brand        sql.NullString `json:"brand"`
+	Weight       sql.NullInt32  `json:"weight"`
+	SlugProduct  sql.NullString `json:"slug_product"`
+	ImageProduct sql.NullString `json:"image_product"`
+	Barcode      sql.NullString `json:"barcode"`
+	CreatedAt    sql.NullTime   `json:"created_at"`
+	UpdatedAt    sql.NullTime   `json:"updated_at"`
+	DeletedAt    sql.NullTime   `json:"deleted_at"`
+	TotalCount   int64          `json:"total_count"`
 }
 
 func (q *Queries) GetProducts(ctx context.Context, arg GetProductsParams) ([]*GetProductsRow, error) {
@@ -182,7 +204,6 @@ func (q *Queries) GetProducts(ctx context.Context, arg GetProductsParams) ([]*Ge
 			&i.CountInStock,
 			&i.Brand,
 			&i.Weight,
-			&i.Rating,
 			&i.SlugProduct,
 			&i.ImageProduct,
 			&i.Barcode,
@@ -206,9 +227,9 @@ func (q *Queries) GetProducts(ctx context.Context, arg GetProductsParams) ([]*Ge
 
 const getProductsActive = `-- name: GetProductsActive :many
 SELECT
-    product_id, merchant_id, category_id, name, description, price, count_in_stock, brand, weight, rating, slug_product, image_product, barcode, created_at, updated_at, deleted_at,
+    product_id, merchant_id, category_id, name, description, price, count_in_stock, brand, weight, slug_product, image_product, barcode, created_at, updated_at, deleted_at,
     COUNT(*) OVER() AS total_count
-FROM products
+FROM products as p
 WHERE deleted_at IS NULL
 AND ($1::TEXT IS NULL 
        OR p.name ILIKE '%' || $1 || '%'
@@ -227,23 +248,22 @@ type GetProductsActiveParams struct {
 }
 
 type GetProductsActiveRow struct {
-	ProductID    int32           `json:"product_id"`
-	MerchantID   int32           `json:"merchant_id"`
-	CategoryID   int32           `json:"category_id"`
-	Name         string          `json:"name"`
-	Description  sql.NullString  `json:"description"`
-	Price        int32           `json:"price"`
-	CountInStock int32           `json:"count_in_stock"`
-	Brand        sql.NullString  `json:"brand"`
-	Weight       sql.NullInt32   `json:"weight"`
-	Rating       sql.NullFloat64 `json:"rating"`
-	SlugProduct  sql.NullString  `json:"slug_product"`
-	ImageProduct sql.NullString  `json:"image_product"`
-	Barcode      sql.NullString  `json:"barcode"`
-	CreatedAt    sql.NullTime    `json:"created_at"`
-	UpdatedAt    sql.NullTime    `json:"updated_at"`
-	DeletedAt    sql.NullTime    `json:"deleted_at"`
-	TotalCount   int64           `json:"total_count"`
+	ProductID    int32          `json:"product_id"`
+	MerchantID   int32          `json:"merchant_id"`
+	CategoryID   int32          `json:"category_id"`
+	Name         string         `json:"name"`
+	Description  sql.NullString `json:"description"`
+	Price        int32          `json:"price"`
+	CountInStock int32          `json:"count_in_stock"`
+	Brand        sql.NullString `json:"brand"`
+	Weight       sql.NullInt32  `json:"weight"`
+	SlugProduct  sql.NullString `json:"slug_product"`
+	ImageProduct sql.NullString `json:"image_product"`
+	Barcode      sql.NullString `json:"barcode"`
+	CreatedAt    sql.NullTime   `json:"created_at"`
+	UpdatedAt    sql.NullTime   `json:"updated_at"`
+	DeletedAt    sql.NullTime   `json:"deleted_at"`
+	TotalCount   int64          `json:"total_count"`
 }
 
 // Get Active Products with Pagination and Total Count
@@ -266,7 +286,6 @@ func (q *Queries) GetProductsActive(ctx context.Context, arg GetProductsActivePa
 			&i.CountInStock,
 			&i.Brand,
 			&i.Weight,
-			&i.Rating,
 			&i.SlugProduct,
 			&i.ImageProduct,
 			&i.Barcode,
@@ -290,7 +309,7 @@ func (q *Queries) GetProductsActive(ctx context.Context, arg GetProductsActivePa
 
 const getProductsByCategoryName = `-- name: GetProductsByCategoryName :many
 SELECT
-    p.product_id, p.merchant_id, p.category_id, p.name, p.description, p.price, p.count_in_stock, p.brand, p.weight, p.rating, p.slug_product, p.image_product, p.barcode, p.created_at, p.updated_at, p.deleted_at,
+    p.product_id, p.merchant_id, p.category_id, p.name, p.description, p.price, p.count_in_stock, p.brand, p.weight, p.slug_product, p.image_product, p.barcode, p.created_at, p.updated_at, p.deleted_at,
     COUNT(*) OVER() AS total_count
 FROM products p
 JOIN categories c ON p.category_id = c.category_id
@@ -314,23 +333,22 @@ type GetProductsByCategoryNameParams struct {
 }
 
 type GetProductsByCategoryNameRow struct {
-	ProductID    int32           `json:"product_id"`
-	MerchantID   int32           `json:"merchant_id"`
-	CategoryID   int32           `json:"category_id"`
-	Name         string          `json:"name"`
-	Description  sql.NullString  `json:"description"`
-	Price        int32           `json:"price"`
-	CountInStock int32           `json:"count_in_stock"`
-	Brand        sql.NullString  `json:"brand"`
-	Weight       sql.NullInt32   `json:"weight"`
-	Rating       sql.NullFloat64 `json:"rating"`
-	SlugProduct  sql.NullString  `json:"slug_product"`
-	ImageProduct sql.NullString  `json:"image_product"`
-	Barcode      sql.NullString  `json:"barcode"`
-	CreatedAt    sql.NullTime    `json:"created_at"`
-	UpdatedAt    sql.NullTime    `json:"updated_at"`
-	DeletedAt    sql.NullTime    `json:"deleted_at"`
-	TotalCount   int64           `json:"total_count"`
+	ProductID    int32          `json:"product_id"`
+	MerchantID   int32          `json:"merchant_id"`
+	CategoryID   int32          `json:"category_id"`
+	Name         string         `json:"name"`
+	Description  sql.NullString `json:"description"`
+	Price        int32          `json:"price"`
+	CountInStock int32          `json:"count_in_stock"`
+	Brand        sql.NullString `json:"brand"`
+	Weight       sql.NullInt32  `json:"weight"`
+	SlugProduct  sql.NullString `json:"slug_product"`
+	ImageProduct sql.NullString `json:"image_product"`
+	Barcode      sql.NullString `json:"barcode"`
+	CreatedAt    sql.NullTime   `json:"created_at"`
+	UpdatedAt    sql.NullTime   `json:"updated_at"`
+	DeletedAt    sql.NullTime   `json:"deleted_at"`
+	TotalCount   int64          `json:"total_count"`
 }
 
 // Get Products by Category Name with Filters
@@ -358,7 +376,6 @@ func (q *Queries) GetProductsByCategoryName(ctx context.Context, arg GetProducts
 			&i.CountInStock,
 			&i.Brand,
 			&i.Weight,
-			&i.Rating,
 			&i.SlugProduct,
 			&i.ImageProduct,
 			&i.Barcode,
@@ -381,53 +398,78 @@ func (q *Queries) GetProductsByCategoryName(ctx context.Context, arg GetProducts
 }
 
 const getProductsByMerchant = `-- name: GetProductsByMerchant :many
-SELECT
-    product_id, merchant_id, category_id, name, description, price, count_in_stock, brand, weight, rating, slug_product, image_product, barcode, created_at, updated_at, deleted_at,
-    COUNT(*) OVER() AS total_count
-FROM products
-WHERE merchant_id = $1
-AND deleted_at IS NULL
-AND ($2::TEXT IS NULL 
-       OR p.name ILIKE '%' || $2 || '%'
-       OR p.description ILIKE '%' || $2 || '%'
-       OR p.brand ILIKE '%' || $2 || '%'
-       OR p.slug_product ILIKE '%' || $2 || '%'
-       OR p.barcode ILIKE '%' || $2 || '%')
-ORDER BY created_at DESC
-LIMIT $3 OFFSET $4
+WITH filtered_products AS (
+    SELECT 
+        p.product_id,
+        p.name,
+        p.description,
+        p.price,
+        p.count_in_stock,
+        p.brand,
+        p.image_product,
+        p.created_at,  
+        c.name AS category_name
+    FROM 
+        products p
+    JOIN 
+        categories c ON p.category_id = c.category_id
+    WHERE 
+        p.deleted_at IS NULL
+        AND p.merchant_id = $1  
+        AND (
+            p.name ILIKE '%' || COALESCE($2, '') || '%' 
+            OR p.description ILIKE '%' || COALESCE($2, '') || '%'
+            OR $2 IS NULL
+        )
+        AND (
+            c.category_id = NULLIF($3, 0) 
+            OR NULLIF($3, 0) IS NULL
+        )
+        AND (
+            p.price >= COALESCE(NULLIF($4, 0), 0)
+            AND p.price <= COALESCE(NULLIF($5, 0), 999999999)
+        )
+)
+SELECT 
+    (SELECT COUNT(*) FROM filtered_products) AS total_count,
+    fp.product_id, fp.name, fp.description, fp.price, fp.count_in_stock, fp.brand, fp.image_product, fp.created_at, fp.category_name
+FROM 
+    filtered_products fp
+ORDER BY 
+    fp.created_at DESC
+LIMIT $6 OFFSET $7
 `
 
 type GetProductsByMerchantParams struct {
-	MerchantID int32  `json:"merchant_id"`
-	Column2    string `json:"column_2"`
-	Limit      int32  `json:"limit"`
-	Offset     int32  `json:"offset"`
+	MerchantID int32          `json:"merchant_id"`
+	Column2    sql.NullString `json:"column_2"`
+	Column3    interface{}    `json:"column_3"`
+	Column4    interface{}    `json:"column_4"`
+	Column5    interface{}    `json:"column_5"`
+	Limit      int32          `json:"limit"`
+	Offset     int32          `json:"offset"`
 }
 
 type GetProductsByMerchantRow struct {
-	ProductID    int32           `json:"product_id"`
-	MerchantID   int32           `json:"merchant_id"`
-	CategoryID   int32           `json:"category_id"`
-	Name         string          `json:"name"`
-	Description  sql.NullString  `json:"description"`
-	Price        int32           `json:"price"`
-	CountInStock int32           `json:"count_in_stock"`
-	Brand        sql.NullString  `json:"brand"`
-	Weight       sql.NullInt32   `json:"weight"`
-	Rating       sql.NullFloat64 `json:"rating"`
-	SlugProduct  sql.NullString  `json:"slug_product"`
-	ImageProduct sql.NullString  `json:"image_product"`
-	Barcode      sql.NullString  `json:"barcode"`
-	CreatedAt    sql.NullTime    `json:"created_at"`
-	UpdatedAt    sql.NullTime    `json:"updated_at"`
-	DeletedAt    sql.NullTime    `json:"deleted_at"`
-	TotalCount   int64           `json:"total_count"`
+	TotalCount   int64          `json:"total_count"`
+	ProductID    int32          `json:"product_id"`
+	Name         string         `json:"name"`
+	Description  sql.NullString `json:"description"`
+	Price        int32          `json:"price"`
+	CountInStock int32          `json:"count_in_stock"`
+	Brand        sql.NullString `json:"brand"`
+	ImageProduct sql.NullString `json:"image_product"`
+	CreatedAt    sql.NullTime   `json:"created_at"`
+	CategoryName string         `json:"category_name"`
 }
 
 func (q *Queries) GetProductsByMerchant(ctx context.Context, arg GetProductsByMerchantParams) ([]*GetProductsByMerchantRow, error) {
 	rows, err := q.db.QueryContext(ctx, getProductsByMerchant,
 		arg.MerchantID,
 		arg.Column2,
+		arg.Column3,
+		arg.Column4,
+		arg.Column5,
 		arg.Limit,
 		arg.Offset,
 	)
@@ -439,23 +481,16 @@ func (q *Queries) GetProductsByMerchant(ctx context.Context, arg GetProductsByMe
 	for rows.Next() {
 		var i GetProductsByMerchantRow
 		if err := rows.Scan(
+			&i.TotalCount,
 			&i.ProductID,
-			&i.MerchantID,
-			&i.CategoryID,
 			&i.Name,
 			&i.Description,
 			&i.Price,
 			&i.CountInStock,
 			&i.Brand,
-			&i.Weight,
-			&i.Rating,
-			&i.SlugProduct,
 			&i.ImageProduct,
-			&i.Barcode,
 			&i.CreatedAt,
-			&i.UpdatedAt,
-			&i.DeletedAt,
-			&i.TotalCount,
+			&i.CategoryName,
 		); err != nil {
 			return nil, err
 		}
@@ -472,9 +507,9 @@ func (q *Queries) GetProductsByMerchant(ctx context.Context, arg GetProductsByMe
 
 const getProductsTrashed = `-- name: GetProductsTrashed :many
 SELECT
-    product_id, merchant_id, category_id, name, description, price, count_in_stock, brand, weight, rating, slug_product, image_product, barcode, created_at, updated_at, deleted_at,
+    product_id, merchant_id, category_id, name, description, price, count_in_stock, brand, weight, slug_product, image_product, barcode, created_at, updated_at, deleted_at,
     COUNT(*) OVER() AS total_count
-FROM products
+FROM products as p
 WHERE deleted_at IS NOT NULL
 AND ($1::TEXT IS NULL 
        OR p.name ILIKE '%' || $1 || '%'
@@ -493,23 +528,22 @@ type GetProductsTrashedParams struct {
 }
 
 type GetProductsTrashedRow struct {
-	ProductID    int32           `json:"product_id"`
-	MerchantID   int32           `json:"merchant_id"`
-	CategoryID   int32           `json:"category_id"`
-	Name         string          `json:"name"`
-	Description  sql.NullString  `json:"description"`
-	Price        int32           `json:"price"`
-	CountInStock int32           `json:"count_in_stock"`
-	Brand        sql.NullString  `json:"brand"`
-	Weight       sql.NullInt32   `json:"weight"`
-	Rating       sql.NullFloat64 `json:"rating"`
-	SlugProduct  sql.NullString  `json:"slug_product"`
-	ImageProduct sql.NullString  `json:"image_product"`
-	Barcode      sql.NullString  `json:"barcode"`
-	CreatedAt    sql.NullTime    `json:"created_at"`
-	UpdatedAt    sql.NullTime    `json:"updated_at"`
-	DeletedAt    sql.NullTime    `json:"deleted_at"`
-	TotalCount   int64           `json:"total_count"`
+	ProductID    int32          `json:"product_id"`
+	MerchantID   int32          `json:"merchant_id"`
+	CategoryID   int32          `json:"category_id"`
+	Name         string         `json:"name"`
+	Description  sql.NullString `json:"description"`
+	Price        int32          `json:"price"`
+	CountInStock int32          `json:"count_in_stock"`
+	Brand        sql.NullString `json:"brand"`
+	Weight       sql.NullInt32  `json:"weight"`
+	SlugProduct  sql.NullString `json:"slug_product"`
+	ImageProduct sql.NullString `json:"image_product"`
+	Barcode      sql.NullString `json:"barcode"`
+	CreatedAt    sql.NullTime   `json:"created_at"`
+	UpdatedAt    sql.NullTime   `json:"updated_at"`
+	DeletedAt    sql.NullTime   `json:"deleted_at"`
+	TotalCount   int64          `json:"total_count"`
 }
 
 // Get Trashed Products with Pagination and Total Count
@@ -532,7 +566,6 @@ func (q *Queries) GetProductsTrashed(ctx context.Context, arg GetProductsTrashed
 			&i.CountInStock,
 			&i.Brand,
 			&i.Weight,
-			&i.Rating,
 			&i.SlugProduct,
 			&i.ImageProduct,
 			&i.Barcode,
@@ -575,7 +608,7 @@ SET
 WHERE
     product_id = $1
     AND deleted_at IS NOT NULL
-  RETURNING product_id, merchant_id, category_id, name, description, price, count_in_stock, brand, weight, rating, slug_product, image_product, barcode, created_at, updated_at, deleted_at
+  RETURNING product_id, merchant_id, category_id, name, description, price, count_in_stock, brand, weight, slug_product, image_product, barcode, created_at, updated_at, deleted_at
 `
 
 // Restore Trashed Product
@@ -592,7 +625,6 @@ func (q *Queries) RestoreProduct(ctx context.Context, productID int32) (*Product
 		&i.CountInStock,
 		&i.Brand,
 		&i.Weight,
-		&i.Rating,
 		&i.SlugProduct,
 		&i.ImageProduct,
 		&i.Barcode,
@@ -610,7 +642,7 @@ SET
 WHERE
     product_id = $1
     AND deleted_at IS NULL
-    RETURNING product_id, merchant_id, category_id, name, description, price, count_in_stock, brand, weight, rating, slug_product, image_product, barcode, created_at, updated_at, deleted_at
+    RETURNING product_id, merchant_id, category_id, name, description, price, count_in_stock, brand, weight, slug_product, image_product, barcode, created_at, updated_at, deleted_at
 `
 
 // Trash Product
@@ -627,7 +659,6 @@ func (q *Queries) TrashProduct(ctx context.Context, productID int32) (*Product, 
 		&i.CountInStock,
 		&i.Brand,
 		&i.Weight,
-		&i.Rating,
 		&i.SlugProduct,
 		&i.ImageProduct,
 		&i.Barcode,
@@ -647,29 +678,25 @@ SET category_id = $2,
     count_in_stock = $6,
     brand = $7,
     weight = $8,
-    rating = $9,
-    slug_product = $10,
-    image_product = $11,
-    barcode = $12,
+    image_product = $9,
+    barcode = $10,
     updated_at = CURRENT_TIMESTAMP
 WHERE product_id = $1
   AND deleted_at IS NULL
-  RETURNING product_id, merchant_id, category_id, name, description, price, count_in_stock, brand, weight, rating, slug_product, image_product, barcode, created_at, updated_at, deleted_at
+  RETURNING product_id, merchant_id, category_id, name, description, price, count_in_stock, brand, weight, slug_product, image_product, barcode, created_at, updated_at, deleted_at
 `
 
 type UpdateProductParams struct {
-	ProductID    int32           `json:"product_id"`
-	CategoryID   int32           `json:"category_id"`
-	Name         string          `json:"name"`
-	Description  sql.NullString  `json:"description"`
-	Price        int32           `json:"price"`
-	CountInStock int32           `json:"count_in_stock"`
-	Brand        sql.NullString  `json:"brand"`
-	Weight       sql.NullInt32   `json:"weight"`
-	Rating       sql.NullFloat64 `json:"rating"`
-	SlugProduct  sql.NullString  `json:"slug_product"`
-	ImageProduct sql.NullString  `json:"image_product"`
-	Barcode      sql.NullString  `json:"barcode"`
+	ProductID    int32          `json:"product_id"`
+	CategoryID   int32          `json:"category_id"`
+	Name         string         `json:"name"`
+	Description  sql.NullString `json:"description"`
+	Price        int32          `json:"price"`
+	CountInStock int32          `json:"count_in_stock"`
+	Brand        sql.NullString `json:"brand"`
+	Weight       sql.NullInt32  `json:"weight"`
+	ImageProduct sql.NullString `json:"image_product"`
+	Barcode      sql.NullString `json:"barcode"`
 }
 
 func (q *Queries) UpdateProduct(ctx context.Context, arg UpdateProductParams) (*Product, error) {
@@ -682,8 +709,6 @@ func (q *Queries) UpdateProduct(ctx context.Context, arg UpdateProductParams) (*
 		arg.CountInStock,
 		arg.Brand,
 		arg.Weight,
-		arg.Rating,
-		arg.SlugProduct,
 		arg.ImageProduct,
 		arg.Barcode,
 	)
@@ -698,7 +723,6 @@ func (q *Queries) UpdateProduct(ctx context.Context, arg UpdateProductParams) (*
 		&i.CountInStock,
 		&i.Brand,
 		&i.Weight,
-		&i.Rating,
 		&i.SlugProduct,
 		&i.ImageProduct,
 		&i.Barcode,
@@ -714,7 +738,7 @@ UPDATE products
 SET count_in_stock = $2
 WHERE product_id = $1
     AND deleted_at IS NULL
-RETURNING product_id, merchant_id, category_id, name, description, price, count_in_stock, brand, weight, rating, slug_product, image_product, barcode, created_at, updated_at, deleted_at
+RETURNING product_id, merchant_id, category_id, name, description, price, count_in_stock, brand, weight, slug_product, image_product, barcode, created_at, updated_at, deleted_at
 `
 
 type UpdateProductCountStockParams struct {
@@ -735,7 +759,6 @@ func (q *Queries) UpdateProductCountStock(ctx context.Context, arg UpdateProduct
 		&i.CountInStock,
 		&i.Brand,
 		&i.Weight,
-		&i.Rating,
 		&i.SlugProduct,
 		&i.ImageProduct,
 		&i.Barcode,

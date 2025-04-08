@@ -70,12 +70,12 @@ func (q *Queries) DeleteAllPermanentOrdersItem(ctx context.Context) error {
 }
 
 const deleteOrderItemPermanently = `-- name: DeleteOrderItemPermanently :exec
-DELETE FROM order_items WHERE order_id = $1 AND deleted_at IS NOT NULL
+DELETE FROM order_items WHERE order_item_id = $1 AND deleted_at IS NOT NULL
 `
 
 // Delete Order Item Permanently
-func (q *Queries) DeleteOrderItemPermanently(ctx context.Context, orderID int32) error {
-	_, err := q.db.ExecContext(ctx, deleteOrderItemPermanently, orderID)
+func (q *Queries) DeleteOrderItemPermanently(ctx context.Context, orderItemID int32) error {
+	_, err := q.db.ExecContext(ctx, deleteOrderItemPermanently, orderItemID)
 	return err
 }
 
@@ -326,14 +326,14 @@ UPDATE order_items
 SET
     deleted_at = NULL
 WHERE
-    order_id = $1
+    order_item_id = $1
     AND deleted_at IS NOT NULL
   RETURNING order_item_id, order_id, product_id, quantity, price, created_at, updated_at, deleted_at
 `
 
 // Restore Trashed Order Item
-func (q *Queries) RestoreOrderItem(ctx context.Context, orderID int32) (*OrderItem, error) {
-	row := q.db.QueryRowContext(ctx, restoreOrderItem, orderID)
+func (q *Queries) RestoreOrderItem(ctx context.Context, orderItemID int32) (*OrderItem, error) {
+	row := q.db.QueryRowContext(ctx, restoreOrderItem, orderItemID)
 	var i OrderItem
 	err := row.Scan(
 		&i.OrderItemID,
@@ -350,17 +350,15 @@ func (q *Queries) RestoreOrderItem(ctx context.Context, orderID int32) (*OrderIt
 
 const trashOrderItem = `-- name: TrashOrderItem :one
 UPDATE order_items
-SET
-    deleted_at = current_timestamp
-WHERE
-    order_id = $1
-    AND deleted_at IS NULL
-    RETURNING order_item_id, order_id, product_id, quantity, price, created_at, updated_at, deleted_at
+SET deleted_at = current_timestamp
+WHERE order_item_id = $1  
+AND deleted_at IS NULL
+RETURNING order_item_id, order_id, product_id, quantity, price, created_at, updated_at, deleted_at
 `
 
-// Trash Order Item
-func (q *Queries) TrashOrderItem(ctx context.Context, orderID int32) (*OrderItem, error) {
-	row := q.db.QueryRowContext(ctx, trashOrderItem, orderID)
+// Correct query to trash a specific order item
+func (q *Queries) TrashOrderItem(ctx context.Context, orderItemID int32) (*OrderItem, error) {
+	row := q.db.QueryRowContext(ctx, trashOrderItem, orderItemID)
 	var i OrderItem
 	err := row.Scan(
 		&i.OrderItemID,

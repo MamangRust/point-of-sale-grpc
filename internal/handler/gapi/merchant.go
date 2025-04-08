@@ -44,19 +44,19 @@ func (s *merchantHandleGrpc) FindAll(ctx context.Context, request *pb.FindAllMer
 	merchant, totalRecords, err := s.merchantService.FindAll(page, pageSize, search)
 
 	if err != nil {
-		return nil, status.Errorf(codes.Internal, "%v", &pb.ErrorResponse{
-			Status:  "error",
-			Message: "Failed to fetch merchant: ",
+		return nil, status.Errorf(codes.Code(err.Code), "%v", &pb.ErrorResponse{
+			Status:  err.Status,
+			Message: err.Message,
 		})
 	}
 
-	totalPages := int(math.Ceil(float64(totalRecords) / float64(pageSize)))
+	totalPages := int(math.Ceil(float64(*totalRecords) / float64(pageSize)))
 
 	paginationMeta := &pb.PaginationMeta{
 		CurrentPage:  int32(page),
 		PageSize:     int32(pageSize),
 		TotalPages:   int32(totalPages),
-		TotalRecords: int32(totalRecords),
+		TotalRecords: int32(*totalRecords),
 	}
 
 	so := s.mapping.ToProtoResponsePaginationMerchant(paginationMeta, "success", "Successfully fetched merchant", merchant)
@@ -66,17 +66,17 @@ func (s *merchantHandleGrpc) FindAll(ctx context.Context, request *pb.FindAllMer
 func (s *merchantHandleGrpc) FindById(ctx context.Context, request *pb.FindByIdMerchantRequest) (*pb.ApiResponseMerchant, error) {
 	if request.GetId() == 0 {
 		return nil, status.Errorf(codes.InvalidArgument, "%v", &pb.ErrorResponse{
-			Status:  "error",
-			Message: "Invalid merchant id",
+			Status:  "validation_error",
+			Message: "Merchant ID parameter cannot be empty and must be a positive number",
 		})
 	}
 
 	merchant, err := s.merchantService.FindById(int(request.GetId()))
 
 	if err != nil {
-		return nil, status.Errorf(codes.Internal, "%v", &pb.ErrorResponse{
-			Status:  "error",
-			Message: "Failed to fetch merchant: " + err.Message,
+		return nil, status.Errorf(codes.Code(err.Code), "%v", &pb.ErrorResponse{
+			Status:  err.Status,
+			Message: err.Message,
 		})
 	}
 
@@ -101,13 +101,13 @@ func (s *merchantHandleGrpc) FindByActive(ctx context.Context, request *pb.FindA
 	merchant, totalRecords, err := s.merchantService.FindByActive(search, page, pageSize)
 
 	if err != nil {
-		return nil, status.Errorf(codes.Internal, "%v", &pb.ErrorResponse{
-			Status:  "error",
-			Message: "Failed to fetch active merchant: " + err.Message,
+		return nil, status.Errorf(codes.Code(err.Code), "%v", &pb.ErrorResponse{
+			Status:  err.Status,
+			Message: err.Message,
 		})
 	}
 
-	totalPages := int(math.Ceil(float64(totalRecords) / float64(pageSize)))
+	totalPages := int(math.Ceil(float64(*totalRecords) / float64(pageSize)))
 
 	paginationMeta := &pb.PaginationMeta{
 		CurrentPage:  int32(page),
@@ -135,13 +135,13 @@ func (s *merchantHandleGrpc) FindByTrashed(ctx context.Context, request *pb.Find
 	users, totalRecords, err := s.merchantService.FindByTrashed(search, page, pageSize)
 
 	if err != nil {
-		return nil, status.Errorf(codes.Internal, "%v", &pb.ErrorResponse{
-			Status:  "error",
-			Message: "Failed to fetch trashed merchant: " + err.Message,
+		return nil, status.Errorf(codes.Code(err.Code), "%v", &pb.ErrorResponse{
+			Status:  err.Status,
+			Message: err.Message,
 		})
 	}
 
-	totalPages := int(math.Ceil(float64(totalRecords) / float64(pageSize)))
+	totalPages := int(math.Ceil(float64(*totalRecords) / float64(pageSize)))
 
 	paginationMeta := &pb.PaginationMeta{
 		CurrentPage:  int32(page),
@@ -168,16 +168,16 @@ func (s *merchantHandleGrpc) Create(ctx context.Context, request *pb.CreateMerch
 
 	if err := req.Validate(); err != nil {
 		return nil, status.Errorf(codes.InvalidArgument, "%v", &pb.ErrorResponse{
-			Status:  "error",
-			Message: "Failed to create merchant: " + err.Error(),
+			Status:  "validate_error",
+			Message: "Invalid merchant creation data. Please check all required fields.",
 		})
 	}
 
 	merchant, err := s.merchantService.CreateMerchant(req)
 	if err != nil {
-		return nil, status.Errorf(codes.Internal, "%v", &pb.ErrorResponse{
-			Status:  "error",
-			Message: "Failed to create merchant: ",
+		return nil, status.Errorf(codes.Code(err.Code), "%v", &pb.ErrorResponse{
+			Status:  err.Status,
+			Message: err.Message,
 		})
 	}
 
@@ -186,15 +186,17 @@ func (s *merchantHandleGrpc) Create(ctx context.Context, request *pb.CreateMerch
 }
 
 func (s *merchantHandleGrpc) Update(ctx context.Context, request *pb.UpdateMerchantRequest) (*pb.ApiResponseMerchant, error) {
-	if request.GetMerchantId() == 0 {
+	id := int(request.GetMerchantId())
+
+	if id == 0 {
 		return nil, status.Errorf(codes.InvalidArgument, "%v", &pb.ErrorResponse{
-			Status:  "error",
-			Message: "Invalid merchant id",
+			Status:  "validation_error",
+			Message: "Merchant ID parameter cannot be empty and must be a positive number",
 		})
 	}
 
 	req := &requests.UpdateMerchantRequest{
-		MerchantID:   int(request.GetMerchantId()),
+		MerchantID:   &id,
 		UserID:       int(request.GetUserId()),
 		Name:         request.GetName(),
 		Description:  request.GetDescription(),
@@ -206,16 +208,16 @@ func (s *merchantHandleGrpc) Update(ctx context.Context, request *pb.UpdateMerch
 
 	if err := req.Validate(); err != nil {
 		return nil, status.Errorf(codes.InvalidArgument, "%v", &pb.ErrorResponse{
-			Status:  "error",
-			Message: "Failed to update merchant: ",
+			Status:  "validate_error",
+			Message: "Invalid merchant update data. Please verify your changes.",
 		})
 	}
 
 	merchant, err := s.merchantService.UpdateMerchant(req)
 	if err != nil {
-		return nil, status.Errorf(codes.Internal, "%v", &pb.ErrorResponse{
-			Status:  "error",
-			Message: "Failed to update merchant: ",
+		return nil, status.Errorf(codes.Code(err.Code), "%v", &pb.ErrorResponse{
+			Status:  err.Status,
+			Message: err.Message,
 		})
 	}
 
@@ -226,17 +228,17 @@ func (s *merchantHandleGrpc) Update(ctx context.Context, request *pb.UpdateMerch
 func (s *merchantHandleGrpc) TrashedMerchant(ctx context.Context, request *pb.FindByIdMerchantRequest) (*pb.ApiResponseMerchantDeleteAt, error) {
 	if request.GetId() == 0 {
 		return nil, status.Errorf(codes.InvalidArgument, "%v", &pb.ErrorResponse{
-			Status:  "error",
-			Message: "Invalid merchant id",
+			Status:  "validation_error",
+			Message: "Merchant ID parameter cannot be empty and must be a positive number",
 		})
 	}
 
 	merchant, err := s.merchantService.TrashedMerchant(int(request.GetId()))
 
 	if err != nil {
-		return nil, status.Errorf(codes.Internal, "%v", &pb.ErrorResponse{
-			Status:  "error",
-			Message: "Failed to trashed merchant: " + err.Message,
+		return nil, status.Errorf(codes.Code(err.Code), "%v", &pb.ErrorResponse{
+			Status:  err.Status,
+			Message: err.Message,
 		})
 	}
 
@@ -248,17 +250,17 @@ func (s *merchantHandleGrpc) TrashedMerchant(ctx context.Context, request *pb.Fi
 func (s *merchantHandleGrpc) RestoreMerchant(ctx context.Context, request *pb.FindByIdMerchantRequest) (*pb.ApiResponseMerchantDeleteAt, error) {
 	if request.GetId() == 0 {
 		return nil, status.Errorf(codes.InvalidArgument, "%v", &pb.ErrorResponse{
-			Status:  "error",
-			Message: "Invalid merchant id",
+			Status:  "validation_error",
+			Message: "Merchant ID parameter cannot be empty and must be a positive number",
 		})
 	}
 
 	merchant, err := s.merchantService.RestoreMerchant(int(request.GetId()))
 
 	if err != nil {
-		return nil, status.Errorf(codes.Internal, "%v", &pb.ErrorResponse{
-			Status:  "error",
-			Message: "Failed to restore merchant: " + err.Message,
+		return nil, status.Errorf(codes.Code(err.Code), "%v", &pb.ErrorResponse{
+			Status:  err.Status,
+			Message: err.Message,
 		})
 	}
 
@@ -270,17 +272,17 @@ func (s *merchantHandleGrpc) RestoreMerchant(ctx context.Context, request *pb.Fi
 func (s *merchantHandleGrpc) DeleteMerchantPermanent(ctx context.Context, request *pb.FindByIdMerchantRequest) (*pb.ApiResponseMerchantDelete, error) {
 	if request.GetId() == 0 {
 		return nil, status.Errorf(codes.InvalidArgument, "%v", &pb.ErrorResponse{
-			Status:  "error",
-			Message: "Invalid merchant id",
+			Status:  "validation_error",
+			Message: "Merchant ID parameter cannot be empty and must be a positive number",
 		})
 	}
 
 	_, err := s.merchantService.DeleteMerchantPermanent(int(request.GetId()))
 
 	if err != nil {
-		return nil, status.Errorf(codes.Internal, "%v", &pb.ErrorResponse{
-			Status:  "error",
-			Message: "Failed to delete merchant permanently: " + err.Message,
+		return nil, status.Errorf(codes.Code(err.Code), "%v", &pb.ErrorResponse{
+			Status:  err.Status,
+			Message: err.Message,
 		})
 	}
 
@@ -293,9 +295,9 @@ func (s *merchantHandleGrpc) RestoreAllMerchant(ctx context.Context, _ *emptypb.
 	_, err := s.merchantService.RestoreAllMerchant()
 
 	if err != nil {
-		return nil, status.Errorf(codes.Internal, "%v", &pb.ErrorResponse{
-			Status:  "error",
-			Message: "Failed to restore all merchant: ",
+		return nil, status.Errorf(codes.Code(err.Code), "%v", &pb.ErrorResponse{
+			Status:  err.Status,
+			Message: err.Message,
 		})
 	}
 
@@ -308,9 +310,9 @@ func (s *merchantHandleGrpc) DeleteAllMerchantPermanent(ctx context.Context, _ *
 	_, err := s.merchantService.DeleteAllMerchantPermanent()
 
 	if err != nil {
-		return nil, status.Errorf(codes.Internal, "%v", &pb.ErrorResponse{
-			Status:  "error",
-			Message: "Failed to delete merchant permanent: ",
+		return nil, status.Errorf(codes.Code(err.Code), "%v", &pb.ErrorResponse{
+			Status:  err.Status,
+			Message: err.Message,
 		})
 	}
 

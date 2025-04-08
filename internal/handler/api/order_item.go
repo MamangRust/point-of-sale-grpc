@@ -42,7 +42,7 @@ func NewHandlerOrderItem(
 
 // @Security Bearer
 // @Summary Find all order items
-// @Tags OrderItem
+// @Tags Order-Item
 // @Description Retrieve a list of all order items
 // @Accept json
 // @Produce json
@@ -76,10 +76,11 @@ func (h *orderItemHandleApi) FindAllOrderItems(c echo.Context) error {
 	res, err := h.client.FindAll(ctx, req)
 
 	if err != nil {
-		h.logger.Debug("Failed to retrieve order item data", zap.Error(err))
+		h.logger.Error("Failed to fetch order-items", zap.Error(err))
 		return c.JSON(http.StatusInternalServerError, response.ErrorResponse{
-			Status:  "error",
-			Message: "Failed to retrieve order item data: " + err.Error(),
+			Status:  "server_error",
+			Message: "We couldn't retrieve the order-items list. Please try again later.",
+			Code:    http.StatusInternalServerError,
 		})
 	}
 
@@ -90,7 +91,7 @@ func (h *orderItemHandleApi) FindAllOrderItems(c echo.Context) error {
 
 // @Security Bearer
 // @Summary Retrieve active order items
-// @Tags OrderItem
+// @Tags Order-Item
 // @Description Retrieve a list of active order items
 // @Accept json
 // @Produce json
@@ -121,10 +122,11 @@ func (h *orderItemHandleApi) FindByActive(c echo.Context) error {
 	res, err := h.client.FindByActive(ctx, req)
 
 	if err != nil {
-		h.logger.Debug("Failed to retrieve order item data", zap.Error(err))
+		h.logger.Error("Failed to fetch active order-items", zap.Error(err))
 		return c.JSON(http.StatusInternalServerError, response.ErrorResponse{
-			Status:  "error",
-			Message: "Failed to retrieve order item data: " + err.Error(),
+			Status:  "server_error",
+			Message: "We couldn't retrieve the active order-items list. Please try again later.",
+			Code:    http.StatusInternalServerError,
 		})
 	}
 
@@ -135,7 +137,7 @@ func (h *orderItemHandleApi) FindByActive(c echo.Context) error {
 
 // @Security Bearer
 // @Summary Retrieve trashed order items
-// @Tags OrderItem
+// @Tags Order-Item
 // @Description Retrieve a list of trashed order items
 // @Accept json
 // @Produce json
@@ -166,10 +168,11 @@ func (h *orderItemHandleApi) FindByTrashed(c echo.Context) error {
 	res, err := h.client.FindByTrashed(ctx, req)
 
 	if err != nil {
-		h.logger.Debug("Failed to retrieve order item data", zap.Error(err))
+		h.logger.Error("Failed to fetch archived order-items", zap.Error(err))
 		return c.JSON(http.StatusInternalServerError, response.ErrorResponse{
-			Status:  "error",
-			Message: "Failed to retrieve order item data: " + err.Error(),
+			Status:  "server_error",
+			Message: "We couldn't retrieve the archived order-items list. Please try again later.",
+			Code:    http.StatusInternalServerError,
 		})
 	}
 
@@ -180,7 +183,7 @@ func (h *orderItemHandleApi) FindByTrashed(c echo.Context) error {
 
 // @Security Bearer
 // @Summary Find order items by order ID
-// @Tags OrderItem
+// @Tags Order-Item
 // @Description Retrieve order items by order ID
 // @Accept json
 // @Produce json
@@ -193,10 +196,11 @@ func (h *orderItemHandleApi) FindOrderItemByOrder(c echo.Context) error {
 	orderID, err := strconv.Atoi(c.Param("order_id"))
 
 	if err != nil {
-		h.logger.Debug("Invalid order ID", zap.Error(err))
+		h.logger.Debug("Invalid order ID format", zap.Error(err))
 		return c.JSON(http.StatusBadRequest, response.ErrorResponse{
-			Status:  "error",
-			Message: "Invalid order ID",
+			Status:  "invalid_input",
+			Message: "Please provide a valid order ID.",
+			Code:    http.StatusBadRequest,
 		})
 	}
 
@@ -209,10 +213,11 @@ func (h *orderItemHandleApi) FindOrderItemByOrder(c echo.Context) error {
 	res, err := h.client.FindOrderItemByOrder(ctx, req)
 
 	if err != nil {
-		h.logger.Debug("Failed to retrieve order item data", zap.Error(err))
+		h.logger.Error("Failed to fetch order item details", zap.Error(err))
 		return c.JSON(http.StatusInternalServerError, response.ErrorResponse{
-			Status:  "error",
-			Message: "Failed to retrieve order item data: " + err.Error(),
+			Status:  "server_error",
+			Message: "We couldn't retrieve the order item details. Please try again later.",
+			Code:    http.StatusInternalServerError,
 		})
 	}
 

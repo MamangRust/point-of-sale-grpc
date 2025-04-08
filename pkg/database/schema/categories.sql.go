@@ -8,35 +8,29 @@ package db
 import (
 	"context"
 	"database/sql"
+	"time"
 )
 
 const createCategory = `-- name: CreateCategory :one
-INSERT INTO categories (name, description, slug_category, image_category)
-VALUES ($1, $2, $3, $4)
-  RETURNING category_id, name, description, slug_category, image_category, created_at, updated_at, deleted_at
+INSERT INTO categories (name, description, slug_category)
+VALUES ($1, $2, $3)
+  RETURNING category_id, name, description, slug_category, created_at, updated_at, deleted_at
 `
 
 type CreateCategoryParams struct {
-	Name          string         `json:"name"`
-	Description   sql.NullString `json:"description"`
-	SlugCategory  sql.NullString `json:"slug_category"`
-	ImageCategory sql.NullString `json:"image_category"`
+	Name         string         `json:"name"`
+	Description  sql.NullString `json:"description"`
+	SlugCategory sql.NullString `json:"slug_category"`
 }
 
 func (q *Queries) CreateCategory(ctx context.Context, arg CreateCategoryParams) (*Category, error) {
-	row := q.db.QueryRowContext(ctx, createCategory,
-		arg.Name,
-		arg.Description,
-		arg.SlugCategory,
-		arg.ImageCategory,
-	)
+	row := q.db.QueryRowContext(ctx, createCategory, arg.Name, arg.Description, arg.SlugCategory)
 	var i Category
 	err := row.Scan(
 		&i.CategoryID,
 		&i.Name,
 		&i.Description,
 		&i.SlugCategory,
-		&i.ImageCategory,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 		&i.DeletedAt,
@@ -68,7 +62,7 @@ func (q *Queries) DeleteCategoryPermanently(ctx context.Context, categoryID int3
 
 const getCategories = `-- name: GetCategories :many
 SELECT
-    category_id, name, description, slug_category, image_category, created_at, updated_at, deleted_at,
+    category_id, name, description, slug_category, created_at, updated_at, deleted_at,
     COUNT(*) OVER() AS total_count
 FROM categories
 WHERE deleted_at IS NULL
@@ -84,15 +78,14 @@ type GetCategoriesParams struct {
 }
 
 type GetCategoriesRow struct {
-	CategoryID    int32          `json:"category_id"`
-	Name          string         `json:"name"`
-	Description   sql.NullString `json:"description"`
-	SlugCategory  sql.NullString `json:"slug_category"`
-	ImageCategory sql.NullString `json:"image_category"`
-	CreatedAt     sql.NullTime   `json:"created_at"`
-	UpdatedAt     sql.NullTime   `json:"updated_at"`
-	DeletedAt     sql.NullTime   `json:"deleted_at"`
-	TotalCount    int64          `json:"total_count"`
+	CategoryID   int32          `json:"category_id"`
+	Name         string         `json:"name"`
+	Description  sql.NullString `json:"description"`
+	SlugCategory sql.NullString `json:"slug_category"`
+	CreatedAt    sql.NullTime   `json:"created_at"`
+	UpdatedAt    sql.NullTime   `json:"updated_at"`
+	DeletedAt    sql.NullTime   `json:"deleted_at"`
+	TotalCount   int64          `json:"total_count"`
 }
 
 // Get Categories with Pagination and Total Count
@@ -110,7 +103,6 @@ func (q *Queries) GetCategories(ctx context.Context, arg GetCategoriesParams) ([
 			&i.Name,
 			&i.Description,
 			&i.SlugCategory,
-			&i.ImageCategory,
 			&i.CreatedAt,
 			&i.UpdatedAt,
 			&i.DeletedAt,
@@ -131,7 +123,7 @@ func (q *Queries) GetCategories(ctx context.Context, arg GetCategoriesParams) ([
 
 const getCategoriesActive = `-- name: GetCategoriesActive :many
 SELECT
-    category_id, name, description, slug_category, image_category, created_at, updated_at, deleted_at,
+    category_id, name, description, slug_category, created_at, updated_at, deleted_at,
     COUNT(*) OVER() AS total_count
 FROM categories
 WHERE deleted_at IS NULL
@@ -147,15 +139,14 @@ type GetCategoriesActiveParams struct {
 }
 
 type GetCategoriesActiveRow struct {
-	CategoryID    int32          `json:"category_id"`
-	Name          string         `json:"name"`
-	Description   sql.NullString `json:"description"`
-	SlugCategory  sql.NullString `json:"slug_category"`
-	ImageCategory sql.NullString `json:"image_category"`
-	CreatedAt     sql.NullTime   `json:"created_at"`
-	UpdatedAt     sql.NullTime   `json:"updated_at"`
-	DeletedAt     sql.NullTime   `json:"deleted_at"`
-	TotalCount    int64          `json:"total_count"`
+	CategoryID   int32          `json:"category_id"`
+	Name         string         `json:"name"`
+	Description  sql.NullString `json:"description"`
+	SlugCategory sql.NullString `json:"slug_category"`
+	CreatedAt    sql.NullTime   `json:"created_at"`
+	UpdatedAt    sql.NullTime   `json:"updated_at"`
+	DeletedAt    sql.NullTime   `json:"deleted_at"`
+	TotalCount   int64          `json:"total_count"`
 }
 
 // Get Active Categories with Pagination and Total Count
@@ -173,7 +164,6 @@ func (q *Queries) GetCategoriesActive(ctx context.Context, arg GetCategoriesActi
 			&i.Name,
 			&i.Description,
 			&i.SlugCategory,
-			&i.ImageCategory,
 			&i.CreatedAt,
 			&i.UpdatedAt,
 			&i.DeletedAt,
@@ -194,7 +184,7 @@ func (q *Queries) GetCategoriesActive(ctx context.Context, arg GetCategoriesActi
 
 const getCategoriesTrashed = `-- name: GetCategoriesTrashed :many
 SELECT
-    category_id, name, description, slug_category, image_category, created_at, updated_at, deleted_at,
+    category_id, name, description, slug_category, created_at, updated_at, deleted_at,
     COUNT(*) OVER() AS total_count
 FROM categories
 WHERE deleted_at IS NOT NULL
@@ -210,15 +200,14 @@ type GetCategoriesTrashedParams struct {
 }
 
 type GetCategoriesTrashedRow struct {
-	CategoryID    int32          `json:"category_id"`
-	Name          string         `json:"name"`
-	Description   sql.NullString `json:"description"`
-	SlugCategory  sql.NullString `json:"slug_category"`
-	ImageCategory sql.NullString `json:"image_category"`
-	CreatedAt     sql.NullTime   `json:"created_at"`
-	UpdatedAt     sql.NullTime   `json:"updated_at"`
-	DeletedAt     sql.NullTime   `json:"deleted_at"`
-	TotalCount    int64          `json:"total_count"`
+	CategoryID   int32          `json:"category_id"`
+	Name         string         `json:"name"`
+	Description  sql.NullString `json:"description"`
+	SlugCategory sql.NullString `json:"slug_category"`
+	CreatedAt    sql.NullTime   `json:"created_at"`
+	UpdatedAt    sql.NullTime   `json:"updated_at"`
+	DeletedAt    sql.NullTime   `json:"deleted_at"`
+	TotalCount   int64          `json:"total_count"`
 }
 
 // Get Trashed Categories with Pagination and Total Count
@@ -236,7 +225,6 @@ func (q *Queries) GetCategoriesTrashed(ctx context.Context, arg GetCategoriesTra
 			&i.Name,
 			&i.Description,
 			&i.SlugCategory,
-			&i.ImageCategory,
 			&i.CreatedAt,
 			&i.UpdatedAt,
 			&i.DeletedAt,
@@ -256,7 +244,7 @@ func (q *Queries) GetCategoriesTrashed(ctx context.Context, arg GetCategoriesTra
 }
 
 const getCategoryByID = `-- name: GetCategoryByID :one
-SELECT category_id, name, description, slug_category, image_category, created_at, updated_at, deleted_at
+SELECT category_id, name, description, slug_category, created_at, updated_at, deleted_at
 FROM categories
 WHERE category_id = $1
   AND deleted_at IS NULL
@@ -270,12 +258,1022 @@ func (q *Queries) GetCategoryByID(ctx context.Context, categoryID int32) (*Categ
 		&i.Name,
 		&i.Description,
 		&i.SlugCategory,
-		&i.ImageCategory,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 		&i.DeletedAt,
 	)
 	return &i, err
+}
+
+const getMonthlyCategory = `-- name: GetMonthlyCategory :many
+WITH date_range AS (
+    SELECT 
+        date_trunc('month', $1::timestamp) AS start_date,
+        date_trunc('month', $1::timestamp) + interval '1 year' - interval '1 day' AS end_date
+),
+monthly_category_stats AS (
+    SELECT
+        c.category_id,
+        c.name AS category_name,
+        date_trunc('month', o.created_at) AS activity_month,
+        COUNT(DISTINCT o.order_id) AS order_count,
+        SUM(oi.quantity) AS items_sold,
+        COALESCE(SUM(o.total_price), 0)::INTEGER AS total_revenue
+    FROM
+        orders o
+    JOIN
+        order_items oi ON o.order_id = oi.order_id
+    JOIN
+        products p ON oi.product_id = p.product_id
+    JOIN
+        categories c ON p.category_id = c.category_id
+    WHERE
+        o.deleted_at IS NULL
+        AND oi.deleted_at IS NULL
+        AND p.deleted_at IS NULL
+        AND c.deleted_at IS NULL
+        AND o.created_at BETWEEN (SELECT start_date FROM date_range) 
+                             AND (SELECT end_date FROM date_range)
+    GROUP BY
+        c.category_id, c.name, activity_month
+)
+SELECT
+    TO_CHAR(mcs.activity_month, 'Mon') AS month,
+    mcs.category_id,
+    mcs.category_name,
+    mcs.order_count,
+    mcs.items_sold,
+    mcs.total_revenue
+FROM
+    monthly_category_stats mcs
+ORDER BY
+    mcs.activity_month, mcs.total_revenue DESC
+`
+
+type GetMonthlyCategoryRow struct {
+	Month        string `json:"month"`
+	CategoryID   int32  `json:"category_id"`
+	CategoryName string `json:"category_name"`
+	OrderCount   int64  `json:"order_count"`
+	ItemsSold    int64  `json:"items_sold"`
+	TotalRevenue int32  `json:"total_revenue"`
+}
+
+func (q *Queries) GetMonthlyCategory(ctx context.Context, dollar_1 time.Time) ([]*GetMonthlyCategoryRow, error) {
+	rows, err := q.db.QueryContext(ctx, getMonthlyCategory, dollar_1)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []*GetMonthlyCategoryRow
+	for rows.Next() {
+		var i GetMonthlyCategoryRow
+		if err := rows.Scan(
+			&i.Month,
+			&i.CategoryID,
+			&i.CategoryName,
+			&i.OrderCount,
+			&i.ItemsSold,
+			&i.TotalRevenue,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, &i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const getMonthlyCategoryById = `-- name: GetMonthlyCategoryById :many
+WITH date_range AS (
+    SELECT 
+        date_trunc('month', $1::timestamp) AS start_date,
+        date_trunc('month', $1::timestamp) + interval '1 year' - interval '1 day' AS end_date
+),
+monthly_category_stats AS (
+    SELECT
+        c.category_id,
+        c.name AS category_name,
+        date_trunc('month', o.created_at) AS activity_month,
+        COUNT(DISTINCT o.order_id) AS order_count,
+        SUM(oi.quantity) AS items_sold,
+        COALESCE(SUM(o.total_price), 0)::INTEGER AS total_revenue
+    FROM
+        orders o
+    JOIN
+        order_items oi ON o.order_id = oi.order_id
+    JOIN
+        products p ON oi.product_id = p.product_id
+    JOIN
+        categories c ON p.category_id = c.category_id
+    WHERE
+        o.deleted_at IS NULL
+        AND oi.deleted_at IS NULL
+        AND p.deleted_at IS NULL
+        AND c.deleted_at IS NULL
+        AND o.created_at BETWEEN (SELECT start_date FROM date_range) 
+                             AND (SELECT end_date FROM date_range)
+        AND c.category_id = $2
+    GROUP BY
+        c.category_id, c.name, activity_month
+)
+SELECT
+    TO_CHAR(mcs.activity_month, 'Mon') AS month,
+    mcs.category_id,
+    mcs.category_name,
+    mcs.order_count,
+    mcs.items_sold,
+    mcs.total_revenue
+FROM
+    monthly_category_stats mcs
+ORDER BY
+    mcs.activity_month, mcs.total_revenue DESC
+`
+
+type GetMonthlyCategoryByIdParams struct {
+	Column1    time.Time `json:"column_1"`
+	CategoryID int32     `json:"category_id"`
+}
+
+type GetMonthlyCategoryByIdRow struct {
+	Month        string `json:"month"`
+	CategoryID   int32  `json:"category_id"`
+	CategoryName string `json:"category_name"`
+	OrderCount   int64  `json:"order_count"`
+	ItemsSold    int64  `json:"items_sold"`
+	TotalRevenue int32  `json:"total_revenue"`
+}
+
+func (q *Queries) GetMonthlyCategoryById(ctx context.Context, arg GetMonthlyCategoryByIdParams) ([]*GetMonthlyCategoryByIdRow, error) {
+	rows, err := q.db.QueryContext(ctx, getMonthlyCategoryById, arg.Column1, arg.CategoryID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []*GetMonthlyCategoryByIdRow
+	for rows.Next() {
+		var i GetMonthlyCategoryByIdRow
+		if err := rows.Scan(
+			&i.Month,
+			&i.CategoryID,
+			&i.CategoryName,
+			&i.OrderCount,
+			&i.ItemsSold,
+			&i.TotalRevenue,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, &i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const getMonthlyCategoryByMerchant = `-- name: GetMonthlyCategoryByMerchant :many
+WITH date_range AS (
+    SELECT 
+        date_trunc('month', $1::timestamp) AS start_date,
+        date_trunc('month', $1::timestamp) + interval '1 year' - interval '1 day' AS end_date
+),
+monthly_category_stats AS (
+    SELECT
+        c.category_id,
+        c.name AS category_name,
+        date_trunc('month', o.created_at) AS activity_month,
+        COUNT(DISTINCT o.order_id) AS order_count,
+        SUM(oi.quantity) AS items_sold,
+        COALESCE(SUM(o.total_price), 0)::INTEGER AS total_revenue
+    FROM
+        orders o
+    JOIN
+        order_items oi ON o.order_id = oi.order_id
+    JOIN
+        products p ON oi.product_id = p.product_id
+    JOIN
+        categories c ON p.category_id = c.category_id
+    WHERE
+        o.deleted_at IS NULL
+        AND oi.deleted_at IS NULL
+        AND p.deleted_at IS NULL
+        AND c.deleted_at IS NULL
+        AND o.created_at BETWEEN (SELECT start_date FROM date_range) 
+                             AND (SELECT end_date FROM date_range)
+        AND o.merchant_id = $2
+    GROUP BY
+        c.category_id, c.name, activity_month
+)
+SELECT
+    TO_CHAR(mcs.activity_month, 'Mon') AS month,
+    mcs.category_id,
+    mcs.category_name,
+    mcs.order_count,
+    mcs.items_sold,
+    mcs.total_revenue
+FROM
+    monthly_category_stats mcs
+ORDER BY
+    mcs.activity_month, mcs.total_revenue DESC
+`
+
+type GetMonthlyCategoryByMerchantParams struct {
+	Column1    time.Time `json:"column_1"`
+	MerchantID int32     `json:"merchant_id"`
+}
+
+type GetMonthlyCategoryByMerchantRow struct {
+	Month        string `json:"month"`
+	CategoryID   int32  `json:"category_id"`
+	CategoryName string `json:"category_name"`
+	OrderCount   int64  `json:"order_count"`
+	ItemsSold    int64  `json:"items_sold"`
+	TotalRevenue int32  `json:"total_revenue"`
+}
+
+func (q *Queries) GetMonthlyCategoryByMerchant(ctx context.Context, arg GetMonthlyCategoryByMerchantParams) ([]*GetMonthlyCategoryByMerchantRow, error) {
+	rows, err := q.db.QueryContext(ctx, getMonthlyCategoryByMerchant, arg.Column1, arg.MerchantID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []*GetMonthlyCategoryByMerchantRow
+	for rows.Next() {
+		var i GetMonthlyCategoryByMerchantRow
+		if err := rows.Scan(
+			&i.Month,
+			&i.CategoryID,
+			&i.CategoryName,
+			&i.OrderCount,
+			&i.ItemsSold,
+			&i.TotalRevenue,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, &i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const getMonthlyTotalPrice = `-- name: GetMonthlyTotalPrice :many
+WITH monthly_totals AS (
+    SELECT
+        EXTRACT(YEAR FROM o.created_at)::TEXT AS year,
+        EXTRACT(MONTH FROM o.created_at)::integer AS month,
+        COALESCE(SUM(o.total_price), 0)::INTEGER AS total_revenue
+    FROM
+        orders o
+    JOIN
+    order_items oi ON o.order_id = oi.order_id
+    WHERE
+        o.deleted_at IS NULL
+        AND oi.deleted_at IS NULL
+        AND (
+            (o.created_at >= $1 AND o.created_at <= $2)  
+            OR (o.created_at >= $3 AND o.created_at <= $4)  
+        )
+    GROUP BY
+        EXTRACT(YEAR FROM o.created_at),
+        EXTRACT(MONTH FROM o.created_at)
+),
+all_months AS (
+    SELECT 
+        EXTRACT(YEAR FROM $1)::TEXT AS year,
+        EXTRACT(MONTH FROM $1)::integer AS month,
+        TO_CHAR($1, 'FMMonth') AS month_name
+    
+    UNION
+    
+    SELECT 
+        EXTRACT(YEAR FROM $3)::TEXT AS year,
+        EXTRACT(MONTH FROM $3)::integer AS month,
+        TO_CHAR($3, 'FMMonth') AS month_name
+)
+SELECT 
+    COALESCE(am.year, EXTRACT(YEAR FROM $1)::TEXT) AS year,
+    COALESCE(am.month_name, TO_CHAR($1, 'FMMonth')) AS month,
+    COALESCE(mt.total_revenue, 0) AS total_revenue
+FROM 
+    all_months am
+LEFT JOIN 
+    monthly_totals mt ON am.year = mt.year AND am.month = mt.month
+ORDER BY 
+    am.year::INT DESC,
+    am.month DESC
+`
+
+type GetMonthlyTotalPriceParams struct {
+	Extract     time.Time    `json:"extract"`
+	CreatedAt   sql.NullTime `json:"created_at"`
+	CreatedAt_2 sql.NullTime `json:"created_at_2"`
+	CreatedAt_3 sql.NullTime `json:"created_at_3"`
+}
+
+type GetMonthlyTotalPriceRow struct {
+	Year         string `json:"year"`
+	Month        string `json:"month"`
+	TotalRevenue int32  `json:"total_revenue"`
+}
+
+func (q *Queries) GetMonthlyTotalPrice(ctx context.Context, arg GetMonthlyTotalPriceParams) ([]*GetMonthlyTotalPriceRow, error) {
+	rows, err := q.db.QueryContext(ctx, getMonthlyTotalPrice,
+		arg.Extract,
+		arg.CreatedAt,
+		arg.CreatedAt_2,
+		arg.CreatedAt_3,
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []*GetMonthlyTotalPriceRow
+	for rows.Next() {
+		var i GetMonthlyTotalPriceRow
+		if err := rows.Scan(&i.Year, &i.Month, &i.TotalRevenue); err != nil {
+			return nil, err
+		}
+		items = append(items, &i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const getMonthlyTotalPriceById = `-- name: GetMonthlyTotalPriceById :many
+WITH monthly_totals AS (
+    SELECT
+        EXTRACT(YEAR FROM o.created_at)::TEXT AS year,
+        EXTRACT(MONTH FROM o.created_at)::integer AS month,
+        COALESCE(SUM(o.total_price), 0)::INTEGER AS total_revenue
+    FROM
+        orders o
+    JOIN
+    order_items oi ON o.order_id = oi.order_id
+    WHERE
+        o.deleted_at IS NULL
+        AND oi.deleted_at IS NULL
+        AND (
+            (o.created_at >= $1 AND o.created_at <= $2)  
+            OR (o.created_at >= $3 AND o.created_at <= $4)  
+        )
+        AND o.order_id = $5
+    GROUP BY
+        EXTRACT(YEAR FROM o.created_at),
+        EXTRACT(MONTH FROM o.created_at)
+),
+all_months AS (
+    SELECT 
+        EXTRACT(YEAR FROM $1)::TEXT AS year,
+        EXTRACT(MONTH FROM $1)::integer AS month,
+        TO_CHAR($1, 'FMMonth') AS month_name
+    
+    UNION
+    
+    SELECT 
+        EXTRACT(YEAR FROM $3)::TEXT AS year,
+        EXTRACT(MONTH FROM $3)::integer AS month,
+        TO_CHAR($3, 'FMMonth') AS month_name
+)
+SELECT 
+    COALESCE(am.year, EXTRACT(YEAR FROM $1)::TEXT) AS year,
+    COALESCE(am.month_name, TO_CHAR($1, 'FMMonth')) AS month,
+    COALESCE(mt.total_revenue, 0) AS total_revenue
+FROM 
+    all_months am
+LEFT JOIN 
+    monthly_totals mt ON am.year = mt.year AND am.month = mt.month
+ORDER BY 
+    am.year::INT DESC,
+    am.month DESC
+`
+
+type GetMonthlyTotalPriceByIdParams struct {
+	Extract     time.Time    `json:"extract"`
+	CreatedAt   sql.NullTime `json:"created_at"`
+	CreatedAt_2 sql.NullTime `json:"created_at_2"`
+	CreatedAt_3 sql.NullTime `json:"created_at_3"`
+	OrderID     int32        `json:"order_id"`
+}
+
+type GetMonthlyTotalPriceByIdRow struct {
+	Year         string `json:"year"`
+	Month        string `json:"month"`
+	TotalRevenue int32  `json:"total_revenue"`
+}
+
+func (q *Queries) GetMonthlyTotalPriceById(ctx context.Context, arg GetMonthlyTotalPriceByIdParams) ([]*GetMonthlyTotalPriceByIdRow, error) {
+	rows, err := q.db.QueryContext(ctx, getMonthlyTotalPriceById,
+		arg.Extract,
+		arg.CreatedAt,
+		arg.CreatedAt_2,
+		arg.CreatedAt_3,
+		arg.OrderID,
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []*GetMonthlyTotalPriceByIdRow
+	for rows.Next() {
+		var i GetMonthlyTotalPriceByIdRow
+		if err := rows.Scan(&i.Year, &i.Month, &i.TotalRevenue); err != nil {
+			return nil, err
+		}
+		items = append(items, &i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const getMonthlyTotalPriceByMerchant = `-- name: GetMonthlyTotalPriceByMerchant :many
+WITH monthly_totals AS (
+    SELECT
+        EXTRACT(YEAR FROM o.created_at)::TEXT AS year,
+        EXTRACT(MONTH FROM o.created_at)::integer AS month,
+        COALESCE(SUM(o.total_price), 0)::INTEGER AS total_revenue
+    FROM
+        orders o
+    JOIN
+    order_items oi ON o.order_id = oi.order_id
+    WHERE
+        o.deleted_at IS NULL
+        AND oi.deleted_at IS NULL
+        AND (
+            (o.created_at >= $1 AND o.created_at <= $2)  
+            OR (o.created_at >= $3 AND o.created_at <= $4)  
+        )
+        AND o.merchant_id = $5
+    GROUP BY
+        EXTRACT(YEAR FROM o.created_at),
+        EXTRACT(MONTH FROM o.created_at)
+),
+all_months AS (
+    SELECT 
+        EXTRACT(YEAR FROM $1)::TEXT AS year,
+        EXTRACT(MONTH FROM $1)::integer AS month,
+        TO_CHAR($1, 'FMMonth') AS month_name
+    
+    UNION
+    
+    SELECT 
+        EXTRACT(YEAR FROM $3)::TEXT AS year,
+        EXTRACT(MONTH FROM $3)::integer AS month,
+        TO_CHAR($3, 'FMMonth') AS month_name
+)
+SELECT 
+    COALESCE(am.year, EXTRACT(YEAR FROM $1)::TEXT) AS year,
+    COALESCE(am.month_name, TO_CHAR($1, 'FMMonth')) AS month,
+    COALESCE(mt.total_revenue, 0) AS total_revenue
+FROM 
+    all_months am
+LEFT JOIN 
+    monthly_totals mt ON am.year = mt.year AND am.month = mt.month
+ORDER BY 
+    am.year::INT DESC,
+    am.month DESC
+`
+
+type GetMonthlyTotalPriceByMerchantParams struct {
+	Extract     time.Time    `json:"extract"`
+	CreatedAt   sql.NullTime `json:"created_at"`
+	CreatedAt_2 sql.NullTime `json:"created_at_2"`
+	CreatedAt_3 sql.NullTime `json:"created_at_3"`
+	MerchantID  int32        `json:"merchant_id"`
+}
+
+type GetMonthlyTotalPriceByMerchantRow struct {
+	Year         string `json:"year"`
+	Month        string `json:"month"`
+	TotalRevenue int32  `json:"total_revenue"`
+}
+
+func (q *Queries) GetMonthlyTotalPriceByMerchant(ctx context.Context, arg GetMonthlyTotalPriceByMerchantParams) ([]*GetMonthlyTotalPriceByMerchantRow, error) {
+	rows, err := q.db.QueryContext(ctx, getMonthlyTotalPriceByMerchant,
+		arg.Extract,
+		arg.CreatedAt,
+		arg.CreatedAt_2,
+		arg.CreatedAt_3,
+		arg.MerchantID,
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []*GetMonthlyTotalPriceByMerchantRow
+	for rows.Next() {
+		var i GetMonthlyTotalPriceByMerchantRow
+		if err := rows.Scan(&i.Year, &i.Month, &i.TotalRevenue); err != nil {
+			return nil, err
+		}
+		items = append(items, &i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const getYearlyCategory = `-- name: GetYearlyCategory :many
+WITH last_five_years AS (
+    SELECT
+        c.category_id,
+        c.name AS category_name,
+        EXTRACT(YEAR FROM o.created_at)::text AS year,
+        COUNT(DISTINCT o.order_id) AS order_count,
+        SUM(oi.quantity) AS items_sold,
+        COALESCE(SUM(o.total_price), 0)::INTEGER AS total_revenue,
+        COUNT(DISTINCT oi.product_id) AS unique_products_sold
+    FROM
+        orders o
+    JOIN
+        order_items oi ON o.order_id = oi.order_id
+    JOIN
+        products p ON oi.product_id = p.product_id
+    JOIN
+        categories c ON p.category_id = c.category_id
+    WHERE
+        o.deleted_at IS NULL
+        AND oi.deleted_at IS NULL
+        AND p.deleted_at IS NULL
+        AND c.deleted_at IS NULL
+        AND EXTRACT(YEAR FROM o.created_at) BETWEEN (EXTRACT(YEAR FROM $1::timestamp) - 4) AND EXTRACT(YEAR FROM $1::timestamp)
+    GROUP BY
+        c.category_id, c.name, EXTRACT(YEAR FROM o.created_at)
+)
+SELECT
+    year,
+    category_id,
+    category_name,
+    order_count,
+    items_sold,
+    total_revenue,
+    unique_products_sold
+FROM
+    last_five_years
+ORDER BY
+    year, total_revenue DESC
+`
+
+type GetYearlyCategoryRow struct {
+	Year               string `json:"year"`
+	CategoryID         int32  `json:"category_id"`
+	CategoryName       string `json:"category_name"`
+	OrderCount         int64  `json:"order_count"`
+	ItemsSold          int64  `json:"items_sold"`
+	TotalRevenue       int32  `json:"total_revenue"`
+	UniqueProductsSold int64  `json:"unique_products_sold"`
+}
+
+func (q *Queries) GetYearlyCategory(ctx context.Context, dollar_1 time.Time) ([]*GetYearlyCategoryRow, error) {
+	rows, err := q.db.QueryContext(ctx, getYearlyCategory, dollar_1)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []*GetYearlyCategoryRow
+	for rows.Next() {
+		var i GetYearlyCategoryRow
+		if err := rows.Scan(
+			&i.Year,
+			&i.CategoryID,
+			&i.CategoryName,
+			&i.OrderCount,
+			&i.ItemsSold,
+			&i.TotalRevenue,
+			&i.UniqueProductsSold,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, &i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const getYearlyCategoryById = `-- name: GetYearlyCategoryById :many
+WITH last_five_years AS (
+    SELECT
+        c.category_id,
+        c.name AS category_name,
+        EXTRACT(YEAR FROM o.created_at)::text AS year,
+        COUNT(DISTINCT o.order_id) AS order_count,
+        SUM(oi.quantity) AS items_sold,
+        COALESCE(SUM(o.total_price), 0)::INTEGER AS total_revenue,
+        COUNT(DISTINCT oi.product_id) AS unique_products_sold
+    FROM
+        orders o
+    JOIN
+        order_items oi ON o.order_id = oi.order_id
+    JOIN
+        products p ON oi.product_id = p.product_id
+    JOIN
+        categories c ON p.category_id = c.category_id
+    WHERE
+        o.deleted_at IS NULL
+        AND oi.deleted_at IS NULL
+        AND p.deleted_at IS NULL
+        AND c.deleted_at IS NULL
+        AND EXTRACT(YEAR FROM o.created_at) BETWEEN (EXTRACT(YEAR FROM $1::timestamp) - 4) AND EXTRACT(YEAR FROM $1::timestamp)
+        AND c.category_id = $2
+    GROUP BY
+        c.category_id, c.name, EXTRACT(YEAR FROM o.created_at)
+)
+SELECT
+    year,
+    category_id,
+    category_name,
+    order_count,
+    items_sold,
+    total_revenue,
+    unique_products_sold
+FROM
+    last_five_years
+ORDER BY
+    year, total_revenue DESC
+`
+
+type GetYearlyCategoryByIdParams struct {
+	Column1    time.Time `json:"column_1"`
+	CategoryID int32     `json:"category_id"`
+}
+
+type GetYearlyCategoryByIdRow struct {
+	Year               string `json:"year"`
+	CategoryID         int32  `json:"category_id"`
+	CategoryName       string `json:"category_name"`
+	OrderCount         int64  `json:"order_count"`
+	ItemsSold          int64  `json:"items_sold"`
+	TotalRevenue       int32  `json:"total_revenue"`
+	UniqueProductsSold int64  `json:"unique_products_sold"`
+}
+
+func (q *Queries) GetYearlyCategoryById(ctx context.Context, arg GetYearlyCategoryByIdParams) ([]*GetYearlyCategoryByIdRow, error) {
+	rows, err := q.db.QueryContext(ctx, getYearlyCategoryById, arg.Column1, arg.CategoryID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []*GetYearlyCategoryByIdRow
+	for rows.Next() {
+		var i GetYearlyCategoryByIdRow
+		if err := rows.Scan(
+			&i.Year,
+			&i.CategoryID,
+			&i.CategoryName,
+			&i.OrderCount,
+			&i.ItemsSold,
+			&i.TotalRevenue,
+			&i.UniqueProductsSold,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, &i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const getYearlyCategoryByMerchant = `-- name: GetYearlyCategoryByMerchant :many
+WITH last_five_years AS (
+    SELECT
+        c.category_id,
+        c.name AS category_name,
+        EXTRACT(YEAR FROM o.created_at)::text AS year,
+        COUNT(DISTINCT o.order_id) AS order_count,
+        SUM(oi.quantity) AS items_sold,
+        COALESCE(SUM(o.total_price), 0)::INTEGER AS total_revenue,
+        COUNT(DISTINCT oi.product_id) AS unique_products_sold
+    FROM
+        orders o
+    JOIN
+        order_items oi ON o.order_id = oi.order_id
+    JOIN
+        products p ON oi.product_id = p.product_id
+    JOIN
+        categories c ON p.category_id = c.category_id
+    WHERE
+        o.deleted_at IS NULL
+        AND oi.deleted_at IS NULL
+        AND p.deleted_at IS NULL
+        AND c.deleted_at IS NULL
+        AND EXTRACT(YEAR FROM o.created_at) BETWEEN (EXTRACT(YEAR FROM $1::timestamp) - 4) AND EXTRACT(YEAR FROM $1::timestamp)
+        AND o.merchant_id = $2
+    GROUP BY
+        c.category_id, c.name, EXTRACT(YEAR FROM o.created_at)
+)
+SELECT
+    year,
+    category_id,
+    category_name,
+    order_count,
+    items_sold,
+    total_revenue,
+    unique_products_sold
+FROM
+    last_five_years
+ORDER BY
+    year, total_revenue DESC
+`
+
+type GetYearlyCategoryByMerchantParams struct {
+	Column1    time.Time `json:"column_1"`
+	MerchantID int32     `json:"merchant_id"`
+}
+
+type GetYearlyCategoryByMerchantRow struct {
+	Year               string `json:"year"`
+	CategoryID         int32  `json:"category_id"`
+	CategoryName       string `json:"category_name"`
+	OrderCount         int64  `json:"order_count"`
+	ItemsSold          int64  `json:"items_sold"`
+	TotalRevenue       int32  `json:"total_revenue"`
+	UniqueProductsSold int64  `json:"unique_products_sold"`
+}
+
+func (q *Queries) GetYearlyCategoryByMerchant(ctx context.Context, arg GetYearlyCategoryByMerchantParams) ([]*GetYearlyCategoryByMerchantRow, error) {
+	rows, err := q.db.QueryContext(ctx, getYearlyCategoryByMerchant, arg.Column1, arg.MerchantID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []*GetYearlyCategoryByMerchantRow
+	for rows.Next() {
+		var i GetYearlyCategoryByMerchantRow
+		if err := rows.Scan(
+			&i.Year,
+			&i.CategoryID,
+			&i.CategoryName,
+			&i.OrderCount,
+			&i.ItemsSold,
+			&i.TotalRevenue,
+			&i.UniqueProductsSold,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, &i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const getYearlyTotalPrice = `-- name: GetYearlyTotalPrice :many
+WITH yearly_data AS (
+    SELECT
+        EXTRACT(YEAR FROM o.created_at)::integer AS year,
+        COALESCE(SUM(o.total_price), 0)::INTEGER AS total_revenue
+    FROM
+        orders o
+    JOIN
+        order_items oi ON o.order_id = oi.order_id
+    JOIN
+        products p ON oi.product_id = p.product_id
+    JOIN
+        categories c ON p.category_id = c.category_id
+    WHERE
+        o.deleted_at IS NULL
+        AND oi.deleted_at IS NULL
+        AND p.deleted_at IS NULL
+        AND c.deleted_at IS NULL
+        AND (
+            EXTRACT(YEAR FROM o.created_at) = $1::integer
+            OR EXTRACT(YEAR FROM o.created_at) = $1::integer - 1
+        )
+    GROUP BY
+        EXTRACT(YEAR FROM o.created_at)
+),
+all_years AS (
+    SELECT $1 AS year
+    UNION
+    SELECT $1 - 1 AS year
+)
+SELECT 
+    a.year::text AS year,
+    COALESCE(yd.total_revenue, 0) AS total_revenue
+FROM 
+    all_years a
+LEFT JOIN 
+    yearly_data yd ON a.year = yd.year
+ORDER BY 
+    a.year DESC
+`
+
+type GetYearlyTotalPriceRow struct {
+	Year         string `json:"year"`
+	TotalRevenue int32  `json:"total_revenue"`
+}
+
+func (q *Queries) GetYearlyTotalPrice(ctx context.Context, dollar_1 int32) ([]*GetYearlyTotalPriceRow, error) {
+	rows, err := q.db.QueryContext(ctx, getYearlyTotalPrice, dollar_1)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []*GetYearlyTotalPriceRow
+	for rows.Next() {
+		var i GetYearlyTotalPriceRow
+		if err := rows.Scan(&i.Year, &i.TotalRevenue); err != nil {
+			return nil, err
+		}
+		items = append(items, &i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const getYearlyTotalPriceById = `-- name: GetYearlyTotalPriceById :many
+WITH yearly_data AS (
+    SELECT
+        EXTRACT(YEAR FROM o.created_at)::integer AS year,
+        COALESCE(SUM(o.total_price), 0)::INTEGER AS total_revenue
+    FROM
+        orders o
+    JOIN
+        order_items oi ON o.order_id = oi.order_id
+    JOIN
+        products p ON oi.product_id = p.product_id
+    JOIN
+        categories c ON p.category_id = c.category_id
+    WHERE
+        o.deleted_at IS NULL
+        AND oi.deleted_at IS NULL
+        AND p.deleted_at IS NULL
+        AND c.deleted_at IS NULL
+        AND (
+            EXTRACT(YEAR FROM o.created_at) = $1::integer
+            OR EXTRACT(YEAR FROM o.created_at) = $1::integer - 1
+        )
+        AND o.order_id = $2
+    GROUP BY
+        EXTRACT(YEAR FROM o.created_at)
+),
+all_years AS (
+    SELECT $1 AS year
+    UNION
+    SELECT $1 - 1 AS year
+)
+SELECT 
+    a.year::text AS year,
+    COALESCE(yd.total_revenue, 0) AS total_revenue
+FROM 
+    all_years a
+LEFT JOIN 
+    yearly_data yd ON a.year = yd.year
+ORDER BY 
+    a.year DESC
+`
+
+type GetYearlyTotalPriceByIdParams struct {
+	Column1 int32 `json:"column_1"`
+	OrderID int32 `json:"order_id"`
+}
+
+type GetYearlyTotalPriceByIdRow struct {
+	Year         string `json:"year"`
+	TotalRevenue int32  `json:"total_revenue"`
+}
+
+func (q *Queries) GetYearlyTotalPriceById(ctx context.Context, arg GetYearlyTotalPriceByIdParams) ([]*GetYearlyTotalPriceByIdRow, error) {
+	rows, err := q.db.QueryContext(ctx, getYearlyTotalPriceById, arg.Column1, arg.OrderID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []*GetYearlyTotalPriceByIdRow
+	for rows.Next() {
+		var i GetYearlyTotalPriceByIdRow
+		if err := rows.Scan(&i.Year, &i.TotalRevenue); err != nil {
+			return nil, err
+		}
+		items = append(items, &i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const getYearlyTotalPriceByMerchant = `-- name: GetYearlyTotalPriceByMerchant :many
+WITH yearly_data AS (
+    SELECT
+        EXTRACT(YEAR FROM o.created_at)::integer AS year,
+        COALESCE(SUM(o.total_price), 0)::INTEGER AS total_revenue
+    FROM
+        orders o
+    JOIN
+        order_items oi ON o.order_id = oi.order_id
+    JOIN
+        products p ON oi.product_id = p.product_id
+    JOIN
+        categories c ON p.category_id = c.category_id
+    WHERE
+        o.deleted_at IS NULL
+        AND oi.deleted_at IS NULL
+        AND p.deleted_at IS NULL
+        AND c.deleted_at IS NULL
+        AND (
+            EXTRACT(YEAR FROM o.created_at) = $1::integer
+            OR EXTRACT(YEAR FROM o.created_at) = $1::integer - 1
+        )
+        AND o.merchant_id = $2
+    GROUP BY
+        EXTRACT(YEAR FROM o.created_at)
+),
+all_years AS (
+    SELECT $1 AS year
+    UNION
+    SELECT $1 - 1 AS year
+)
+SELECT 
+    a.year::text AS year,
+    COALESCE(yd.total_revenue, 0) AS total_revenue
+FROM 
+    all_years a
+LEFT JOIN 
+    yearly_data yd ON a.year = yd.year
+ORDER BY 
+    a.year DESC
+`
+
+type GetYearlyTotalPriceByMerchantParams struct {
+	Column1    int32 `json:"column_1"`
+	MerchantID int32 `json:"merchant_id"`
+}
+
+type GetYearlyTotalPriceByMerchantRow struct {
+	Year         string `json:"year"`
+	TotalRevenue int32  `json:"total_revenue"`
+}
+
+func (q *Queries) GetYearlyTotalPriceByMerchant(ctx context.Context, arg GetYearlyTotalPriceByMerchantParams) ([]*GetYearlyTotalPriceByMerchantRow, error) {
+	rows, err := q.db.QueryContext(ctx, getYearlyTotalPriceByMerchant, arg.Column1, arg.MerchantID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []*GetYearlyTotalPriceByMerchantRow
+	for rows.Next() {
+		var i GetYearlyTotalPriceByMerchantRow
+		if err := rows.Scan(&i.Year, &i.TotalRevenue); err != nil {
+			return nil, err
+		}
+		items = append(items, &i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
 }
 
 const restoreAllCategories = `-- name: RestoreAllCategories :exec
@@ -299,7 +1297,7 @@ SET
 WHERE
     category_id = $1
     AND deleted_at IS NOT NULL
-  RETURNING category_id, name, description, slug_category, image_category, created_at, updated_at, deleted_at
+  RETURNING category_id, name, description, slug_category, created_at, updated_at, deleted_at
 `
 
 // Restore Trashed Category
@@ -311,7 +1309,6 @@ func (q *Queries) RestoreCategory(ctx context.Context, categoryID int32) (*Categ
 		&i.Name,
 		&i.Description,
 		&i.SlugCategory,
-		&i.ImageCategory,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 		&i.DeletedAt,
@@ -326,7 +1323,7 @@ SET
 WHERE
     category_id = $1
     AND deleted_at IS NULL
-    RETURNING category_id, name, description, slug_category, image_category, created_at, updated_at, deleted_at
+    RETURNING category_id, name, description, slug_category, created_at, updated_at, deleted_at
 `
 
 // Trash Category
@@ -338,7 +1335,6 @@ func (q *Queries) TrashCategory(ctx context.Context, categoryID int32) (*Categor
 		&i.Name,
 		&i.Description,
 		&i.SlugCategory,
-		&i.ImageCategory,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 		&i.DeletedAt,
@@ -351,19 +1347,17 @@ UPDATE categories
 SET name = $2,
     description = $3,
     slug_category = $4,
-    image_category = $5,
     updated_at = CURRENT_TIMESTAMP
 WHERE category_id = $1
   AND deleted_at IS NULL
-  RETURNING category_id, name, description, slug_category, image_category, created_at, updated_at, deleted_at
+  RETURNING category_id, name, description, slug_category, created_at, updated_at, deleted_at
 `
 
 type UpdateCategoryParams struct {
-	CategoryID    int32          `json:"category_id"`
-	Name          string         `json:"name"`
-	Description   sql.NullString `json:"description"`
-	SlugCategory  sql.NullString `json:"slug_category"`
-	ImageCategory sql.NullString `json:"image_category"`
+	CategoryID   int32          `json:"category_id"`
+	Name         string         `json:"name"`
+	Description  sql.NullString `json:"description"`
+	SlugCategory sql.NullString `json:"slug_category"`
 }
 
 func (q *Queries) UpdateCategory(ctx context.Context, arg UpdateCategoryParams) (*Category, error) {
@@ -372,7 +1366,6 @@ func (q *Queries) UpdateCategory(ctx context.Context, arg UpdateCategoryParams) 
 		arg.Name,
 		arg.Description,
 		arg.SlugCategory,
-		arg.ImageCategory,
 	)
 	var i Category
 	err := row.Scan(
@@ -380,7 +1373,6 @@ func (q *Queries) UpdateCategory(ctx context.Context, arg UpdateCategoryParams) 
 		&i.Name,
 		&i.Description,
 		&i.SlugCategory,
-		&i.ImageCategory,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 		&i.DeletedAt,

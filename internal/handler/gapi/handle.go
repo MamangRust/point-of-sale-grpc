@@ -6,8 +6,8 @@ import (
 )
 
 type Deps struct {
-	Service service.Service
-	Mapper  protomapper.ProtoMapper
+	Service *service.Service
+	Mapper  *protomapper.ProtoMapper
 }
 
 type Handler struct {

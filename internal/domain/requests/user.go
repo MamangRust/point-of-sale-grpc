@@ -11,7 +11,7 @@ type CreateUserRequest struct {
 }
 
 type UpdateUserRequest struct {
-	UserID          int    `json:"user_id" validate:"required,min=1"`
+	UserID          *int   `json:"user_id"`
 	FirstName       string `json:"firstname" validate:"required,alpha"`
 	LastName        string `json:"lastname" validate:"required,alpha"`
 	Email           string `json:"email" validate:"required,email"`

@@ -9,7 +9,7 @@ type CreateCashierRequest struct {
 }
 
 type UpdateCashierRequest struct {
-	CashierID int    `json:"cashier_id" validate:"required"`
+	CashierID *int   `json:"cashier_id"`
 	Name      string `json:"name" validate:"required"`
 }
 

@@ -32,8 +32,13 @@ type RoleProtoMapper interface {
 }
 
 type CategoryProtoMapper interface {
+	ToProtoResponseMonthlyTotalPrice(status string, message string, row []*response.CategoriesMonthlyTotalPriceResponse) *pb.ApiResponseCategoryMonthlyTotalPrice
+	ToProtoResponseYearlyTotalPrice(status string, message string, row []*response.CategoriesYearlyTotalPriceResponse) *pb.ApiResponseCategoryYearlyTotalPrice
+
 	ToProtoResponsesCategory(status string, message string, pbResponse []*response.CategoryResponse) *pb.ApiResponsesCategory
 	ToProtoResponseCategoryDeleteAt(status string, message string, pbResponse *response.CategoryResponseDeleteAt) *pb.ApiResponseCategoryDeleteAt
+	ToProtoResponseCategoryMonthlyPrice(status string, message string, row []*response.CategoryMonthPriceResponse) *pb.ApiResponseCategoryMonthPrice
+	ToProtoResponseCategoryYearlyPrice(status string, message string, row []*response.CategoryYearPriceResponse) *pb.ApiResponseCategoryYearPrice
 
 	ToProtoResponseCategoryAll(status string, message string) *pb.ApiResponseCategoryAll
 	ToProtoResponseCategory(status string, message string, pbResponse *response.CategoryResponse) *pb.ApiResponseCategory
@@ -43,6 +48,12 @@ type CategoryProtoMapper interface {
 }
 
 type CashierProtoMapper interface {
+	ToProtoMonthlyTotalSales(status, message string, row []*response.CashierResponseMonthTotalSales) *pb.ApiResponseCashierMonthlyTotalSales
+	ToProtoYearlyTotalSales(status, message string, row []*response.CashierResponseYearTotalSales) *pb.ApiResponseCashierYearlyTotalSales
+
+	ToProtoResponseMonthlyTotalSales(status, message string, row []*response.CashierResponseMonthSales) *pb.ApiResponseCashierMonthSales
+	ToProtoResponseYearlyTotalSales(status, message string, row []*response.CashierResponseYearSales) *pb.ApiResponseCashierYearSales
+
 	ToProtoResponseCashier(status string, message string, pbResponse *response.CashierResponse) *pb.ApiResponseCashier
 	ToProtoResponseCashierDeleteAt(status string, message string, pbResponse *response.CashierResponseDeleteAt) *pb.ApiResponseCashierDeleteAt
 	ToProtoResponsesCashier(status string, message string, pbResponse []*response.CashierResponse) *pb.ApiResponsesCashier
@@ -73,6 +84,12 @@ type OrderItemProtoMapper interface {
 }
 
 type OrderProtoMapper interface {
+	ToProtoResponseMonthlyTotalRevenue(status string, message string, row []*response.OrderMonthlyTotalRevenueResponse) *pb.ApiResponseOrderMonthlyTotalRevenue
+	ToProtoResponseYearlyTotalRevenue(status string, message string, row []*response.OrderYearlyTotalRevenueResponse) *pb.ApiResponseOrderYearlyTotalRevenue
+
+	ToProtoResponseMonthlyRevenue(status string, message string, row []*response.OrderMonthlyResponse) *pb.ApiResponseOrderMonthly
+	ToProtoResponseYearlyRevenue(status string, message string, row []*response.OrderYearlyResponse) *pb.ApiResponseOrderYearly
+
 	ToProtoResponseOrder(status string, message string, pbResponse *response.OrderResponse) *pb.ApiResponseOrder
 	ToProtoResponseOrderDeleteAt(status string, message string, pbResponse *response.OrderResponseDeleteAt) *pb.ApiResponseOrderDeleteAt
 	ToProtoResponsesOrder(status string, message string, pbResponse []*response.OrderResponse) *pb.ApiResponsesOrder
@@ -94,6 +111,13 @@ type ProductProtoMapper interface {
 }
 
 type TransactionProtoMapper interface {
+	ToProtoResponseMonthAmountSuccess(status string, message string, row []*response.TransactionMonthlyAmountSuccessResponse) *pb.ApiResponseTransactionMonthAmountSuccess
+	ToProtoResponseYearAmountSuccess(status string, message string, row []*response.TransactionYearlyAmountSuccessResponse) *pb.ApiResponseTransactionYearAmountSuccess
+	ToProtoResponseMonthAmountFailed(status string, message string, row []*response.TransactionMonthlyAmountFailedResponse) *pb.ApiResponseTransactionMonthAmountFailed
+	ToProtoResponseYearAmountFailed(status string, message string, row []*response.TransactionYearlyAmountFailedResponse) *pb.ApiResponseTransactionYearAmountFailed
+	ToProtoResponseMonthMethod(status string, message string, row []*response.TransactionMonthlyMethodResponse) *pb.ApiResponseTransactionMonthPaymentMethod
+	ToProtoResponseYearMethod(status string, message string, row []*response.TransactionYearlyMethodResponse) *pb.ApiResponseTransactionYearPaymentmethod
+
 	ToProtoResponseTransaction(status string, message string, trans *response.TransactionResponse) *pb.ApiResponseTransaction
 	ToProtoResponseTransactionDeleteAt(status string, message string, trans *response.TransactionResponseDeleteAt) *pb.ApiResponseTransactionDeleteAt
 	ToProtoResponsesTransaction(status string, message string, transList []*response.TransactionResponse) *pb.ApiResponsesTransaction

@@ -3,6 +3,7 @@ package seeder
 import (
 	"context"
 	"database/sql"
+	"math/rand"
 	db "pointofsale/pkg/database/schema"
 	"pointofsale/pkg/logger"
 
@@ -47,24 +48,12 @@ func (r *transactionSeeder) Seed() error {
 	}
 
 	for i := 0; i < 10; i++ {
-		var orderID int
-		var merchantID int
+		selectedMerchantId := merchants[rand.Intn(len(merchants))]
+		selectedOrderId := orders[rand.Intn(len(orders))]
+
 		var paymentMethod string
 		var amount, changeAmount float64
 		var paymentStatus string
-
-		if len(orders) > 0 {
-
-			orderID = int(orders[i%len(orders)].OrderID)
-		} else {
-			orderID = i + 1
-		}
-
-		if len(merchants) > 0 {
-			merchantID = int(merchants[i%len(merchants)].MerchantID)
-		} else {
-			merchantID = i + 1
-		}
 
 		paymentMethod = "Credit Card"
 		amount = float64(100 + i)
@@ -72,7 +61,7 @@ func (r *transactionSeeder) Seed() error {
 		paymentStatus = "Completed"
 
 		_, err := r.db.CreateTransactions(r.ctx, db.CreateTransactionsParams{
-			OrderID:       int32(orderID),
+			OrderID:       selectedOrderId.OrderID,
 			PaymentMethod: paymentMethod,
 			Amount:        int32(amount),
 			ChangeAmount: sql.NullInt32{
@@ -80,7 +69,7 @@ func (r *transactionSeeder) Seed() error {
 				Valid: true,
 			},
 			PaymentStatus: paymentStatus,
-			MerchantID:    int32(merchantID),
+			MerchantID:    selectedMerchantId.MerchantID,
 		})
 		if err != nil {
 			r.logger.Error("Failed to create transaction:", zap.Any("error", err))
