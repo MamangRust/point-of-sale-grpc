@@ -62,14 +62,11 @@ definitions:
     type: object
   requests.CreateOrderItemRequest:
     properties:
-      price:
-        type: integer
       product_id:
         type: integer
       quantity:
         type: integer
     required:
-    - price
     - product_id
     - quantity
     type: object
@@ -99,6 +96,8 @@ definitions:
     properties:
       amount:
         type: integer
+      cashier_id:
+        type: integer
       change_amount:
         type: integer
       merchant_id:
@@ -111,11 +110,9 @@ definitions:
         type: string
     required:
     - amount
-    - change_amount
-    - merchant_id
+    - cashier_id
     - order_id
     - payment_method
-    - payment_status
     type: object
   requests.CreateUserRequest:
     properties:
@@ -152,7 +149,6 @@ definitions:
       name:
         type: string
     required:
-    - cashier_id
     - name
     type: object
   requests.UpdateCategoryRequest:
@@ -166,7 +162,6 @@ definitions:
       slug_category:
         type: string
     required:
-    - category_id
     - description
     - name
     type: object
@@ -193,7 +188,6 @@ definitions:
     - contact_email
     - contact_phone
     - description
-    - merchant_id
     - name
     - status
     - user_id
@@ -202,15 +196,12 @@ definitions:
     properties:
       order_item_id:
         type: integer
-      price:
-        type: integer
       product_id:
         type: integer
       quantity:
         type: integer
     required:
     - order_item_id
-    - price
     - product_id
     - quantity
     type: object
@@ -224,22 +215,21 @@ definitions:
         type: integer
     required:
     - items
-    - order_id
     type: object
   requests.UpdateRoleRequest:
     properties:
       id:
-        minimum: 1
         type: integer
       name:
         type: string
     required:
-    - id
     - name
     type: object
   requests.UpdateTransactionRequest:
     properties:
       amount:
+        type: integer
+      cashier_id:
         type: integer
       change_amount:
         type: integer
@@ -255,12 +245,9 @@ definitions:
         type: integer
     required:
     - amount
-    - change_amount
-    - merchant_id
+    - cashier_id
     - order_id
     - payment_method
-    - payment_status
-    - transaction_id
     type: object
   requests.UpdateUserRequest:
     properties:
@@ -276,7 +263,6 @@ definitions:
         minLength: 6
         type: string
       user_id:
-        minimum: 1
         type: integer
     required:
     - confirm_password
@@ -284,7 +270,6 @@ definitions:
     - firstname
     - lastname
     - password
-    - user_id
     type: object
   response.ApiResponseCashier:
     properties:
@@ -1661,6 +1646,21 @@ paths:
       consumes:
       - application/json
       description: Retrieve a list of active cashier
+      parameters:
+      - default: 1
+        description: Page number
+        in: query
+        name: page
+        type: integer
+      - default: 10
+        description: Number of items per page
+        in: query
+        name: page_size
+        type: integer
+      - description: Search query
+        in: query
+        name: search
+        type: string
       produces:
       - application/json
       responses:
@@ -1777,14 +1777,14 @@ paths:
       - application/json
       description: Retrieve monthly cashiers statistics for a specific merchant
       parameters:
-      - description: Merchant ID
-        in: query
-        name: merchant_id
-        required: true
-        type: integer
       - description: Year in YYYY format (e.g., 2023)
         in: query
         name: year
+        required: true
+        type: integer
+      - description: Merchant ID
+        in: query
+        name: merchant_id
         required: true
         type: integer
       produces:
@@ -1866,14 +1866,14 @@ paths:
       - application/json
       description: Retrieve yearly cashier statistics for a specific merchant
       parameters:
-      - description: Merchant ID
-        in: query
-        name: merchant_id
-        required: true
-        type: integer
       - description: Year in YYYY format (e.g., 2023)
         in: query
         name: year
+        required: true
+        type: integer
+      - description: Merchant ID
+        in: query
+        name: merchant_id
         required: true
         type: integer
       produces:
@@ -1910,7 +1910,7 @@ paths:
       - application/json
       description: Retrieve the yearly cashiers for a specific year.
       parameters:
-      - description: Year
+      - description: Year in YYYY format (e.g., 2023)
         in: query
         name: year
         required: true
@@ -2021,14 +2021,14 @@ paths:
       - application/json
       description: Retrieve monthly cashier statistics for a specific cashier
       parameters:
-      - description: Cashier ID
-        in: query
-        name: cashier_id
-        required: true
-        type: integer
       - description: Year in YYYY format (e.g., 2023)
         in: query
         name: year
+        required: true
+        type: integer
+      - description: Cashier ID
+        in: query
+        name: cashier_id
         required: true
         type: integer
       produces:
@@ -2075,6 +2075,11 @@ paths:
         name: month
         required: true
         type: integer
+      - description: Cashier id
+        in: query
+        name: cashier_id
+        required: true
+        type: integer
       produces:
       - application/json
       responses:
@@ -2105,14 +2110,14 @@ paths:
       - application/json
       description: Retrieve yearly cashier statistics for a specific cashier
       parameters:
-      - description: Cashier ID
-        in: query
-        name: cashier_id
-        required: true
-        type: integer
       - description: Year in YYYY format (e.g., 2023)
         in: query
         name: year
+        required: true
+        type: integer
+      - description: Cashier ID
+        in: query
+        name: cashier_id
         required: true
         type: integer
       produces:
@@ -2149,7 +2154,7 @@ paths:
       - application/json
       description: Retrieve the yearly cashiers for a specific year.
       parameters:
-      - description: Year
+      - description: Year in YYYY format (e.g., 2023)
         in: query
         name: year
         required: true
@@ -2246,6 +2251,21 @@ paths:
       consumes:
       - application/json
       description: Retrieve a list of trashed cashier records
+      parameters:
+      - default: 1
+        description: Page number
+        in: query
+        name: page
+        type: integer
+      - default: 10
+        description: Number of items per page
+        in: query
+        name: page_size
+        type: integer
+      - description: Search query
+        in: query
+        name: search
+        type: string
       produces:
       - application/json
       responses:
@@ -2299,6 +2319,11 @@ paths:
       - application/json
       description: Update an existing cashier record with the provided details
       parameters:
+      - description: Cashier ID
+        in: path
+        name: id
+        required: true
+        type: integer
       - description: Update cashier request
         in: body
         name: UpdateCashierRequest
@@ -2331,7 +2356,7 @@ paths:
       - application/json
       description: Retrieve the yearly cashiers for a specific year.
       parameters:
-      - description: Year
+      - description: Year in YYYY format (e.g., 2023)
         in: query
         name: year
         required: true
@@ -2362,7 +2387,7 @@ paths:
       - application/json
       description: Retrieve the yearly cashiers for a specific year.
       parameters:
-      - description: Year
+      - description: Year in YYYY format (e.g., 2023)
         in: query
         name: year
         required: true
@@ -2459,6 +2484,21 @@ paths:
       consumes:
       - application/json
       description: Retrieve a list of active category
+      parameters:
+      - default: 1
+        description: Page number
+        in: query
+        name: page
+        type: integer
+      - default: 10
+        description: Number of items per page
+        in: query
+        name: page_size
+        type: integer
+      - description: Search query
+        in: query
+        name: search
+        type: string
       produces:
       - application/json
       responses:
@@ -2576,14 +2616,14 @@ paths:
       description: Retrieve monthly pricing statistics for categories by specific
         merchant
       parameters:
-      - description: Merchant ID
-        in: query
-        name: merchant_id
-        required: true
-        type: integer
       - description: Year in YYYY format (e.g., 2023)
         in: query
         name: year
+        required: true
+        type: integer
+      - description: Merchant ID
+        in: query
+        name: merchant_id
         required: true
         type: integer
       produces:
@@ -2665,14 +2705,14 @@ paths:
       - application/json
       description: Retrieve yearly pricing statistics for categories by specific merchant
       parameters:
-      - description: Merchant ID
-        in: query
-        name: merchant_id
-        required: true
-        type: integer
       - description: Year in YYYY format (e.g., 2023)
         in: query
         name: year
+        required: true
+        type: integer
+      - description: Merchant ID
+        in: query
+        name: merchant_id
         required: true
         type: integer
       produces:
@@ -2779,14 +2819,14 @@ paths:
       - application/json
       description: Retrieve monthly pricing statistics for specific category
       parameters:
-      - description: Category ID
-        in: path
-        name: category_id
-        required: true
-        type: integer
       - description: Year in YYYY format (e.g., 2023)
         in: query
         name: year
+        required: true
+        type: integer
+      - description: Category ID
+        in: path
+        name: category_id
         required: true
         type: integer
       produces:
@@ -2833,6 +2873,11 @@ paths:
         name: month
         required: true
         type: integer
+      - description: Category ID
+        in: query
+        name: category_id
+        required: true
+        type: integer
       produces:
       - application/json
       responses:
@@ -2863,14 +2908,14 @@ paths:
       - application/json
       description: Retrieve yearly pricing statistics for specific category
       parameters:
-      - description: Category ID
-        in: path
-        name: category_id
-        required: true
-        type: integer
       - description: Year in YYYY format (e.g., 2023)
         in: query
         name: year
+        required: true
+        type: integer
+      - description: Category ID
+        in: path
+        name: category_id
         required: true
         type: integer
       produces:
@@ -2937,12 +2982,6 @@ paths:
       consumes:
       - application/json
       description: Restore a trashed category record by its ID.
-      parameters:
-      - description: category ID
-        in: path
-        name: id
-        required: true
-        type: integer
       produces:
       - application/json
       responses:
@@ -2968,6 +3007,21 @@ paths:
       consumes:
       - application/json
       description: Retrieve a list of trashed category records
+      parameters:
+      - default: 1
+        description: Page number
+        in: query
+        name: page
+        type: integer
+      - default: 10
+        description: Number of items per page
+        in: query
+        name: page_size
+        type: integer
+      - description: Search query
+        in: query
+        name: search
+        type: string
       produces:
       - application/json
       responses:
@@ -3021,6 +3075,11 @@ paths:
       - application/json
       description: Update an existing category record with the provided details
       parameters:
+      - description: Category ID
+        in: path
+        name: id
+        required: true
+        type: integer
       - description: Category update details
         in: body
         name: request
@@ -3194,6 +3253,21 @@ paths:
       consumes:
       - application/json
       description: Retrieve a list of active merchant
+      parameters:
+      - default: 1
+        description: Page number
+        in: query
+        name: page
+        type: integer
+      - default: 10
+        description: Number of items per page
+        in: query
+        name: page_size
+        type: integer
+      - description: Search query
+        in: query
+        name: search
+        type: string
       produces:
       - application/json
       responses:
@@ -3371,6 +3445,21 @@ paths:
       consumes:
       - application/json
       description: Retrieve a list of trashed merchant records
+      parameters:
+      - default: 1
+        description: Page number
+        in: query
+        name: page
+        type: integer
+      - default: 10
+        description: Number of items per page
+        in: query
+        name: page_size
+        type: integer
+      - description: Search query
+        in: query
+        name: search
+        type: string
       produces:
       - application/json
       responses:
@@ -3567,6 +3656,21 @@ paths:
       consumes:
       - application/json
       description: Retrieve a list of active order items
+      parameters:
+      - default: 1
+        description: Page number
+        in: query
+        name: page
+        type: integer
+      - default: 10
+        description: Number of items per page
+        in: query
+        name: page_size
+        type: integer
+      - description: Search query
+        in: query
+        name: search
+        type: string
       produces:
       - application/json
       responses:
@@ -3619,6 +3723,21 @@ paths:
       consumes:
       - application/json
       description: Retrieve a list of trashed order items
+      parameters:
+      - default: 1
+        description: Page number
+        in: query
+        name: page
+        type: integer
+      - default: 10
+        description: Number of items per page
+        in: query
+        name: page_size
+        type: integer
+      - description: Search query
+        in: query
+        name: search
+        type: string
       produces:
       - application/json
       responses:
@@ -3671,6 +3790,21 @@ paths:
       consumes:
       - application/json
       description: Retrieve a list of active orders
+      parameters:
+      - default: 1
+        description: Page number
+        in: query
+        name: page
+        type: integer
+      - default: 10
+        description: Number of items per page
+        in: query
+        name: page_size
+        type: integer
+      - description: Search query
+        in: query
+        name: search
+        type: string
       produces:
       - application/json
       responses:
@@ -4066,6 +4200,21 @@ paths:
       consumes:
       - application/json
       description: Retrieve a list of trashed orders
+      parameters:
+      - default: 1
+        description: Page number
+        in: query
+        name: page
+        type: integer
+      - default: 10
+        description: Number of items per page
+        in: query
+        name: page_size
+        type: integer
+      - description: Search query
+        in: query
+        name: search
+        type: string
       produces:
       - application/json
       responses:
@@ -4287,6 +4436,21 @@ paths:
       consumes:
       - application/json
       description: Retrieve a list of active products
+      parameters:
+      - default: 1
+        description: Page number
+        in: query
+        name: page
+        type: integer
+      - default: 10
+        description: Number of items per page
+        in: query
+        name: page_size
+        type: integer
+      - description: Search query
+        in: query
+        name: search
+        type: string
       produces:
       - application/json
       responses:
@@ -4482,31 +4646,46 @@ paths:
       summary: Permanently delete all products
       tags:
       - Product
-  /api/product/merchant:
+  /api/product/merchant/{merchant_id}:
     get:
       consumes:
       - application/json
       description: Retrieve a list of products filtered by merchant
       parameters:
       - description: Merchant ID
-        in: query
+        in: path
         name: merchant_id
         required: true
-        type: string
+        type: integer
       - default: 1
         description: Page number
         in: query
+        minimum: 1
         name: page
         type: integer
       - default: 10
         description: Number of items per page
         in: query
+        maximum: 100
+        minimum: 1
         name: page_size
         type: integer
       - description: Search query
         in: query
         name: search
         type: string
+      - description: Category ID filter
+        in: query
+        name: category_id
+        type: integer
+      - description: Minimum price filter
+        in: query
+        name: min_price
+        type: integer
+      - description: Maximum price filter
+        in: query
+        name: max_price
+        type: integer
       produces:
       - application/json
       responses:
@@ -4514,6 +4693,10 @@ paths:
           description: List of products
           schema:
             $ref: '#/definitions/response.ApiResponsePaginationProduct'
+        "400":
+          description: Invalid request parameters
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
         "500":
           description: Failed to retrieve product data
           schema:
@@ -4580,6 +4763,21 @@ paths:
       consumes:
       - application/json
       description: Retrieve a list of trashed products
+      parameters:
+      - default: 1
+        description: Page number
+        in: query
+        name: page
+        type: integer
+      - default: 10
+        description: Number of items per page
+        in: query
+        name: page_size
+        type: integer
+      - description: Search query
+        in: query
+        name: search
+        type: string
       produces:
       - application/json
       responses:
@@ -4789,36 +4987,6 @@ paths:
       tags:
       - Role
   /api/role/{id}:
-    delete:
-      consumes:
-      - application/json
-      description: Soft-delete a role by its ID.
-      parameters:
-      - description: Role ID
-        in: path
-        name: id
-        required: true
-        type: integer
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: Soft-deleted role data
-          schema:
-            $ref: '#/definitions/response.ApiResponseRole'
-        "400":
-          description: Invalid role ID
-          schema:
-            $ref: '#/definitions/response.ErrorResponse'
-        "500":
-          description: Failed to soft-delete role
-          schema:
-            $ref: '#/definitions/response.ErrorResponse'
-      security:
-      - Bearer: []
-      summary: Soft-delete a role
-      tags:
-      - Role
     get:
       consumes:
       - application/json
@@ -4852,37 +5020,31 @@ paths:
     post:
       consumes:
       - application/json
-      description: Update an existing role with the provided details.
+      description: Soft-delete a role by its ID.
       parameters:
       - description: Role ID
         in: path
         name: id
         required: true
         type: integer
-      - description: Role data
-        in: body
-        name: request
-        required: true
-        schema:
-          $ref: '#/definitions/requests.UpdateRoleRequest'
       produces:
       - application/json
       responses:
         "200":
-          description: Updated role data
+          description: Soft-deleted role data
           schema:
             $ref: '#/definitions/response.ApiResponseRole'
         "400":
-          description: Invalid role ID or request body
+          description: Invalid role ID
           schema:
             $ref: '#/definitions/response.ErrorResponse'
         "500":
-          description: Failed to update role
+          description: Failed to soft-delete role
           schema:
             $ref: '#/definitions/response.ErrorResponse'
       security:
       - Bearer: []
-      summary: Update a role
+      summary: Soft-delete a role
       tags:
       - Role
   /api/role/active:
@@ -4998,7 +5160,7 @@ paths:
       tags:
       - Role
   /api/role/restore/{id}:
-    put:
+    post:
       consumes:
       - application/json
       description: Restore a soft-deleted role by its ID.
@@ -5179,6 +5341,21 @@ paths:
       consumes:
       - application/json
       description: Retrieve a list of active transactions
+      parameters:
+      - default: 1
+        description: Page number
+        in: query
+        name: page
+        type: integer
+      - default: 10
+        description: Number of items per page
+        in: query
+        name: page_size
+        type: integer
+      - description: Search query
+        in: query
+        name: search
+        type: string
       produces:
       - application/json
       responses:
@@ -5731,6 +5908,21 @@ paths:
       consumes:
       - application/json
       description: Retrieve a list of trashed transaction records
+      parameters:
+      - default: 1
+        description: Page number
+        in: query
+        name: page
+        type: integer
+      - default: 10
+        description: Number of items per page
+        in: query
+        name: page_size
+        type: integer
+      - description: Search query
+        in: query
+        name: search
+        type: string
       produces:
       - application/json
       responses:
@@ -5987,6 +6179,21 @@ paths:
       consumes:
       - application/json
       description: Retrieve a list of active users
+      parameters:
+      - default: 1
+        description: Page number
+        in: query
+        name: page
+        type: integer
+      - default: 10
+        description: Number of items per page
+        in: query
+        name: page_size
+        type: integer
+      - description: Search query
+        in: query
+        name: search
+        type: string
       produces:
       - application/json
       responses:
@@ -6164,6 +6371,21 @@ paths:
       consumes:
       - application/json
       description: Retrieve a list of trashed user records
+      parameters:
+      - default: 1
+        description: Page number
+        in: query
+        name: page
+        type: integer
+      - default: 10
+        description: Number of items per page
+        in: query
+        name: page_size
+        type: integer
+      - description: Search query
+        in: query
+        name: search
+        type: string
       produces:
       - application/json
       responses:
@@ -6217,6 +6439,11 @@ paths:
       - application/json
       description: Update an existing user record with the provided details
       parameters:
+      - description: User ID
+        in: path
+        name: id
+        required: true
+        type: integer
       - description: Update user request
         in: body
         name: UpdateUserRequest

@@ -41,6 +41,18 @@ type UpdateProductRequest struct {
 	Barcode      *string `json:"barcode"`
 }
 
+type ProductFormData struct {
+	MerchantID   int
+	CategoryID   int
+	Name         string
+	Description  string
+	Price        int
+	CountInStock int
+	Brand        string
+	Weight       int
+	ImagePath    string
+}
+
 func (r *CreateProductRequest) Validate() error {
 	validate := validator.New()
 	err := validate.Struct(r)

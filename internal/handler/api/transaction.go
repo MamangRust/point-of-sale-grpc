@@ -232,6 +232,9 @@ func (h *transactionHandleApi) FindById(c echo.Context) error {
 // @Description Retrieve a list of active transactions
 // @Accept json
 // @Produce json
+// @Param page query int false "Page number" default(1)
+// @Param page_size query int false "Number of items per page" default(10)
+// @Param search query string false "Search query"
 // @Success 200 {object} response.ApiResponsePaginationTransactionDeleteAt "List of active transactions"
 // @Failure 500 {object} response.ErrorResponse "Failed to retrieve transaction data"
 // @Router /api/transaction/active [get]
@@ -279,6 +282,9 @@ func (h *transactionHandleApi) FindByActive(c echo.Context) error {
 // @Description Retrieve a list of trashed transaction records
 // @Accept json
 // @Produce json
+// @Param page query int false "Page number" default(1)
+// @Param page_size query int false "Number of items per page" default(10)
+// @Param search query string false "Search query"
 // @Success 200 {object} response.ApiResponsePaginationTransactionDeleteAt "List of trashed transaction data"
 // @Failure 500 {object} response.ErrorResponse "Failed to retrieve transaction data"
 // @Router /api/transaction/trashed [get]

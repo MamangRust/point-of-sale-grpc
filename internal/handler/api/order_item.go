@@ -95,6 +95,9 @@ func (h *orderItemHandleApi) FindAllOrderItems(c echo.Context) error {
 // @Description Retrieve a list of active order items
 // @Accept json
 // @Produce json
+// @Param page query int false "Page number" default(1)
+// @Param page_size query int false "Number of items per page" default(10)
+// @Param search query string false "Search query"
 // @Success 200 {object} response.ApiResponsePaginationOrderItemDeleteAt "List of active order items"
 // @Failure 500 {object} response.ErrorResponse "Failed to retrieve order item data"
 // @Router /api/order-item/active [get]
@@ -141,6 +144,9 @@ func (h *orderItemHandleApi) FindByActive(c echo.Context) error {
 // @Description Retrieve a list of trashed order items
 // @Accept json
 // @Produce json
+// @Param page query int false "Page number" default(1)
+// @Param page_size query int false "Number of items per page" default(10)
+// @Param search query string false "Search query"
 // @Success 200 {object} response.ApiResponsePaginationOrderItemDeleteAt "List of trashed order items"
 // @Failure 500 {object} response.ErrorResponse "Failed to retrieve order item data"
 // @Router /api/order-item/trashed [get]

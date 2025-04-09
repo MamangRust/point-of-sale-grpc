@@ -159,6 +159,9 @@ func (h *cashierHandleApi) FindById(c echo.Context) error {
 // @Description Retrieve a list of active cashier
 // @Accept json
 // @Produce json
+// @Param page query int false "Page number" default(1)
+// @Param page_size query int false "Number of items per page" default(10)
+// @Param search query string false "Search query"
 // @Success 200 {object} response.ApiResponsePaginationCashierDeleteAt "List of active cashier"
 // @Failure 500 {object} response.ErrorResponse "Failed to retrieve cashier data"
 // @Router /api/cashier/active [get]
@@ -202,6 +205,9 @@ func (h *cashierHandleApi) FindByActive(c echo.Context) error {
 // @Description Retrieve a list of trashed cashier records
 // @Accept json
 // @Produce json
+// @Param page query int false "Page number" default(1)
+// @Param page_size query int false "Number of items per page" default(10)
+// @Param search query string false "Search query"
 // @Success 200 {object} response.ApiResponsePaginationCashierDeleteAt "List of trashed cashier data"
 // @Failure 500 {object} response.ErrorResponse "Failed to retrieve cashier data"
 // @Router /api/cashier/trashed [get]
@@ -307,7 +313,7 @@ func (h *cashierHandleApi) FindMonthlyTotalSales(c echo.Context) error {
 // @Description Retrieve the yearly cashiers for a specific year.
 // @Accept json
 // @Produce json
-// @Param year query int true "Year"
+// @Param year query int true "Year in YYYY format (e.g., 2023)"
 // @Success 200 {object} response.ApiResponseCashierYearSales "Yearly cashiers"
 // @Failure 400 {object} response.ErrorResponse "Invalid year parameter"
 // @Failure 500 {object} response.ErrorResponse "Failed to retrieve yearly cashiers"
@@ -355,6 +361,7 @@ func (h *cashierHandleApi) FindYearTotalSales(c echo.Context) error {
 // @Produce json
 // @Param year query int true "Year in YYYY format (e.g., 2023)"
 // @Param month query int true "Month"
+// @Param cashier_id query int true "Cashier id"
 // @Success 200 {object} response.ApiResponseCashierMonthSales "Successfully retrieved monthly sales data"
 // @Failure 400 {object} response.ErrorResponse "Invalid year parameter"
 // @Failure 401 {object} response.ErrorResponse "Unauthorized"
@@ -428,7 +435,7 @@ func (h *cashierHandleApi) FindMonthlyTotalSalesById(c echo.Context) error {
 // @Description Retrieve the yearly cashiers for a specific year.
 // @Accept json
 // @Produce json
-// @Param year query int true "Year"
+// @Param year query int true "Year in YYYY format (e.g., 2023)"
 // @Param cashier_id query int true "Cashier ID"
 // @Success 200 {object} response.ApiResponseCashierYearSales "Yearly cashiers"
 // @Failure 400 {object} response.ErrorResponse "Invalid year parameter"
@@ -562,7 +569,7 @@ func (h *cashierHandleApi) FindMonthlyTotalSalesByMerchant(c echo.Context) error
 // @Description Retrieve the yearly cashiers for a specific year.
 // @Accept json
 // @Produce json
-// @Param year query int true "Year"
+// @Param year query int true "Year in YYYY format (e.g., 2023)"
 // @Param merchant_id query int true "Merchant ID"
 // @Success 200 {object} response.ApiResponseCashierYearSales "Yearly cashiers"
 // @Failure 400 {object} response.ErrorResponse "Invalid year parameter"
@@ -667,7 +674,7 @@ func (h *cashierHandleApi) FindMonthSales(c echo.Context) error {
 // @Description Retrieve the yearly cashiers for a specific year.
 // @Accept json
 // @Produce json
-// @Param year query int true "Year"
+// @Param year query int true "Year in YYYY format (e.g., 2023)"
 // @Success 200 {object} response.ApiResponseCashierYearSales "Yearly cashiers"
 // @Failure 400 {object} response.ErrorResponse "Invalid year parameter"
 // @Failure 500 {object} response.ErrorResponse "Failed to retrieve yearly cashiers"
@@ -710,8 +717,8 @@ func (h *cashierHandleApi) FindYearSales(c echo.Context) error {
 // @Description Retrieve monthly cashiers statistics for a specific merchant
 // @Accept json
 // @Produce json
-// @Param merchant_id query int true "Merchant ID"
 // @Param year query int true "Year in YYYY format (e.g., 2023)"
+// @Param merchant_id query int true "Merchant ID"
 // @Success 200 {object} response.ApiResponseCashierMonthSales "Successfully retrieved monthly sales by merchant"
 // @Failure 400 {object} response.ErrorResponse "Invalid merchant ID or year parameter"
 // @Failure 401 {object} response.ErrorResponse "Unauthorized"
@@ -770,8 +777,8 @@ func (h *cashierHandleApi) FindMonthSalesByMerchant(c echo.Context) error {
 // @Description Retrieve yearly cashier statistics for a specific merchant
 // @Accept json
 // @Produce json
-// @Param merchant_id query int true "Merchant ID"
 // @Param year query int true "Year in YYYY format (e.g., 2023)"
+// @Param merchant_id query int true "Merchant ID"
 // @Success 200 {object} response.ApiResponseCashierYearSales "Successfully retrieved yearly sales by merchant"
 // @Failure 400 {object} response.ErrorResponse "Invalid merchant ID or year parameter"
 // @Failure 401 {object} response.ErrorResponse "Unauthorized"
@@ -831,8 +838,8 @@ func (h *cashierHandleApi) FindYearSalesByMerchant(c echo.Context) error {
 // @Description Retrieve monthly cashier statistics for a specific cashier
 // @Accept json
 // @Produce json
-// @Param cashier_id query int true "Cashier ID"
 // @Param year query int true "Year in YYYY format (e.g., 2023)"
+// @Param cashier_id query int true "Cashier ID"
 // @Success 200 {object} response.ApiResponseCashierMonthSales "Successfully retrieved monthly sales by cashier"
 // @Failure 400 {object} response.ErrorResponse "Invalid cashier ID or year parameter"
 // @Failure 401 {object} response.ErrorResponse "Unauthorized"
@@ -870,6 +877,7 @@ func (h *cashierHandleApi) FindMonthSalesById(c echo.Context) error {
 		Year:      int32(year),
 		CashierId: int32(cashier_id),
 	})
+
 	if err != nil {
 		h.logger.Debug("Failed to retrieve monthly cashier sales", zap.Error(err))
 		return c.JSON(http.StatusInternalServerError, response.ErrorResponse{
@@ -891,8 +899,8 @@ func (h *cashierHandleApi) FindMonthSalesById(c echo.Context) error {
 // @Description Retrieve yearly cashier statistics for a specific cashier
 // @Accept json
 // @Produce json
-// @Param cashier_id query int true "Cashier ID"
 // @Param year query int true "Year in YYYY format (e.g., 2023)"
+// @Param cashier_id query int true "Cashier ID"
 // @Success 200 {object} response.ApiResponseCashierYearSales "Successfully retrieved yearly sales by cashier"
 // @Failure 400 {object} response.ErrorResponse "Invalid cashier ID or year parameter"
 // @Failure 401 {object} response.ErrorResponse "Unauthorized"
@@ -995,7 +1003,9 @@ func (h *cashierHandleApi) CreateCashier(c echo.Context) error {
 		})
 	}
 
-	return c.JSON(http.StatusCreated, h.mapping.ToApiResponseCashier(res))
+	so := h.mapping.ToApiResponseCashier(res)
+
+	return c.JSON(http.StatusCreated, so)
 }
 
 // @Security Bearer
@@ -1005,6 +1015,7 @@ func (h *cashierHandleApi) CreateCashier(c echo.Context) error {
 // @Description Update an existing cashier record with the provided details
 // @Accept json
 // @Produce json
+// @Param id path int true "Cashier ID"
 // @Param UpdateCashierRequest body requests.UpdateCashierRequest true "Update cashier request"
 // @Success 200 {object} response.ApiResponseCashier "Successfully updated cashier"
 // @Failure 400 {object} response.ErrorResponse "Invalid request body or validation error"
@@ -1061,7 +1072,9 @@ func (h *cashierHandleApi) UpdateCashier(c echo.Context) error {
 		})
 	}
 
-	return c.JSON(http.StatusOK, h.mapping.ToApiResponseCashier(res))
+	so := h.mapping.ToApiResponseCashier(res)
+
+	return c.JSON(http.StatusOK, so)
 }
 
 // @Security Bearer
@@ -1100,7 +1113,9 @@ func (h *cashierHandleApi) TrashedCashier(c echo.Context) error {
 		})
 	}
 
-	return c.JSON(http.StatusOK, h.mapping.ToApiResponseCashierDeleteAt(cashier))
+	so := h.mapping.ToApiResponseCashierDeleteAt(cashier)
+
+	return c.JSON(http.StatusOK, so)
 }
 
 // @Security Bearer
@@ -1139,7 +1154,9 @@ func (h *cashierHandleApi) RestoreCashier(c echo.Context) error {
 		})
 	}
 
-	return c.JSON(http.StatusOK, h.mapping.ToApiResponseCashierDeleteAt(cashier))
+	so := h.mapping.ToApiResponseCashierDeleteAt(cashier)
+
+	return c.JSON(http.StatusOK, so)
 }
 
 // @Security Bearer
@@ -1178,7 +1195,9 @@ func (h *cashierHandleApi) DeleteCashierPermanent(c echo.Context) error {
 		})
 	}
 
-	return c.JSON(http.StatusOK, h.mapping.ToApiResponseCashierDelete(cashier))
+	so := h.mapping.ToApiResponseCashierDelete(cashier)
+
+	return c.JSON(http.StatusOK, so)
 }
 
 // @Security Bearer
@@ -1208,7 +1227,9 @@ func (h *cashierHandleApi) RestoreAllCashier(c echo.Context) error {
 
 	h.logger.Info("All cashier accounts restored successfully")
 
-	return c.JSON(http.StatusOK, res)
+	so := h.mapping.ToApiResponseCashierAll(res)
+
+	return c.JSON(http.StatusOK, so)
 }
 
 // @Security Bearer
@@ -1237,5 +1258,8 @@ func (h *cashierHandleApi) DeleteAllCashierPermanent(c echo.Context) error {
 	}
 
 	h.logger.Info("All cashier accounts permanently deleted")
-	return c.JSON(http.StatusOK, res)
+
+	so := h.mapping.ToApiResponseCashierAll(res)
+
+	return c.JSON(http.StatusOK, so)
 }

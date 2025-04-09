@@ -292,6 +292,28 @@ const docTemplate = `{
                     "Cashier"
                 ],
                 "summary": "Retrieve active cashier",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "default": 1,
+                        "description": "Page number",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "default": 10,
+                        "description": "Number of items per page",
+                        "name": "page_size",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Search query",
+                        "name": "search",
+                        "in": "query"
+                    }
+                ],
                 "responses": {
                     "200": {
                         "description": "List of active cashier",
@@ -478,15 +500,15 @@ const docTemplate = `{
                 "parameters": [
                     {
                         "type": "integer",
-                        "description": "Merchant ID",
-                        "name": "merchant_id",
+                        "description": "Year in YYYY format (e.g., 2023)",
+                        "name": "year",
                         "in": "query",
                         "required": true
                     },
                     {
                         "type": "integer",
-                        "description": "Year in YYYY format (e.g., 2023)",
-                        "name": "year",
+                        "description": "Merchant ID",
+                        "name": "merchant_id",
                         "in": "query",
                         "required": true
                     }
@@ -615,15 +637,15 @@ const docTemplate = `{
                 "parameters": [
                     {
                         "type": "integer",
-                        "description": "Merchant ID",
-                        "name": "merchant_id",
+                        "description": "Year in YYYY format (e.g., 2023)",
+                        "name": "year",
                         "in": "query",
                         "required": true
                     },
                     {
                         "type": "integer",
-                        "description": "Year in YYYY format (e.g., 2023)",
-                        "name": "year",
+                        "description": "Merchant ID",
+                        "name": "merchant_id",
                         "in": "query",
                         "required": true
                     }
@@ -683,7 +705,7 @@ const docTemplate = `{
                 "parameters": [
                     {
                         "type": "integer",
-                        "description": "Year",
+                        "description": "Year in YYYY format (e.g., 2023)",
                         "name": "year",
                         "in": "query",
                         "required": true
@@ -856,15 +878,15 @@ const docTemplate = `{
                 "parameters": [
                     {
                         "type": "integer",
-                        "description": "Cashier ID",
-                        "name": "cashier_id",
+                        "description": "Year in YYYY format (e.g., 2023)",
+                        "name": "year",
                         "in": "query",
                         "required": true
                     },
                     {
                         "type": "integer",
-                        "description": "Year in YYYY format (e.g., 2023)",
-                        "name": "year",
+                        "description": "Cashier ID",
+                        "name": "cashier_id",
                         "in": "query",
                         "required": true
                     }
@@ -935,6 +957,13 @@ const docTemplate = `{
                         "name": "month",
                         "in": "query",
                         "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Cashier id",
+                        "name": "cashier_id",
+                        "in": "query",
+                        "required": true
                     }
                 ],
                 "responses": {
@@ -986,15 +1015,15 @@ const docTemplate = `{
                 "parameters": [
                     {
                         "type": "integer",
-                        "description": "Cashier ID",
-                        "name": "cashier_id",
+                        "description": "Year in YYYY format (e.g., 2023)",
+                        "name": "year",
                         "in": "query",
                         "required": true
                     },
                     {
                         "type": "integer",
-                        "description": "Year in YYYY format (e.g., 2023)",
-                        "name": "year",
+                        "description": "Cashier ID",
+                        "name": "cashier_id",
                         "in": "query",
                         "required": true
                     }
@@ -1054,7 +1083,7 @@ const docTemplate = `{
                 "parameters": [
                     {
                         "type": "integer",
-                        "description": "Year",
+                        "description": "Year in YYYY format (e.g., 2023)",
                         "name": "year",
                         "in": "query",
                         "required": true
@@ -1205,6 +1234,28 @@ const docTemplate = `{
                     "Cashier"
                 ],
                 "summary": "Retrieve trashed cashier",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "default": 1,
+                        "description": "Page number",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "default": 10,
+                        "description": "Number of items per page",
+                        "name": "page_size",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Search query",
+                        "name": "search",
+                        "in": "query"
+                    }
+                ],
                 "responses": {
                     "200": {
                         "description": "List of trashed cashier data",
@@ -1290,6 +1341,13 @@ const docTemplate = `{
                 "summary": "Update an existing cashier",
                 "parameters": [
                     {
+                        "type": "integer",
+                        "description": "Cashier ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
                         "description": "Update cashier request",
                         "name": "UpdateCashierRequest",
                         "in": "body",
@@ -1342,7 +1400,7 @@ const docTemplate = `{
                 "parameters": [
                     {
                         "type": "integer",
-                        "description": "Year",
+                        "description": "Year in YYYY format (e.g., 2023)",
                         "name": "year",
                         "in": "query",
                         "required": true
@@ -1391,7 +1449,7 @@ const docTemplate = `{
                 "parameters": [
                     {
                         "type": "integer",
-                        "description": "Year",
+                        "description": "Year in YYYY format (e.g., 2023)",
                         "name": "year",
                         "in": "query",
                         "required": true
@@ -1542,6 +1600,28 @@ const docTemplate = `{
                     "Category"
                 ],
                 "summary": "Retrieve active category",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "default": 1,
+                        "description": "Page number",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "default": 10,
+                        "description": "Number of items per page",
+                        "name": "page_size",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Search query",
+                        "name": "search",
+                        "in": "query"
+                    }
+                ],
                 "responses": {
                     "200": {
                         "description": "List of active category",
@@ -1728,15 +1808,15 @@ const docTemplate = `{
                 "parameters": [
                     {
                         "type": "integer",
-                        "description": "Merchant ID",
-                        "name": "merchant_id",
+                        "description": "Year in YYYY format (e.g., 2023)",
+                        "name": "year",
                         "in": "query",
                         "required": true
                     },
                     {
                         "type": "integer",
-                        "description": "Year in YYYY format (e.g., 2023)",
-                        "name": "year",
+                        "description": "Merchant ID",
+                        "name": "merchant_id",
                         "in": "query",
                         "required": true
                     }
@@ -1865,15 +1945,15 @@ const docTemplate = `{
                 "parameters": [
                     {
                         "type": "integer",
-                        "description": "Merchant ID",
-                        "name": "merchant_id",
+                        "description": "Year in YYYY format (e.g., 2023)",
+                        "name": "year",
                         "in": "query",
                         "required": true
                     },
                     {
                         "type": "integer",
-                        "description": "Year in YYYY format (e.g., 2023)",
-                        "name": "year",
+                        "description": "Merchant ID",
+                        "name": "merchant_id",
                         "in": "query",
                         "required": true
                     }
@@ -2043,16 +2123,16 @@ const docTemplate = `{
                 "parameters": [
                     {
                         "type": "integer",
-                        "description": "Category ID",
-                        "name": "category_id",
-                        "in": "path",
+                        "description": "Year in YYYY format (e.g., 2023)",
+                        "name": "year",
+                        "in": "query",
                         "required": true
                     },
                     {
                         "type": "integer",
-                        "description": "Year in YYYY format (e.g., 2023)",
-                        "name": "year",
-                        "in": "query",
+                        "description": "Category ID",
+                        "name": "category_id",
+                        "in": "path",
                         "required": true
                     }
                 ],
@@ -2122,6 +2202,13 @@ const docTemplate = `{
                         "name": "month",
                         "in": "query",
                         "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Category ID",
+                        "name": "category_id",
+                        "in": "query",
+                        "required": true
                     }
                 ],
                 "responses": {
@@ -2173,16 +2260,16 @@ const docTemplate = `{
                 "parameters": [
                     {
                         "type": "integer",
-                        "description": "Category ID",
-                        "name": "category_id",
-                        "in": "path",
+                        "description": "Year in YYYY format (e.g., 2023)",
+                        "name": "year",
+                        "in": "query",
                         "required": true
                     },
                     {
                         "type": "integer",
-                        "description": "Year in YYYY format (e.g., 2023)",
-                        "name": "year",
-                        "in": "query",
+                        "description": "Category ID",
+                        "name": "category_id",
+                        "in": "path",
                         "required": true
                     }
                 ],
@@ -2238,15 +2325,6 @@ const docTemplate = `{
                     "Category"
                 ],
                 "summary": "Restore a trashed category",
-                "parameters": [
-                    {
-                        "type": "integer",
-                        "description": "category ID",
-                        "name": "id",
-                        "in": "path",
-                        "required": true
-                    }
-                ],
                 "responses": {
                     "200": {
                         "description": "Successfully restored category all",
@@ -2336,6 +2414,28 @@ const docTemplate = `{
                     "Category"
                 ],
                 "summary": "Retrieve trashed category",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "default": 1,
+                        "description": "Page number",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "default": 10,
+                        "description": "Number of items per page",
+                        "name": "page_size",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Search query",
+                        "name": "search",
+                        "in": "query"
+                    }
+                ],
                 "responses": {
                     "200": {
                         "description": "List of trashed category data",
@@ -2420,6 +2520,13 @@ const docTemplate = `{
                 ],
                 "summary": "Update an existing category",
                 "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Category ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
                     {
                         "description": "Category update details",
                         "name": "request",
@@ -2692,6 +2799,28 @@ const docTemplate = `{
                     "Merchant"
                 ],
                 "summary": "Retrieve active merchant",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "default": 1,
+                        "description": "Page number",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "default": 10,
+                        "description": "Number of items per page",
+                        "name": "page_size",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Search query",
+                        "name": "search",
+                        "in": "query"
+                    }
+                ],
                 "responses": {
                     "200": {
                         "description": "List of active merchant",
@@ -2973,6 +3102,28 @@ const docTemplate = `{
                     "Merchant"
                 ],
                 "summary": "Retrieve trashed merchant",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "default": 1,
+                        "description": "Page number",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "default": 10,
+                        "description": "Number of items per page",
+                        "name": "page_size",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Search query",
+                        "name": "search",
+                        "in": "query"
+                    }
+                ],
                 "responses": {
                     "200": {
                         "description": "List of trashed merchant data",
@@ -3330,6 +3481,28 @@ const docTemplate = `{
                     "Order-Item"
                 ],
                 "summary": "Retrieve active order items",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "default": 1,
+                        "description": "Page number",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "default": 10,
+                        "description": "Number of items per page",
+                        "name": "page_size",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Search query",
+                        "name": "search",
+                        "in": "query"
+                    }
+                ],
                 "responses": {
                     "200": {
                         "description": "List of active order items",
@@ -3413,6 +3586,28 @@ const docTemplate = `{
                     "Order-Item"
                 ],
                 "summary": "Retrieve trashed order items",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "default": 1,
+                        "description": "Page number",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "default": 10,
+                        "description": "Number of items per page",
+                        "name": "page_size",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Search query",
+                        "name": "search",
+                        "in": "query"
+                    }
+                ],
                 "responses": {
                     "200": {
                         "description": "List of trashed order items",
@@ -3447,6 +3642,28 @@ const docTemplate = `{
                     "Order"
                 ],
                 "summary": "Retrieve active orders",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "default": 1,
+                        "description": "Page number",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "default": 10,
+                        "description": "Number of items per page",
+                        "name": "page_size",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Search query",
+                        "name": "search",
+                        "in": "query"
+                    }
+                ],
                 "responses": {
                     "200": {
                         "description": "List of active orders",
@@ -4068,6 +4285,28 @@ const docTemplate = `{
                     "Order"
                 ],
                 "summary": "Retrieve trashed orders",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "default": 1,
+                        "description": "Page number",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "default": 10,
+                        "description": "Number of items per page",
+                        "name": "page_size",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Search query",
+                        "name": "search",
+                        "in": "query"
+                    }
+                ],
                 "responses": {
                     "200": {
                         "description": "List of trashed orders",
@@ -4417,6 +4656,28 @@ const docTemplate = `{
                     "Product"
                 ],
                 "summary": "Retrieve active products",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "default": 1,
+                        "description": "Page number",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "default": 10,
+                        "description": "Number of items per page",
+                        "name": "page_size",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Search query",
+                        "name": "search",
+                        "in": "query"
+                    }
+                ],
                 "responses": {
                     "200": {
                         "description": "List of active products",
@@ -4705,7 +4966,7 @@ const docTemplate = `{
                 }
             }
         },
-        "/api/product/merchant": {
+        "/api/product/merchant/{merchant_id}": {
             "get": {
                 "security": [
                     {
@@ -4725,13 +4986,14 @@ const docTemplate = `{
                 "summary": "Find products by merchant",
                 "parameters": [
                     {
-                        "type": "string",
+                        "type": "integer",
                         "description": "Merchant ID",
                         "name": "merchant_id",
-                        "in": "query",
+                        "in": "path",
                         "required": true
                     },
                     {
+                        "minimum": 1,
                         "type": "integer",
                         "default": 1,
                         "description": "Page number",
@@ -4739,6 +5001,8 @@ const docTemplate = `{
                         "in": "query"
                     },
                     {
+                        "maximum": 100,
+                        "minimum": 1,
                         "type": "integer",
                         "default": 10,
                         "description": "Number of items per page",
@@ -4750,6 +5014,24 @@ const docTemplate = `{
                         "description": "Search query",
                         "name": "search",
                         "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Category ID filter",
+                        "name": "category_id",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Minimum price filter",
+                        "name": "min_price",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Maximum price filter",
+                        "name": "max_price",
+                        "in": "query"
                     }
                 ],
                 "responses": {
@@ -4757,6 +5039,12 @@ const docTemplate = `{
                         "description": "List of products",
                         "schema": {
                             "$ref": "#/definitions/response.ApiResponsePaginationProduct"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request parameters",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorResponse"
                         }
                     },
                     "500": {
@@ -4869,6 +5157,28 @@ const docTemplate = `{
                     "Product"
                 ],
                 "summary": "Retrieve trashed products",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "default": 1,
+                        "description": "Page number",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "default": 10,
+                        "description": "Number of items per page",
+                        "name": "page_size",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Search query",
+                        "name": "search",
+                        "in": "query"
+                    }
+                ],
                 "responses": {
                     "200": {
                         "description": "List of trashed products",
@@ -5402,7 +5712,7 @@ const docTemplate = `{
             }
         },
         "/api/role/restore/{id}": {
-            "put": {
+            "post": {
                 "security": [
                     {
                         "Bearer": []
@@ -5613,62 +5923,6 @@ const docTemplate = `{
                         "Bearer": []
                     }
                 ],
-                "description": "Update an existing role with the provided details.",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Role"
-                ],
-                "summary": "Update a role",
-                "parameters": [
-                    {
-                        "type": "integer",
-                        "description": "Role ID",
-                        "name": "id",
-                        "in": "path",
-                        "required": true
-                    },
-                    {
-                        "description": "Role data",
-                        "name": "request",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/requests.UpdateRoleRequest"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "Updated role data",
-                        "schema": {
-                            "$ref": "#/definitions/response.ApiResponseRole"
-                        }
-                    },
-                    "400": {
-                        "description": "Invalid role ID or request body",
-                        "schema": {
-                            "$ref": "#/definitions/response.ErrorResponse"
-                        }
-                    },
-                    "500": {
-                        "description": "Failed to update role",
-                        "schema": {
-                            "$ref": "#/definitions/response.ErrorResponse"
-                        }
-                    }
-                }
-            },
-            "delete": {
-                "security": [
-                    {
-                        "Bearer": []
-                    }
-                ],
                 "description": "Soft-delete a role by its ID.",
                 "consumes": [
                     "application/json"
@@ -5798,6 +6052,28 @@ const docTemplate = `{
                     "Transaction"
                 ],
                 "summary": "Retrieve active transactions",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "default": 1,
+                        "description": "Page number",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "default": 10,
+                        "description": "Number of items per page",
+                        "name": "page_size",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Search query",
+                        "name": "search",
+                        "in": "query"
+                    }
+                ],
                 "responses": {
                     "200": {
                         "description": "List of active transactions",
@@ -6650,6 +6926,28 @@ const docTemplate = `{
                     "Transaction"
                 ],
                 "summary": "Retrieve trashed transactions",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "default": 1,
+                        "description": "Page number",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "default": 10,
+                        "description": "Number of items per page",
+                        "name": "page_size",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Search query",
+                        "name": "search",
+                        "in": "query"
+                    }
+                ],
                 "responses": {
                     "200": {
                         "description": "List of trashed transaction data",
@@ -7054,6 +7352,28 @@ const docTemplate = `{
                     "User"
                 ],
                 "summary": "Retrieve active users",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "default": 1,
+                        "description": "Page number",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "default": 10,
+                        "description": "Number of items per page",
+                        "name": "page_size",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Search query",
+                        "name": "search",
+                        "in": "query"
+                    }
+                ],
                 "responses": {
                     "200": {
                         "description": "List of active users",
@@ -7335,6 +7655,28 @@ const docTemplate = `{
                     "User"
                 ],
                 "summary": "Retrieve trashed users",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "default": 1,
+                        "description": "Page number",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "default": 10,
+                        "description": "Number of items per page",
+                        "name": "page_size",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Search query",
+                        "name": "search",
+                        "in": "query"
+                    }
+                ],
                 "responses": {
                     "200": {
                         "description": "List of trashed user data",
@@ -7419,6 +7761,13 @@ const docTemplate = `{
                 ],
                 "summary": "Update an existing user",
                 "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "User ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
                     {
                         "description": "Update user request",
                         "name": "UpdateUserRequest",
@@ -7593,14 +7942,10 @@ const docTemplate = `{
         "requests.CreateOrderItemRequest": {
             "type": "object",
             "required": [
-                "price",
                 "product_id",
                 "quantity"
             ],
             "properties": {
-                "price": {
-                    "type": "integer"
-                },
                 "product_id": {
                     "type": "integer"
                 },
@@ -7646,14 +7991,15 @@ const docTemplate = `{
             "type": "object",
             "required": [
                 "amount",
-                "change_amount",
-                "merchant_id",
+                "cashier_id",
                 "order_id",
-                "payment_method",
-                "payment_status"
+                "payment_method"
             ],
             "properties": {
                 "amount": {
+                    "type": "integer"
+                },
+                "cashier_id": {
                     "type": "integer"
                 },
                 "change_amount": {
@@ -7716,7 +8062,6 @@ const docTemplate = `{
         "requests.UpdateCashierRequest": {
             "type": "object",
             "required": [
-                "cashier_id",
                 "name"
             ],
             "properties": {
@@ -7731,7 +8076,6 @@ const docTemplate = `{
         "requests.UpdateCategoryRequest": {
             "type": "object",
             "required": [
-                "category_id",
                 "description",
                 "name"
             ],
@@ -7757,7 +8101,6 @@ const docTemplate = `{
                 "contact_email",
                 "contact_phone",
                 "description",
-                "merchant_id",
                 "name",
                 "status",
                 "user_id"
@@ -7793,15 +8136,11 @@ const docTemplate = `{
             "type": "object",
             "required": [
                 "order_item_id",
-                "price",
                 "product_id",
                 "quantity"
             ],
             "properties": {
                 "order_item_id": {
-                    "type": "integer"
-                },
-                "price": {
                     "type": "integer"
                 },
                 "product_id": {
@@ -7815,8 +8154,7 @@ const docTemplate = `{
         "requests.UpdateOrderRequest": {
             "type": "object",
             "required": [
-                "items",
-                "order_id"
+                "items"
             ],
             "properties": {
                 "items": {
@@ -7833,13 +8171,11 @@ const docTemplate = `{
         "requests.UpdateRoleRequest": {
             "type": "object",
             "required": [
-                "id",
                 "name"
             ],
             "properties": {
                 "id": {
-                    "type": "integer",
-                    "minimum": 1
+                    "type": "integer"
                 },
                 "name": {
                     "type": "string"
@@ -7850,15 +8186,15 @@ const docTemplate = `{
             "type": "object",
             "required": [
                 "amount",
-                "change_amount",
-                "merchant_id",
+                "cashier_id",
                 "order_id",
-                "payment_method",
-                "payment_status",
-                "transaction_id"
+                "payment_method"
             ],
             "properties": {
                 "amount": {
+                    "type": "integer"
+                },
+                "cashier_id": {
                     "type": "integer"
                 },
                 "change_amount": {
@@ -7888,8 +8224,7 @@ const docTemplate = `{
                 "email",
                 "firstname",
                 "lastname",
-                "password",
-                "user_id"
+                "password"
             ],
             "properties": {
                 "confirm_password": {
@@ -7909,8 +8244,7 @@ const docTemplate = `{
                     "minLength": 6
                 },
                 "user_id": {
-                    "type": "integer",
-                    "minimum": 1
+                    "type": "integer"
                 }
             }
         },

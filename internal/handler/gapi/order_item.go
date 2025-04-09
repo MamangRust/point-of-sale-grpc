@@ -6,6 +6,7 @@ import (
 	protomapper "pointofsale/internal/mapper/proto"
 	"pointofsale/internal/pb"
 	"pointofsale/internal/service"
+	"pointofsale/pkg/errors_custom"
 
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -41,10 +42,14 @@ func (s *orderItemHandleGrpc) FindAll(ctx context.Context, request *pb.FindAllOr
 
 	orderItems, totalRecords, err := s.orderItemService.FindAllOrderItems(search, page, pageSize)
 	if err != nil {
-		return nil, status.Errorf(codes.Code(err.Code), "%v", &pb.ErrorResponse{
-			Status:  err.Status,
-			Message: err.Message,
-		})
+		return nil, status.Errorf(
+			codes.Code(err.Code),
+			errors_custom.GrpcErrorToJson(&pb.ErrorResponse{
+				Status:  err.Status,
+				Message: err.Message,
+				Code:    int32(err.Code),
+			}),
+		)
 	}
 
 	totalPages := int(math.Ceil(float64(*totalRecords) / float64(pageSize)))
@@ -74,10 +79,14 @@ func (s *orderItemHandleGrpc) FindByActive(ctx context.Context, request *pb.Find
 
 	orderItems, totalRecords, err := s.orderItemService.FindByActive(search, page, pageSize)
 	if err != nil {
-		return nil, status.Errorf(codes.Code(err.Code), "%v", &pb.ErrorResponse{
-			Status:  err.Status,
-			Message: err.Message,
-		})
+		return nil, status.Errorf(
+			codes.Code(err.Code),
+			errors_custom.GrpcErrorToJson(&pb.ErrorResponse{
+				Status:  err.Status,
+				Message: err.Message,
+				Code:    int32(err.Code),
+			}),
+		)
 	}
 
 	totalPages := int(math.Ceil(float64(*totalRecords) / float64(pageSize)))
@@ -107,10 +116,14 @@ func (s *orderItemHandleGrpc) FindByTrashed(ctx context.Context, request *pb.Fin
 
 	orderItems, totalRecords, err := s.orderItemService.FindByTrashed(search, page, pageSize)
 	if err != nil {
-		return nil, status.Errorf(codes.Code(err.Code), "%v", &pb.ErrorResponse{
-			Status:  err.Status,
-			Message: err.Message,
-		})
+		return nil, status.Errorf(
+			codes.Code(err.Code),
+			errors_custom.GrpcErrorToJson(&pb.ErrorResponse{
+				Status:  err.Status,
+				Message: err.Message,
+				Code:    int32(err.Code),
+			}),
+		)
 	}
 
 	totalPages := int(math.Ceil(float64(*totalRecords) / float64(pageSize)))
@@ -128,18 +141,26 @@ func (s *orderItemHandleGrpc) FindByTrashed(ctx context.Context, request *pb.Fin
 
 func (s *orderItemHandleGrpc) FindOrderItemByOrder(ctx context.Context, request *pb.FindByIdOrderItemRequest) (*pb.ApiResponsesOrderItem, error) {
 	if request.GetId() == 0 {
-		return nil, status.Errorf(codes.InvalidArgument, "%v", &pb.ErrorResponse{
-			Status:  "error",
-			Message: "Invalid order id",
-		})
+		return nil, status.Error(
+			codes.InvalidArgument,
+			errors_custom.GrpcErrorToJson(&pb.ErrorResponse{
+				Status:  "invalid_request",
+				Message: "Valid order item ID is required",
+				Code:    int32(codes.InvalidArgument),
+			}),
+		)
 	}
 
 	orderItems, err := s.orderItemService.FindOrderItemByOrder(int(request.GetId()))
 	if err != nil {
-		return nil, status.Errorf(codes.Code(err.Code), "%v", &pb.ErrorResponse{
-			Status:  err.Status,
-			Message: err.Message,
-		})
+		return nil, status.Errorf(
+			codes.Code(err.Code),
+			errors_custom.GrpcErrorToJson(&pb.ErrorResponse{
+				Status:  err.Status,
+				Message: err.Message,
+				Code:    int32(err.Code),
+			}),
+		)
 	}
 
 	so := s.mapping.ToProtoResponsesOrderItem("success", "Successfully fetched order items by order", orderItems)

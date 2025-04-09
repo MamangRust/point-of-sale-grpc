@@ -5,21 +5,22 @@ import (
 	"pointofsale/internal/pb"
 	"pointofsale/pkg/auth"
 	"pointofsale/pkg/logger"
+	"pointofsale/pkg/upload_image"
 
 	"github.com/labstack/echo/v4"
 	"google.golang.org/grpc"
 )
 
 type Deps struct {
-	Conn    *grpc.ClientConn
-	Token   auth.TokenManager
-	E       *echo.Echo
-	Logger  logger.LoggerInterface
-	Mapping response_api.ResponseApiMapper
+	Conn        *grpc.ClientConn
+	Token       auth.TokenManager
+	E           *echo.Echo
+	Logger      logger.LoggerInterface
+	Mapping     response_api.ResponseApiMapper
+	ImageUpload upload_image.ImageUploads
 }
 
 func NewHandler(deps Deps) {
-
 	clientAuth := pb.NewAuthServiceClient(deps.Conn)
 	clientRole := pb.NewRoleServiceClient(deps.Conn)
 	clientUser := pb.NewUserServiceClient(deps.Conn)
@@ -39,6 +40,6 @@ func NewHandler(deps Deps) {
 	NewHandlerMerchant(deps.E, clientMerchant, deps.Logger, deps.Mapping.MerchantResponseMapper)
 	NewHandlerOrderItem(deps.E, clientOrderItem, deps.Logger, deps.Mapping.OrderItemResponseMapper)
 	NewHandlerOrder(deps.E, clientOrder, deps.Logger, deps.Mapping.OrderResponseMapper)
-	NewHandlerProduct(deps.E, clientProduct, deps.Logger, deps.Mapping.ProductResponseMapper)
+	NewHandlerProduct(deps.E, clientProduct, deps.Logger, deps.Mapping.ProductResponseMapper, deps.ImageUpload)
 	NewHandlerTransaction(deps.E, clientTransaction, deps.Logger, deps.Mapping.TransactionResponseMapper)
 }

@@ -7,6 +7,7 @@ import (
 	protomapper "pointofsale/internal/mapper/proto"
 	"pointofsale/internal/pb"
 	"pointofsale/internal/service"
+	"pointofsale/pkg/errors_custom"
 
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -44,10 +45,14 @@ func (s *orderHandleGrpc) FindAll(ctx context.Context, request *pb.FindAllOrderR
 	merchant, totalRecords, err := s.orderService.FindAll(page, pageSize, search)
 
 	if err != nil {
-		return nil, status.Errorf(codes.Code(err.Code), "%v", &pb.ErrorResponse{
-			Status:  err.Status,
-			Message: err.Message,
-		})
+		return nil, status.Errorf(
+			codes.Code(err.Code),
+			errors_custom.GrpcErrorToJson(&pb.ErrorResponse{
+				Status:  err.Status,
+				Message: err.Message,
+				Code:    int32(err.Code),
+			}),
+		)
 	}
 
 	totalPages := int(math.Ceil(float64(*totalRecords) / float64(pageSize)))
@@ -64,20 +69,30 @@ func (s *orderHandleGrpc) FindAll(ctx context.Context, request *pb.FindAllOrderR
 }
 
 func (s *orderHandleGrpc) FindById(ctx context.Context, request *pb.FindByIdOrderRequest) (*pb.ApiResponseOrder, error) {
-	if request.GetId() == 0 {
-		return nil, status.Errorf(codes.InvalidArgument, "%v", &pb.ErrorResponse{
-			Status:  "validation_error",
-			Message: "Order ID parameter cannot be empty and must be a positive number",
-		})
+	id := int(request.GetId())
+
+	if id == 0 {
+		return nil, status.Error(
+			codes.InvalidArgument,
+			errors_custom.GrpcErrorToJson(&pb.ErrorResponse{
+				Status:  "invalid_request",
+				Message: "Valid order ID is required",
+				Code:    int32(codes.InvalidArgument),
+			}),
+		)
 	}
 
-	merchant, err := s.orderService.FindById(int(request.GetId()))
+	merchant, err := s.orderService.FindById(id)
 
 	if err != nil {
-		return nil, status.Errorf(codes.Code(err.Code), "%v", &pb.ErrorResponse{
-			Status:  err.Status,
-			Message: err.Message,
-		})
+		return nil, status.Errorf(
+			codes.Code(err.Code),
+			errors_custom.GrpcErrorToJson(&pb.ErrorResponse{
+				Status:  err.Status,
+				Message: err.Message,
+				Code:    int32(err.Code),
+			}),
+		)
 	}
 
 	so := s.mapping.ToProtoResponseOrder("success", "Successfully fetched order", merchant)
@@ -86,142 +101,284 @@ func (s *orderHandleGrpc) FindById(ctx context.Context, request *pb.FindByIdOrde
 }
 
 func (s *orderHandleGrpc) FindMonthlyTotalRevenue(ctx context.Context, req *pb.FindYearMonthTotalRevenue) (*pb.ApiResponseOrderMonthlyTotalRevenue, error) {
-	if req.GetYear() <= 0 {
-		return nil, status.Errorf(codes.InvalidArgument, "%v", &pb.ErrorResponse{
-			Status:  "invalid_input",
-			Message: "Invalid year parameter",
-		})
+	year := int(req.GetYear())
+	month := int(req.GetMonth())
+
+	if year <= 0 {
+		return nil, status.Errorf(
+			codes.Code(codes.InvalidArgument),
+			errors_custom.GrpcErrorToJson(&pb.ErrorResponse{
+				Status:  "invalid_input",
+				Message: "Invalid year parameter",
+				Code:    int32(codes.InvalidArgument),
+			}),
+		)
 	}
 
-	if req.GetMonth() <= 0 || req.GetMonth() >= 12 {
-		return nil, status.Errorf(codes.InvalidArgument, "%v", &pb.ErrorResponse{
-			Status:  "invalid_month",
-			Message: "Month must be between 1 and 12",
-		})
+	if month <= 0 || month >= 12 {
+		return nil, status.Errorf(
+			codes.Code(codes.InvalidArgument),
+			errors_custom.GrpcErrorToJson(&pb.ErrorResponse{
+				Status:  "invalid_month",
+				Message: "Month must be between 1 and 12",
+				Code:    int32(codes.InvalidArgument),
+			}),
+		)
 	}
 
-	methods, err := s.orderService.FindMonthlyTotalRevenue(int(req.GetYear()), int(req.GetMonth()))
+	methods, err := s.orderService.FindMonthlyTotalRevenue(year, month)
+
 	if err != nil {
-		return nil, status.Errorf(codes.Code(err.Code), "%v", &pb.ErrorResponse{
-			Status:  err.Status,
-			Message: err.Message,
-		})
+		return nil, status.Errorf(
+			codes.Code(err.Code),
+			errors_custom.GrpcErrorToJson(&pb.ErrorResponse{
+				Status:  err.Status,
+				Message: err.Message,
+				Code:    int32(err.Code),
+			}),
+		)
 	}
 
 	return s.mapping.ToProtoResponseMonthlyTotalRevenue("success", "Monthly sales retrieved successfully", methods), nil
 }
 
 func (s *orderHandleGrpc) FindYearlyTotalRevenue(ctx context.Context, req *pb.FindYearTotalRevenue) (*pb.ApiResponseOrderYearlyTotalRevenue, error) {
-	if req.GetYear() <= 0 {
-		return nil, status.Errorf(codes.InvalidArgument, "%v", &pb.ErrorResponse{
-			Status:  "invalid_input",
-			Message: "Invalid year parameter",
-		})
+	year := int(req.GetYear())
+
+	if year <= 0 {
+		return nil, status.Errorf(
+			codes.Code(codes.InvalidArgument),
+			errors_custom.GrpcErrorToJson(&pb.ErrorResponse{
+				Status:  "invalid_input",
+				Message: "Invalid year parameter",
+				Code:    int32(codes.InvalidArgument),
+			}),
+		)
 	}
 
-	methods, err := s.orderService.FindYearlyTotalRevenue(int(req.GetYear()))
+	methods, err := s.orderService.FindYearlyTotalRevenue(year)
+
 	if err != nil {
-		return nil, status.Errorf(codes.Code(err.Code), "%v", &pb.ErrorResponse{
-			Status:  err.Status,
-			Message: err.Message,
-		})
+		return nil, status.Errorf(
+			codes.Code(err.Code),
+			errors_custom.GrpcErrorToJson(&pb.ErrorResponse{
+				Status:  err.Status,
+				Message: err.Message,
+				Code:    int32(err.Code),
+			}),
+		)
 	}
 
 	return s.mapping.ToProtoResponseYearlyTotalRevenue("success", "Yearly payment methods retrieved successfully", methods), nil
 }
 
 func (s *orderHandleGrpc) FindMonthlyTotalRevenueById(ctx context.Context, req *pb.FindYearMonthTotalRevenueById) (*pb.ApiResponseOrderMonthlyTotalRevenue, error) {
-	if req.GetYear() <= 0 {
-		return nil, status.Errorf(codes.InvalidArgument, "%v", &pb.ErrorResponse{
-			Status:  "invalid_input",
-			Message: "Invalid year parameter",
-		})
+	year := int(req.GetYear())
+	month := int(req.GetMonth())
+	id := int(req.GetOrderId())
+
+	if year <= 0 {
+		return nil, status.Errorf(
+			codes.Code(codes.InvalidArgument),
+			errors_custom.GrpcErrorToJson(&pb.ErrorResponse{
+				Status:  "invalid_input",
+				Message: "Invalid year parameter",
+				Code:    int32(codes.InvalidArgument),
+			}),
+		)
 	}
 
-	if req.GetMonth() <= 0 || req.GetMonth() >= 12 {
-		return nil, status.Errorf(codes.InvalidArgument, "%v", &pb.ErrorResponse{
-			Status:  "invalid_month",
-			Message: "Month must be between 1 and 12",
-		})
+	if month <= 0 || month >= 12 {
+		return nil, status.Errorf(
+			codes.Code(codes.InvalidArgument),
+			errors_custom.GrpcErrorToJson(&pb.ErrorResponse{
+				Status:  "invalid_month",
+				Message: "Month must be between 1 and 12",
+				Code:    int32(codes.InvalidArgument),
+			}),
+		)
 	}
 
-	methods, err := s.orderService.FindMonthlyTotalRevenueById(int(req.GetYear()), int(req.GetMonth()), int(req.GetOrderId()))
+	if id <= 0 {
+		return nil, status.Errorf(
+			codes.Code(codes.InvalidArgument),
+			errors_custom.GrpcErrorToJson(&pb.ErrorResponse{
+				Status:  "invalid_input",
+				Message: "Invalid id parameter",
+				Code:    int32(codes.InvalidArgument),
+			}),
+		)
+	}
+
+	methods, err := s.orderService.FindMonthlyTotalRevenueById(year, month, id)
+
 	if err != nil {
-		return nil, status.Errorf(codes.Code(err.Code), "%v", &pb.ErrorResponse{
-			Status:  err.Status,
-			Message: err.Message,
-		})
+		return nil, status.Errorf(
+			codes.Code(err.Code),
+			errors_custom.GrpcErrorToJson(&pb.ErrorResponse{
+				Status:  err.Status,
+				Message: err.Message,
+				Code:    int32(err.Code),
+			}),
+		)
 	}
 
 	return s.mapping.ToProtoResponseMonthlyTotalRevenue("success", "Monthly sales retrieved successfully", methods), nil
 }
 
 func (s *orderHandleGrpc) FindYearlyTotalRevenueById(ctx context.Context, req *pb.FindYearTotalRevenueById) (*pb.ApiResponseOrderYearlyTotalRevenue, error) {
-	if req.GetYear() <= 0 {
-		return nil, status.Errorf(codes.InvalidArgument, "%v", &pb.ErrorResponse{
-			Status:  "invalid_input",
-			Message: "Invalid year parameter",
-		})
+	year := int(req.GetYear())
+	id := int(req.GetOrderId())
+
+	if year <= 0 {
+		return nil, status.Errorf(
+			codes.Code(codes.InvalidArgument),
+			errors_custom.GrpcErrorToJson(&pb.ErrorResponse{
+				Status:  "invalid_input",
+				Message: "Invalid year parameter",
+				Code:    int32(codes.InvalidArgument),
+			}),
+		)
 	}
 
-	methods, err := s.orderService.FindYearlyTotalRevenueById(int(req.GetYear()), int(req.GetOrderId()))
+	if id <= 0 {
+		return nil, status.Errorf(
+			codes.Code(codes.InvalidArgument),
+			errors_custom.GrpcErrorToJson(&pb.ErrorResponse{
+				Status:  "invalid_input",
+				Message: "Invalid id parameter",
+				Code:    int32(codes.InvalidArgument),
+			}),
+		)
+	}
+
+	methods, err := s.orderService.FindYearlyTotalRevenueById(year, id)
+
 	if err != nil {
-		return nil, status.Errorf(codes.Code(err.Code), "%v", &pb.ErrorResponse{
-			Status:  err.Status,
-			Message: err.Message,
-		})
+		return nil, status.Errorf(
+			codes.Code(err.Code),
+			errors_custom.GrpcErrorToJson(&pb.ErrorResponse{
+				Status:  err.Status,
+				Message: err.Message,
+				Code:    int32(err.Code),
+			}),
+		)
 	}
 
 	return s.mapping.ToProtoResponseYearlyTotalRevenue("success", "Yearly payment methods retrieved successfully", methods), nil
 }
 
 func (s *orderHandleGrpc) FindMonthlyTotalRevenueByMerchant(ctx context.Context, req *pb.FindYearMonthTotalRevenueByMerchant) (*pb.ApiResponseOrderMonthlyTotalRevenue, error) {
-	if req.GetYear() <= 0 {
-		return nil, status.Errorf(codes.InvalidArgument, "%v", &pb.ErrorResponse{
-			Status:  "invalid_input",
-			Message: "Invalid year parameter",
-		})
+	year := int(req.GetYear())
+	month := int(req.GetMonth())
+	id := int(req.GetMerchantId())
+
+	if year <= 0 {
+		return nil, status.Errorf(
+			codes.Code(codes.InvalidArgument),
+			errors_custom.GrpcErrorToJson(&pb.ErrorResponse{
+				Status:  "invalid_input",
+				Message: "Invalid year parameter",
+				Code:    int32(codes.InvalidArgument),
+			}),
+		)
 	}
 
-	if req.GetMonth() <= 0 || req.GetMonth() >= 12 {
-		return nil, status.Errorf(codes.InvalidArgument, "%v", &pb.ErrorResponse{
-			Status:  "invalid_month",
-			Message: "Month must be between 1 and 12",
-		})
+	if month <= 0 || month >= 12 {
+		return nil, status.Errorf(
+			codes.Code(codes.InvalidArgument),
+			errors_custom.GrpcErrorToJson(&pb.ErrorResponse{
+				Status:  "invalid_input",
+				Message: "Invalid year parameter",
+				Code:    int32(codes.InvalidArgument),
+			}),
+		)
 	}
 
-	methods, err := s.orderService.FindMonthlyTotalRevenueByMerchant(int(req.GetYear()), int(req.GetMonth()), int(req.GetMerchantId()))
+	if id <= 0 {
+		return nil, status.Errorf(
+			codes.Code(codes.InvalidArgument),
+			errors_custom.GrpcErrorToJson(&pb.ErrorResponse{
+				Status:  "invalid_input",
+				Message: "Invalid id parameter",
+				Code:    int32(codes.InvalidArgument),
+			}),
+		)
+	}
+
+	methods, err := s.orderService.FindMonthlyTotalRevenueByMerchant(year, month, id)
+
 	if err != nil {
-		return nil, status.Errorf(codes.Code(err.Code), "%v", &pb.ErrorResponse{
-			Status:  err.Status,
-			Message: err.Message,
-		})
+		return nil, status.Errorf(
+			codes.Code(err.Code),
+			errors_custom.GrpcErrorToJson(&pb.ErrorResponse{
+				Status:  err.Status,
+				Message: err.Message,
+				Code:    int32(err.Code),
+			}),
+		)
 	}
 
 	return s.mapping.ToProtoResponseMonthlyTotalRevenue("success", "Monthly sales retrieved successfully", methods), nil
 }
 
 func (s *orderHandleGrpc) FindYearlyTotalRevenueByMerchant(ctx context.Context, req *pb.FindYearTotalRevenueByMerchant) (*pb.ApiResponseOrderYearlyTotalRevenue, error) {
-	if req.GetYear() <= 0 {
-		return nil, status.Errorf(codes.InvalidArgument, "%v", &pb.ErrorResponse{
-			Status:  "invalid_input",
-			Message: "Invalid year parameter",
-		})
+	year := int(req.GetYear())
+	id := int(req.GetMerchantId())
+
+	if year <= 0 {
+		return nil, status.Errorf(
+			codes.Code(codes.InvalidArgument),
+			errors_custom.GrpcErrorToJson(&pb.ErrorResponse{
+				Status:  "invalid_input",
+				Message: "Invalid year parameter",
+				Code:    int32(codes.InvalidArgument),
+			}),
+		)
 	}
 
-	methods, err := s.orderService.FindYearlyTotalRevenueByMerchant(int(req.GetYear()), int(req.GetMerchantId()))
+	if id <= 0 {
+		return nil, status.Errorf(
+			codes.Code(codes.InvalidArgument),
+			errors_custom.GrpcErrorToJson(&pb.ErrorResponse{
+				Status:  "invalid_input",
+				Message: "Invalid id parameter",
+				Code:    int32(codes.InvalidArgument),
+			}),
+		)
+	}
+
+	methods, err := s.orderService.FindYearlyTotalRevenueByMerchant(year, id)
+
 	if err != nil {
-		return nil, status.Errorf(codes.Code(err.Code), "%v", &pb.ErrorResponse{
-			Status:  err.Status,
-			Message: err.Message,
-		})
+		return nil, status.Errorf(
+			codes.Code(err.Code),
+			errors_custom.GrpcErrorToJson(&pb.ErrorResponse{
+				Status:  err.Status,
+				Message: err.Message,
+				Code:    int32(err.Code),
+			}),
+		)
 	}
 
 	return s.mapping.ToProtoResponseYearlyTotalRevenue("success", "Yearly payment methods retrieved successfully", methods), nil
 }
 
 func (s *orderHandleGrpc) FindMonthlyRevenue(ctx context.Context, request *pb.FindYearOrder) (*pb.ApiResponseOrderMonthly, error) {
-	res, err := s.orderService.FindMonthlyOrder(int(request.GetYear()))
+	year := int(request.GetYear())
+
+	if year <= 0 {
+		return nil, status.Errorf(
+			codes.Code(codes.InvalidArgument),
+			errors_custom.GrpcErrorToJson(&pb.ErrorResponse{
+				Status:  "invalid_input",
+				Message: "Invalid year parameter",
+				Code:    int32(codes.InvalidArgument),
+			}),
+		)
+	}
+
+	res, err := s.orderService.FindMonthlyOrder(year)
 	if err != nil {
 		return nil, status.Errorf(codes.Code(err.Code), "%v", &pb.ErrorResponse{
 			Status:  err.Status,
@@ -234,12 +391,29 @@ func (s *orderHandleGrpc) FindMonthlyRevenue(ctx context.Context, request *pb.Fi
 }
 
 func (s *orderHandleGrpc) FindYearlyRevenue(ctx context.Context, request *pb.FindYearOrder) (*pb.ApiResponseOrderYearly, error) {
-	res, err := s.orderService.FindYearlyOrder(int(request.GetYear()))
+	year := int(request.GetYear())
+
+	if year <= 0 {
+		return nil, status.Errorf(
+			codes.Code(codes.InvalidArgument),
+			errors_custom.GrpcErrorToJson(&pb.ErrorResponse{
+				Status:  "invalid_input",
+				Message: "Invalid year parameter",
+				Code:    int32(codes.InvalidArgument),
+			}),
+		)
+	}
+
+	res, err := s.orderService.FindYearlyOrder(year)
 	if err != nil {
-		return nil, status.Errorf(codes.Code(err.Code), "%v", &pb.ErrorResponse{
-			Status:  err.Status,
-			Message: err.Message,
-		})
+		return nil, status.Errorf(
+			codes.Code(err.Code),
+			errors_custom.GrpcErrorToJson(&pb.ErrorResponse{
+				Status:  err.Status,
+				Message: err.Message,
+				Code:    int32(err.Code),
+			}),
+		)
 	}
 
 	so := s.mapping.ToProtoResponseYearlyRevenue("success", "Yearly revenue data retrieved", res)
@@ -247,12 +421,42 @@ func (s *orderHandleGrpc) FindYearlyRevenue(ctx context.Context, request *pb.Fin
 }
 
 func (s *orderHandleGrpc) FindMonthlyRevenueByMerchant(ctx context.Context, request *pb.FindYearOrderByMerchant) (*pb.ApiResponseOrderMonthly, error) {
-	res, err := s.orderService.FindMonthlyOrderByMerchant(int(request.GetMerchantId()), int(request.GetYear()))
+	year := int(request.GetYear())
+	id := int(request.GetMerchantId())
+
+	if year <= 0 {
+		return nil, status.Errorf(
+			codes.Code(codes.InvalidArgument),
+			errors_custom.GrpcErrorToJson(&pb.ErrorResponse{
+				Status:  "invalid_input",
+				Message: "Invalid year parameter",
+				Code:    int32(codes.InvalidArgument),
+			}),
+		)
+	}
+
+	if id <= 0 {
+		return nil, status.Errorf(
+			codes.Code(codes.InvalidArgument),
+			errors_custom.GrpcErrorToJson(&pb.ErrorResponse{
+				Status:  "invalid_input",
+				Message: "Invalid id parameter",
+				Code:    int32(codes.InvalidArgument),
+			}),
+		)
+	}
+
+	res, err := s.orderService.FindMonthlyOrderByMerchant(year, id)
+
 	if err != nil {
-		return nil, status.Errorf(codes.Code(err.Code), "%v", &pb.ErrorResponse{
-			Status:  err.Status,
-			Message: err.Message,
-		})
+		return nil, status.Errorf(
+			codes.Code(err.Code),
+			errors_custom.GrpcErrorToJson(&pb.ErrorResponse{
+				Status:  err.Status,
+				Message: err.Message,
+				Code:    int32(err.Code),
+			}),
+		)
 	}
 
 	so := s.mapping.ToProtoResponseMonthlyRevenue("success", "Monthly revenue by merchant data retrieved", res)
@@ -260,12 +464,42 @@ func (s *orderHandleGrpc) FindMonthlyRevenueByMerchant(ctx context.Context, requ
 }
 
 func (s *orderHandleGrpc) FindYearlyRevenueByMerchant(ctx context.Context, request *pb.FindYearOrderByMerchant) (*pb.ApiResponseOrderYearly, error) {
-	res, err := s.orderService.FindYearlyOrderByMerchant(int(request.GetMerchantId()), int(request.GetYear()))
+	year := int(request.GetYear())
+	id := int(request.GetMerchantId())
+
+	if year <= 0 {
+		return nil, status.Errorf(
+			codes.Code(codes.InvalidArgument),
+			errors_custom.GrpcErrorToJson(&pb.ErrorResponse{
+				Status:  "invalid_input",
+				Message: "Invalid year parameter",
+				Code:    int32(codes.InvalidArgument),
+			}),
+		)
+	}
+
+	if id <= 0 {
+		return nil, status.Errorf(
+			codes.Code(codes.InvalidArgument),
+			errors_custom.GrpcErrorToJson(&pb.ErrorResponse{
+				Status:  "invalid_input",
+				Message: "Invalid id parameter",
+				Code:    int32(codes.InvalidArgument),
+			}),
+		)
+	}
+
+	res, err := s.orderService.FindYearlyOrderByMerchant(year, id)
+
 	if err != nil {
-		return nil, status.Errorf(codes.Code(err.Code), "%v", &pb.ErrorResponse{
-			Status:  err.Status,
-			Message: err.Message,
-		})
+		return nil, status.Errorf(
+			codes.Code(err.Code),
+			errors_custom.GrpcErrorToJson(&pb.ErrorResponse{
+				Status:  err.Status,
+				Message: err.Message,
+				Code:    int32(err.Code),
+			}),
+		)
 	}
 
 	so := s.mapping.ToProtoResponseYearlyRevenue("success", "Yearly revenue by merchant data retrieved", res)
@@ -287,10 +521,14 @@ func (s *orderHandleGrpc) FindByActive(ctx context.Context, request *pb.FindAllO
 	merchant, totalRecords, err := s.orderService.FindByActive(page, pageSize, search)
 
 	if err != nil {
-		return nil, status.Errorf(codes.Code(err.Code), "%v", &pb.ErrorResponse{
-			Status:  err.Status,
-			Message: err.Message,
-		})
+		return nil, status.Errorf(
+			codes.Code(err.Code),
+			errors_custom.GrpcErrorToJson(&pb.ErrorResponse{
+				Status:  err.Status,
+				Message: err.Message,
+				Code:    int32(err.Code),
+			}),
+		)
 	}
 
 	totalPages := int(math.Ceil(float64(*totalRecords) / float64(pageSize)))
@@ -321,10 +559,14 @@ func (s *orderHandleGrpc) FindByTrashed(ctx context.Context, request *pb.FindAll
 	users, totalRecords, err := s.orderService.FindByTrashed(page, pageSize, search)
 
 	if err != nil {
-		return nil, status.Errorf(codes.Code(err.Code), "%v", &pb.ErrorResponse{
-			Status:  err.Status,
-			Message: err.Message,
-		})
+		return nil, status.Errorf(
+			codes.Code(err.Code),
+			errors_custom.GrpcErrorToJson(&pb.ErrorResponse{
+				Status:  err.Status,
+				Message: err.Message,
+				Code:    int32(err.Code),
+			}),
+		)
 	}
 
 	totalPages := int(math.Ceil(float64(*totalRecords) / float64(pageSize)))
@@ -355,18 +597,27 @@ func (s *orderHandleGrpc) Create(ctx context.Context, request *pb.CreateOrderReq
 	}
 
 	if err := req.Validate(); err != nil {
-		return nil, status.Errorf(codes.InvalidArgument, "%v", &pb.ErrorResponse{
-			Status:  "validation_error",
-			Message: "Order creation failed. Please check your order details.",
-		})
+		return nil, status.Errorf(
+			codes.InvalidArgument,
+			errors_custom.GrpcErrorToJson(&pb.ErrorResponse{
+				Status:  "validation_error",
+				Message: "Unable to create new order. Please check your input.",
+				Code:    int32(codes.InvalidArgument),
+			}),
+		)
 	}
 
 	order, err := s.orderService.CreateOrder(req)
+
 	if err != nil {
-		return nil, status.Errorf(codes.Internal, "%v", &pb.ErrorResponse{
-			Status:  "error",
-			Message: "Failed to create order: ",
-		})
+		return nil, status.Errorf(
+			codes.Code(err.Code),
+			errors_custom.GrpcErrorToJson(&pb.ErrorResponse{
+				Status:  err.Status,
+				Message: err.Message,
+				Code:    int32(err.Code),
+			}),
+		)
 	}
 
 	so := s.mapping.ToProtoResponseOrder("success", "Successfully created order", order)
@@ -377,10 +628,14 @@ func (s *orderHandleGrpc) Update(ctx context.Context, request *pb.UpdateOrderReq
 	id := int(request.GetOrderId())
 
 	if id == 0 {
-		return nil, status.Errorf(codes.InvalidArgument, "%v", &pb.ErrorResponse{
-			Status:  "validation_error",
-			Message: "Order ID parameter cannot be empty and must be a positive number",
-		})
+		return nil, status.Errorf(
+			codes.InvalidArgument,
+			errors_custom.GrpcErrorToJson(&pb.ErrorResponse{
+				Status:  "validation_error",
+				Message: "Category ID parameter cannot be empty and must be a positive number",
+				Code:    int32(codes.InvalidArgument),
+			}),
+		)
 	}
 
 	req := &requests.UpdateOrderRequest{
@@ -396,18 +651,26 @@ func (s *orderHandleGrpc) Update(ctx context.Context, request *pb.UpdateOrderReq
 	}
 
 	if err := req.Validate(); err != nil {
-		return nil, status.Errorf(codes.InvalidArgument, "%v", &pb.ErrorResponse{
-			Status:  "validation_error",
-			Message: "Order update failed. Please verify your changes.",
-		})
+		return nil, status.Errorf(
+			codes.InvalidArgument,
+			errors_custom.GrpcErrorToJson(&pb.ErrorResponse{
+				Status:  "validation_error",
+				Message: "Unable to process category update. Please review your data.",
+				Code:    int32(codes.InvalidArgument),
+			}),
+		)
 	}
 
 	order, err := s.orderService.UpdateOrder(req)
 	if err != nil {
-		return nil, status.Errorf(codes.Internal, "%v", &pb.ErrorResponse{
-			Status:  "error",
-			Message: "Failed to update order: ",
-		})
+		return nil, status.Errorf(
+			codes.Code(err.Code),
+			errors_custom.GrpcErrorToJson(&pb.ErrorResponse{
+				Status:  err.Status,
+				Message: err.Message,
+				Code:    int32(err.Code),
+			}),
+		)
 	}
 
 	so := s.mapping.ToProtoResponseOrder("success", "Successfully updated order", order)
@@ -415,14 +678,20 @@ func (s *orderHandleGrpc) Update(ctx context.Context, request *pb.UpdateOrderReq
 }
 
 func (s *orderHandleGrpc) TrashedOrder(ctx context.Context, request *pb.FindByIdOrderRequest) (*pb.ApiResponseOrderDeleteAt, error) {
-	if request.GetId() == 0 {
-		return nil, status.Errorf(codes.InvalidArgument, "%v", &pb.ErrorResponse{
-			Status:  "validation_error",
-			Message: "Order ID parameter cannot be empty and must be a positive number",
-		})
+	id := int(request.GetId())
+
+	if id == 0 {
+		return nil, status.Errorf(
+			codes.InvalidArgument,
+			errors_custom.GrpcErrorToJson(&pb.ErrorResponse{
+				Status:  "validation_error",
+				Message: "Order ID parameter cannot be empty and must be a positive number",
+				Code:    int32(codes.InvalidArgument),
+			}),
+		)
 	}
 
-	merchant, err := s.orderService.TrashedOrder(int(request.GetId()))
+	merchant, err := s.orderService.TrashedOrder(id)
 
 	if err != nil {
 		return nil, status.Errorf(codes.Code(err.Code), "%v", &pb.ErrorResponse{
@@ -437,20 +706,30 @@ func (s *orderHandleGrpc) TrashedOrder(ctx context.Context, request *pb.FindById
 }
 
 func (s *orderHandleGrpc) RestoreOrder(ctx context.Context, request *pb.FindByIdOrderRequest) (*pb.ApiResponseOrderDeleteAt, error) {
-	if request.GetId() == 0 {
-		return nil, status.Errorf(codes.InvalidArgument, "%v", &pb.ErrorResponse{
-			Status:  "validation_error",
-			Message: "Order ID parameter cannot be empty and must be a positive number",
-		})
+	id := int(request.GetId())
+
+	if id == 0 {
+		return nil, status.Errorf(
+			codes.InvalidArgument,
+			errors_custom.GrpcErrorToJson(&pb.ErrorResponse{
+				Status:  "validation_error",
+				Message: "Order ID parameter cannot be empty and must be a positive number",
+				Code:    int32(codes.InvalidArgument),
+			}),
+		)
 	}
 
-	merchant, err := s.orderService.RestoreOrder(int(request.GetId()))
+	merchant, err := s.orderService.RestoreOrder(id)
 
 	if err != nil {
-		return nil, status.Errorf(codes.Code(err.Code), "%v", &pb.ErrorResponse{
-			Status:  err.Status,
-			Message: err.Message,
-		})
+		return nil, status.Errorf(
+			codes.Code(err.Code),
+			errors_custom.GrpcErrorToJson(&pb.ErrorResponse{
+				Status:  err.Status,
+				Message: err.Message,
+				Code:    int32(err.Code),
+			}),
+		)
 	}
 
 	so := s.mapping.ToProtoResponseOrderDeleteAt("success", "Successfully restored order", merchant)
@@ -459,20 +738,30 @@ func (s *orderHandleGrpc) RestoreOrder(ctx context.Context, request *pb.FindById
 }
 
 func (s *orderHandleGrpc) DeleteOrderPermanent(ctx context.Context, request *pb.FindByIdOrderRequest) (*pb.ApiResponseOrderDelete, error) {
-	if request.GetId() == 0 {
-		return nil, status.Errorf(codes.InvalidArgument, "%v", &pb.ErrorResponse{
-			Status:  "validation_error",
-			Message: "Order ID parameter cannot be empty and must be a positive number",
-		})
+	id := int(request.GetId())
+
+	if id == 0 {
+		return nil, status.Errorf(
+			codes.InvalidArgument,
+			errors_custom.GrpcErrorToJson(&pb.ErrorResponse{
+				Status:  "validation_error",
+				Message: "Order ID parameter cannot be empty and must be a positive number",
+				Code:    int32(codes.InvalidArgument),
+			}),
+		)
 	}
 
 	_, err := s.orderService.DeleteOrderPermanent(int(request.GetId()))
 
 	if err != nil {
-		return nil, status.Errorf(codes.Code(err.Code), "%v", &pb.ErrorResponse{
-			Status:  err.Status,
-			Message: err.Message,
-		})
+		return nil, status.Errorf(
+			codes.Code(err.Code),
+			errors_custom.GrpcErrorToJson(&pb.ErrorResponse{
+				Status:  err.Status,
+				Message: err.Message,
+				Code:    int32(err.Code),
+			}),
+		)
 	}
 
 	so := s.mapping.ToProtoResponseOrderDelete("success", "Successfully deleted order permanently")
@@ -484,10 +773,14 @@ func (s *orderHandleGrpc) RestoreAllOrder(ctx context.Context, _ *emptypb.Empty)
 	_, err := s.orderService.RestoreAllOrder()
 
 	if err != nil {
-		return nil, status.Errorf(codes.Code(err.Code), "%v", &pb.ErrorResponse{
-			Status:  err.Status,
-			Message: err.Message,
-		})
+		return nil, status.Errorf(
+			codes.Code(err.Code),
+			errors_custom.GrpcErrorToJson(&pb.ErrorResponse{
+				Status:  err.Status,
+				Message: err.Message,
+				Code:    int32(err.Code),
+			}),
+		)
 	}
 
 	so := s.mapping.ToProtoResponseOrderAll("success", "Successfully restore all order")
@@ -499,10 +792,14 @@ func (s *orderHandleGrpc) DeleteAllOrderPermanent(ctx context.Context, _ *emptyp
 	_, err := s.orderService.DeleteAllOrderPermanent()
 
 	if err != nil {
-		return nil, status.Errorf(codes.Code(err.Code), "%v", &pb.ErrorResponse{
-			Status:  err.Status,
-			Message: err.Message,
-		})
+		return nil, status.Errorf(
+			codes.Code(err.Code),
+			errors_custom.GrpcErrorToJson(&pb.ErrorResponse{
+				Status:  err.Status,
+				Message: err.Message,
+				Code:    int32(err.Code),
+			}),
+		)
 	}
 
 	so := s.mapping.ToProtoResponseOrderAll("success", "Successfully delete order permanen")

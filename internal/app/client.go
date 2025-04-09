@@ -13,6 +13,7 @@ import (
 	"pointofsale/pkg/auth"
 	"pointofsale/pkg/dotenv"
 	"pointofsale/pkg/logger"
+	"pointofsale/pkg/upload_image"
 	"time"
 
 	"github.com/labstack/echo/v4"
@@ -90,13 +91,15 @@ func RunClient() {
 	}
 
 	mapping := response_api.NewResponseApiMapper()
+	imageUpload := upload_image.NewImageUpload()
 
 	depsHandler := api.Deps{
-		Conn:    conn,
-		Token:   token,
-		E:       e,
-		Logger:  logger,
-		Mapping: *mapping,
+		Conn:        conn,
+		Token:       token,
+		E:           e,
+		Logger:      logger,
+		Mapping:     *mapping,
+		ImageUpload: imageUpload,
 	}
 
 	api.NewHandler(depsHandler)

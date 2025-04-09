@@ -153,6 +153,9 @@ func (h *merchantHandleApi) FindById(c echo.Context) error {
 // @Description Retrieve a list of active merchant
 // @Accept json
 // @Produce json
+// @Param page query int false "Page number" default(1)
+// @Param page_size query int false "Number of items per page" default(10)
+// @Param search query string false "Search query"
 // @Success 200 {object} response.ApiResponsePaginationMerchantDeleteAt "List of active merchant"
 // @Failure 500 {object} response.ErrorResponse "Failed to retrieve merchant data"
 // @Router /api/merchant/active [get]
@@ -200,6 +203,9 @@ func (h *merchantHandleApi) FindByActive(c echo.Context) error {
 // @Description Retrieve a list of trashed merchant records
 // @Accept json
 // @Produce json
+// @Param page query int false "Page number" default(1)
+// @Param page_size query int false "Number of items per page" default(10)
+// @Param search query string false "Search query"
 // @Success 200 {object} response.ApiResponsePaginationMerchantDeleteAt "List of trashed merchant data"
 // @Failure 500 {object} response.ErrorResponse "Failed to retrieve merchant data"
 // @Router /api/merchant/trashed [get]
@@ -359,6 +365,7 @@ func (h *merchantHandleApi) Update(c echo.Context) error {
 	}
 
 	res, err := h.client.Update(ctx, req)
+
 	if err != nil {
 		h.logger.Error("Merchant update failed", zap.Error(err))
 		return c.JSON(http.StatusInternalServerError, response.ErrorResponse{

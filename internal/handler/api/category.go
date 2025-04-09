@@ -166,6 +166,9 @@ func (h *categoryHandleApi) FindById(c echo.Context) error {
 // @Description Retrieve a list of active category
 // @Accept json
 // @Produce json
+// @Param page query int false "Page number" default(1)
+// @Param page_size query int false "Number of items per page" default(10)
+// @Param search query string false "Search query"
 // @Success 200 {object} response.ApiResponsePaginationCategoryDeleteAt "List of active category"
 // @Failure 500 {object} response.ErrorResponse "Failed to retrieve category data"
 // @Router /api/category/active [get]
@@ -213,6 +216,9 @@ func (h *categoryHandleApi) FindByActive(c echo.Context) error {
 // @Description Retrieve a list of trashed category records
 // @Accept json
 // @Produce json
+// @Param page query int false "Page number" default(1)
+// @Param page_size query int false "Number of items per page" default(10)
+// @Param search query string false "Search query"
 // @Success 200 {object} response.ApiResponsePaginationCategoryDeleteAt "List of trashed category data"
 // @Failure 500 {object} response.ErrorResponse "Failed to retrieve category data"
 // @Router /api/category/trashed [get]
@@ -660,7 +666,9 @@ func (h *categoryHandleApi) FindYearTotalPriceByMerchant(c echo.Context) error {
 // @Router /api/category/monthly-pricing [get]
 func (h *categoryHandleApi) FindMonthPrice(c echo.Context) error {
 	yearStr := c.QueryParam("year")
+
 	year, err := strconv.Atoi(yearStr)
+
 	if err != nil {
 		h.logger.Debug("Invalid year parameter", zap.Error(err))
 		return c.JSON(http.StatusBadRequest, response.ErrorResponse{
@@ -675,6 +683,7 @@ func (h *categoryHandleApi) FindMonthPrice(c echo.Context) error {
 	res, err := h.client.FindMonthPrice(ctx, &pb.FindYearCategory{
 		Year: int32(year),
 	})
+
 	if err != nil {
 		h.logger.Debug("Failed to retrieve monthly category price", zap.Error(err))
 		return c.JSON(http.StatusInternalServerError, response.ErrorResponse{
@@ -739,8 +748,8 @@ func (h *categoryHandleApi) FindYearPrice(c echo.Context) error {
 // @Description Retrieve monthly pricing statistics for categories by specific merchant
 // @Accept json
 // @Produce json
-// @Param merchant_id query int true "Merchant ID"
 // @Param year query int true "Year in YYYY format (e.g., 2023)"
+// @Param merchant_id query int true "Merchant ID"
 // @Success 200 {object} response.ApiResponseCategoryMonthPrice "Monthly category pricing by merchant"
 // @Failure 400 {object} response.ErrorResponse "Invalid merchant ID or year parameter"
 // @Failure 401 {object} response.ErrorResponse "Unauthorized"
@@ -799,8 +808,8 @@ func (h *categoryHandleApi) FindMonthPriceByMerchant(c echo.Context) error {
 // @Description Retrieve yearly pricing statistics for categories by specific merchant
 // @Accept json
 // @Produce json
-// @Param merchant_id query int true "Merchant ID"
 // @Param year query int true "Year in YYYY format (e.g., 2023)"
+// @Param merchant_id query int true "Merchant ID"
 // @Success 200 {object} response.ApiResponseCategoryYearPrice "Yearly category pricing by merchant"
 // @Failure 400 {object} response.ErrorResponse "Invalid merchant ID or year parameter"
 // @Failure 401 {object} response.ErrorResponse "Unauthorized"
@@ -860,8 +869,8 @@ func (h *categoryHandleApi) FindYearPriceByMerchant(c echo.Context) error {
 // @Description Retrieve monthly pricing statistics for specific category
 // @Accept json
 // @Produce json
-// @Param category_id path int true "Category ID"
 // @Param year query int true "Year in YYYY format (e.g., 2023)"
+// @Param category_id path int true "Category ID"
 // @Success 200 {object} response.ApiResponseCategoryMonthPrice "Monthly pricing by category"
 // @Failure 400 {object} response.ErrorResponse "Invalid category ID or year parameter"
 // @Failure 401 {object} response.ErrorResponse "Unauthorized"
@@ -921,8 +930,8 @@ func (h *categoryHandleApi) FindMonthPriceById(c echo.Context) error {
 // @Description Retrieve yearly pricing statistics for specific category
 // @Accept json
 // @Produce json
-// @Param category_id path int true "Category ID"
 // @Param year query int true "Year in YYYY format (e.g., 2023)"
+// @Param category_id path int true "Category ID"
 // @Success 200 {object} response.ApiResponseCategoryYearPrice "Yearly pricing by category"
 // @Failure 400 {object} response.ErrorResponse "Invalid category ID or year parameter"
 // @Failure 401 {object} response.ErrorResponse "Unauthorized"
@@ -1043,6 +1052,7 @@ func (h *categoryHandleApi) Create(c echo.Context) error {
 // @Description Update an existing category record with the provided details
 // @Accept json
 // @Produce json
+// @Param id path int true "Category ID"
 // @Param request body requests.UpdateCategoryRequest true "Category update details"
 // @Success 200 {object} response.ApiResponseCategory "Successfully updated category"
 // @Failure 400 {object} response.ErrorResponse "Invalid request body or validation error"
@@ -1122,6 +1132,7 @@ func (h *categoryHandleApi) Update(c echo.Context) error {
 // @Router /api/category/trashed/{id} [get]
 func (h *categoryHandleApi) TrashedCategory(c echo.Context) error {
 	id, err := strconv.Atoi(c.Param("id"))
+
 	if err != nil {
 		h.logger.Debug("Invalid category ID format", zap.Error(err))
 		return c.JSON(http.StatusBadRequest, response.ErrorResponse{
@@ -1135,6 +1146,7 @@ func (h *categoryHandleApi) TrashedCategory(c echo.Context) error {
 	req := &pb.FindByIdCategoryRequest{Id: int32(id)}
 
 	res, err := h.client.TrashedCategory(ctx, req)
+
 	if err != nil {
 		h.logger.Error("Failed to archive category", zap.Error(err))
 		return c.JSON(http.StatusInternalServerError, response.ErrorResponse{
@@ -1239,7 +1251,6 @@ func (h *categoryHandleApi) DeleteCategoryPermanent(c echo.Context) error {
 // @Description Restore a trashed category record by its ID.
 // @Accept json
 // @Produce json
-// @Param id path int true "category ID"
 // @Success 200 {object} response.ApiResponseCategoryAll "Successfully restored category all"
 // @Failure 400 {object} response.ErrorResponse "Invalid category ID"
 // @Failure 500 {object} response.ErrorResponse "Failed to restore category"

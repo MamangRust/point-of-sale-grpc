@@ -159,6 +159,9 @@ func (h *orderHandleApi) FindById(c echo.Context) error {
 // @Description Retrieve a list of active orders
 // @Accept json
 // @Produce json
+// @Param page query int false "Page number" default(1)
+// @Param page_size query int false "Number of items per page" default(10)
+// @Param search query string false "Search query"
 // @Success 200 {object} response.ApiResponsePaginationOrderDeleteAt "List of active orders"
 // @Failure 500 {object} response.ErrorResponse "Failed to retrieve order data"
 // @Router /api/order/active [get]
@@ -204,6 +207,9 @@ func (h *orderHandleApi) FindByActive(c echo.Context) error {
 // @Description Retrieve a list of trashed orders
 // @Accept json
 // @Produce json
+// @Param page query int false "Page number" default(1)
+// @Param page_size query int false "Number of items per page" default(10)
+// @Param search query string false "Search query"
 // @Success 200 {object} response.ApiResponsePaginationOrderDeleteAt "List of trashed orders"
 // @Failure 500 {object} response.ErrorResponse "Failed to retrieve order data"
 // @Router /api/order/trashed [get]
@@ -400,6 +406,7 @@ func (h *orderHandleApi) FindMonthlyTotalRevenueByMerchant(c echo.Context) error
 	merchantStr := c.QueryParam("merchant_id")
 
 	merchant, err := strconv.Atoi(merchantStr)
+
 	if err != nil {
 		h.logger.Debug("Invalid merchant id parameter", zap.Error(err))
 		return c.JSON(http.StatusBadRequest, response.ErrorResponse{
@@ -416,6 +423,7 @@ func (h *orderHandleApi) FindMonthlyTotalRevenueByMerchant(c echo.Context) error
 		Month:      int32(month),
 		MerchantId: int32(merchant),
 	})
+
 	if err != nil {
 		h.logger.Debug("Failed to retrieve monthly order revenue", zap.Error(err))
 		return c.JSON(http.StatusInternalServerError, response.ErrorResponse{

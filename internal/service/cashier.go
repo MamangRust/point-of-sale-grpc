@@ -257,10 +257,12 @@ func (s *cashierService) FindYearlyTotalSales(year int) ([]*response.CashierResp
 	}
 
 	res, err := s.cashierRepository.GetYearlyTotalSales(year)
+
 	if err != nil {
 		s.logger.Error("failed to get yearly total sales",
 			zap.Int("year", year),
 			zap.Error(err))
+
 		return nil, &response.ErrorResponse{
 			Status:  "server_error",
 			Message: "Failed to retrieve yearly total sales data",

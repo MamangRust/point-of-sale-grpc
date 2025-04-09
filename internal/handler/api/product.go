@@ -6,14 +6,14 @@ import (
 	"mime/multipart"
 	"net/http"
 	"os"
-	"path/filepath"
+	"pointofsale/internal/domain/requests"
 	"pointofsale/internal/domain/response"
 	response_api "pointofsale/internal/mapper/response/api"
 	"pointofsale/internal/pb"
 	"pointofsale/pkg/logger"
+	"pointofsale/pkg/upload_image"
 	"strconv"
 	"strings"
-	"time"
 
 	"github.com/grpc-ecosystem/grpc-gateway/runtime"
 	"github.com/labstack/echo/v4"
@@ -24,9 +24,10 @@ import (
 )
 
 type productHandleApi struct {
-	client  pb.ProductServiceClient
-	logger  logger.LoggerInterface
-	mapping response_api.ProductResponseMapper
+	client       pb.ProductServiceClient
+	logger       logger.LoggerInterface
+	mapping      response_api.ProductResponseMapper
+	upload_image upload_image.ImageUploads
 }
 
 func NewHandlerProduct(
@@ -34,11 +35,13 @@ func NewHandlerProduct(
 	client pb.ProductServiceClient,
 	logger logger.LoggerInterface,
 	mapping response_api.ProductResponseMapper,
+	upload_image upload_image.ImageUploads,
 ) *productHandleApi {
 	productHandler := &productHandleApi{
-		client:  client,
-		logger:  logger,
-		mapping: mapping,
+		client:       client,
+		logger:       logger,
+		mapping:      mapping,
+		upload_image: upload_image,
 	}
 
 	routercategory := router.Group("/api/product")
@@ -132,6 +135,7 @@ func (h *productHandleApi) FindAllProduct(c echo.Context) error {
 // @Router /api/product/merchant/{merchant_id} [get]
 func (h *productHandleApi) FindByMerchant(c echo.Context) error {
 	merchantID, err := strconv.Atoi(c.Param("merchant_id"))
+
 	if err != nil || merchantID <= 0 {
 		h.logger.Debug("Invalid merchant ID", zap.Error(err))
 		return c.JSON(http.StatusBadRequest, response.ErrorResponse{
@@ -322,6 +326,9 @@ func (h *productHandleApi) FindById(c echo.Context) error {
 // @Description Retrieve a list of active products
 // @Accept json
 // @Produce json
+// @Param page query int false "Page number" default(1)
+// @Param page_size query int false "Number of items per page" default(10)
+// @Param search query string false "Search query"
 // @Success 200 {object} response.ApiResponsePaginationProductDeleteAt "List of active products"
 // @Failure 500 {object} response.ErrorResponse "Failed to retrieve product data"
 // @Router /api/product/active [get]
@@ -368,6 +375,9 @@ func (h *productHandleApi) FindByActive(c echo.Context) error {
 // @Description Retrieve a list of trashed products
 // @Accept json
 // @Produce json
+// @Param page query int false "Page number" default(1)
+// @Param page_size query int false "Number of items per page" default(10)
+// @Param search query string false "Search query"
 // @Success 200 {object} response.ApiResponsePaginationProductDeleteAt "List of trashed products"
 // @Failure 500 {object} response.ErrorResponse "Failed to retrieve product data"
 // @Router /api/product/trashed [get]
@@ -432,151 +442,32 @@ func (h *productHandleApi) FindByTrashed(c echo.Context) error {
 // @Failure 500 {object} response.ErrorResponse "Failed to create product"
 // @Router /api/product/create [post]
 func (h *productHandleApi) Create(c echo.Context) error {
-	merchantID, err := strconv.Atoi(c.FormValue("merchant_id"))
-	if err != nil || merchantID <= 0 {
-		return c.JSON(http.StatusBadRequest, response.ErrorResponse{
-			Status:  "invalid_merchant",
-			Message: "Please provide a valid merchant ID",
-			Code:    http.StatusBadRequest,
-		})
-	}
-
-	categoryID, err := strconv.Atoi(c.FormValue("category_id"))
-	if err != nil || categoryID <= 0 {
-		return c.JSON(http.StatusBadRequest, response.ErrorResponse{
-			Status:  "invalid_category",
-			Message: "Please provide a valid category ID",
-			Code:    http.StatusBadRequest,
-		})
-	}
-
-	name := strings.TrimSpace(c.FormValue("name"))
-	if name == "" {
-		return c.JSON(http.StatusBadRequest, response.ErrorResponse{
-			Status:  "validation_error",
-			Message: "Product name is required",
-			Code:    http.StatusBadRequest,
-		})
-	}
-
-	description := strings.TrimSpace(c.FormValue("description"))
-	brand := strings.TrimSpace(c.FormValue("brand"))
-
-	price, err := strconv.Atoi(c.FormValue("price"))
-	if err != nil || price <= 0 {
-		return c.JSON(http.StatusBadRequest, response.ErrorResponse{
-			Status:  "invalid_price",
-			Message: "Please provide a valid positive price",
-			Code:    http.StatusBadRequest,
-		})
-	}
-
-	countInStock, err := strconv.Atoi(c.FormValue("count_in_stock"))
-	if err != nil || countInStock < 0 {
-		return c.JSON(http.StatusBadRequest, response.ErrorResponse{
-			Status:  "invalid_stock",
-			Message: "Please provide a valid stock count (zero or positive)",
-			Code:    http.StatusBadRequest,
-		})
-	}
-
-	weight, err := strconv.Atoi(c.FormValue("weight"))
-
-	if err != nil || weight <= 0 {
-		return c.JSON(http.StatusBadRequest, response.ErrorResponse{
-			Status:  "invalid_weight",
-			Message: "Please provide a valid positive weight",
-			Code:    http.StatusBadRequest,
-		})
-	}
-
-	file, err := c.FormFile("image_product")
-
+	formData, err := h.parseProductForm(c, true)
 	if err != nil {
-		h.logger.Debug("Image upload error", zap.Error(err))
 		return c.JSON(http.StatusBadRequest, response.ErrorResponse{
-			Status:  "image_required",
-			Message: "A product image is required",
+			Status:  "error",
+			Message: "invalid body",
 			Code:    http.StatusBadRequest,
-		})
-	}
-
-	allowedTypes := map[string]bool{
-		".jpg":  true,
-		".jpeg": true,
-		".png":  true,
-		".webp": true,
-	}
-	ext := strings.ToLower(filepath.Ext(file.Filename))
-
-	if !allowedTypes[ext] {
-		return c.JSON(http.StatusBadRequest, response.ErrorResponse{
-			Status:  "invalid_image_type",
-			Message: "Only JPG, JPEG, PNG, and WEBP images are allowed",
-			Code:    http.StatusBadRequest,
-		})
-	}
-
-	if file.Size > 5<<20 {
-		return c.JSON(http.StatusBadRequest, response.ErrorResponse{
-			Status:  "invalid_image_size",
-			Message: "Image size must be less than 5MB",
-			Code:    http.StatusBadRequest,
-		})
-	}
-
-	uploadDir := "uploads/products"
-
-	if _, err := os.Stat(uploadDir); os.IsNotExist(err) {
-		if err := os.MkdirAll(uploadDir, 0755); err != nil {
-			h.logger.Error("Failed to create upload directory",
-				zap.String("directory", uploadDir),
-				zap.Error(err),
-			)
-			return c.JSON(http.StatusInternalServerError, response.ErrorResponse{
-				Status:  "server_error",
-				Message: "Failed to prepare storage for upload",
-				Code:    http.StatusInternalServerError,
-			})
-		}
-	}
-
-	filename := fmt.Sprintf("%d%s", time.Now().UnixNano(), ext)
-	imagePath := filepath.Join(uploadDir, filename)
-
-	if err := saveUploadedFile(file, imagePath); err != nil {
-		h.logger.Error("Failed to save image",
-			zap.String("path", imagePath),
-			zap.Error(err),
-		)
-		return c.JSON(http.StatusInternalServerError, response.ErrorResponse{
-			Status:  "upload_failed",
-			Message: "Failed to save uploaded image",
-			Code:    http.StatusInternalServerError,
 		})
 	}
 
 	ctx := c.Request().Context()
 	req := &pb.CreateProductRequest{
-		MerchantId:   int32(merchantID),
-		CategoryId:   int32(categoryID),
-		Name:         name,
-		Description:  description,
-		Price:        int32(price),
-		CountInStock: int32(countInStock),
-		Brand:        brand,
-		Weight:       int32(weight),
-		ImageProduct: imagePath,
+		MerchantId:   int32(formData.MerchantID),
+		CategoryId:   int32(formData.CategoryID),
+		Name:         formData.Name,
+		Description:  formData.Description,
+		Price:        int32(formData.Price),
+		CountInStock: int32(formData.CountInStock),
+		Brand:        formData.Brand,
+		Weight:       int32(formData.Weight),
+		ImageProduct: formData.ImagePath,
 	}
 
 	res, err := h.client.Create(ctx, req)
-
 	if err != nil {
-		if removeErr := os.Remove(imagePath); removeErr != nil {
-			h.logger.Debug("Failed to clean up uploaded file after creation failure",
-				zap.String("path", imagePath),
-				zap.Error(removeErr),
-			)
+		if formData.ImagePath != "" {
+			h.upload_image.CleanupImageOnFailure(formData.ImagePath)
 		}
 
 		h.logger.Error("Product creation failed",
@@ -592,7 +483,6 @@ func (h *productHandleApi) Create(c echo.Context) error {
 	}
 
 	so := h.mapping.ToApiResponseProduct(res)
-
 	return c.JSON(http.StatusCreated, so)
 }
 
@@ -630,146 +520,33 @@ func (h *productHandleApi) Update(c echo.Context) error {
 		})
 	}
 
-	merchantID, err := strconv.Atoi(c.FormValue("merchant_id"))
+	formData, err := h.parseProductForm(c, false)
 	if err != nil {
 		return c.JSON(http.StatusBadRequest, response.ErrorResponse{
 			Status:  "error",
-			Message: "Invalid merchant ID",
+			Message: "invalid body",
 			Code:    http.StatusBadRequest,
 		})
-	}
-
-	categoryID, err := strconv.Atoi(c.FormValue("category_id"))
-	if err != nil {
-		return c.JSON(http.StatusBadRequest, response.ErrorResponse{
-			Status:  "error",
-			Message: "Invalid category ID",
-			Code:    http.StatusBadRequest,
-		})
-	}
-
-	name := c.FormValue("name")
-	description := c.FormValue("description")
-	price, err := strconv.Atoi(c.FormValue("price"))
-	if err != nil {
-		return c.JSON(http.StatusBadRequest, response.ErrorResponse{
-			Status:  "error",
-			Message: "Invalid price",
-			Code:    http.StatusBadRequest,
-		})
-	}
-
-	countInStock, err := strconv.Atoi(c.FormValue("count_in_stock"))
-	if err != nil {
-		return c.JSON(http.StatusBadRequest, response.ErrorResponse{
-			Status:  "error",
-			Message: "Invalid count in stock",
-			Code:    http.StatusBadRequest,
-		})
-	}
-
-	brand := c.FormValue("brand")
-	weight, err := strconv.Atoi(c.FormValue("weight"))
-	if err != nil {
-		return c.JSON(http.StatusBadRequest, response.ErrorResponse{
-			Status:  "error",
-			Message: "Invalid weight",
-			Code:    http.StatusBadRequest,
-		})
-	}
-
-	imagePath := ""
-
-	file, err := c.FormFile("image_product")
-
-	if err == nil {
-		allowedTypes := map[string]bool{
-			".jpg":  true,
-			".jpeg": true,
-			".png":  true,
-			".webp": true,
-			".gif":  true,
-		}
-		ext := strings.ToLower(filepath.Ext(file.Filename))
-		if !allowedTypes[ext] {
-			return c.JSON(http.StatusBadRequest, response.ErrorResponse{
-				Status:  "invalid_image_type",
-				Message: "Only JPG, JPEG, PNG, WEBP, and GIF images are allowed",
-				Code:    http.StatusBadRequest,
-			})
-		}
-
-		if file.Size > 5<<20 {
-			return c.JSON(http.StatusBadRequest, response.ErrorResponse{
-				Status:  "invalid_image_size",
-				Message: "Image size must be less than 5MB",
-				Code:    http.StatusBadRequest,
-			})
-		}
-
-		uploadDir := "uploads/products"
-
-		if _, err := os.Stat(uploadDir); os.IsNotExist(err) {
-			if err := os.MkdirAll(uploadDir, 0755); err != nil {
-				h.logger.Error("Failed to create upload directory",
-					zap.String("directory", uploadDir),
-					zap.Error(err),
-				)
-				return c.JSON(http.StatusInternalServerError, response.ErrorResponse{
-					Status:  "server_error",
-					Message: "Failed to prepare storage for upload",
-					Code:    http.StatusInternalServerError,
-				})
-			}
-		}
-
-		filename := fmt.Sprintf("%d%s", time.Now().UnixNano(), ext)
-		imagePath = filepath.Join(uploadDir, filename)
-
-		if err := saveUploadedFile(file, imagePath); err != nil {
-			h.logger.Error("Failed to save uploaded file",
-				zap.String("path", imagePath),
-				zap.Error(err),
-			)
-
-			return c.JSON(http.StatusInternalServerError, response.ErrorResponse{
-				Status:  "upload_failed",
-				Message: "Failed to save uploaded image",
-				Code:    http.StatusInternalServerError,
-			})
-		}
-
-		h.logger.Debug("Successfully saved uploaded file",
-			zap.String("path", imagePath),
-			zap.Int64("size", file.Size),
-		)
 	}
 
 	ctx := c.Request().Context()
-
 	req := &pb.UpdateProductRequest{
 		ProductId:    int32(productID),
-		MerchantId:   int32(merchantID),
-		CategoryId:   int32(categoryID),
-		Name:         name,
-		Description:  description,
-		Price:        int32(price),
-		CountInStock: int32(countInStock),
-		Brand:        brand,
-		Weight:       int32(weight),
-		ImageProduct: imagePath,
+		MerchantId:   int32(formData.MerchantID),
+		CategoryId:   int32(formData.CategoryID),
+		Name:         formData.Name,
+		Description:  formData.Description,
+		Price:        int32(formData.Price),
+		CountInStock: int32(formData.CountInStock),
+		Brand:        formData.Brand,
+		Weight:       int32(formData.Weight),
+		ImageProduct: formData.ImagePath,
 	}
 
 	res, err := h.client.Update(ctx, req)
-
 	if err != nil {
-		if imagePath != "" {
-			if err := os.Remove(imagePath); err != nil {
-				h.logger.Debug("Failed to clean up uploaded file after update failure",
-					zap.String("path", imagePath),
-					zap.Error(err),
-				)
-			}
+		if formData.ImagePath != "" {
+			h.upload_image.CleanupImageOnFailure(formData.ImagePath)
 		}
 
 		h.logger.Error("Product update failed",
@@ -779,13 +556,12 @@ func (h *productHandleApi) Update(c echo.Context) error {
 
 		return c.JSON(http.StatusInternalServerError, response.ErrorResponse{
 			Status:  "update_failed",
-			Message: "Failed to update category. Please try again.",
+			Message: "Failed to update product. Please try again.",
 			Code:    http.StatusInternalServerError,
 		})
 	}
 
 	so := h.mapping.ToApiResponseProduct(res)
-
 	return c.JSON(http.StatusOK, so)
 }
 
@@ -1011,4 +787,88 @@ func saveUploadedFile(file *multipart.FileHeader, dst string) error {
 	}
 
 	return nil
+}
+
+func (h *productHandleApi) parseProductForm(c echo.Context, requireImage bool) (requests.ProductFormData, error) {
+	var formData requests.ProductFormData
+	var err error
+
+	formData.MerchantID, err = strconv.Atoi(c.FormValue("merchant_id"))
+	if err != nil || formData.MerchantID <= 0 {
+		return formData, c.JSON(http.StatusBadRequest, response.ErrorResponse{
+			Status:  "invalid_merchant",
+			Message: "Please provide a valid merchant ID",
+			Code:    http.StatusBadRequest,
+		})
+	}
+
+	formData.CategoryID, err = strconv.Atoi(c.FormValue("category_id"))
+	if err != nil || formData.CategoryID <= 0 {
+		return formData, c.JSON(http.StatusBadRequest, response.ErrorResponse{
+			Status:  "invalid_category",
+			Message: "Please provide a valid category ID",
+			Code:    http.StatusBadRequest,
+		})
+	}
+
+	formData.Name = strings.TrimSpace(c.FormValue("name"))
+	if formData.Name == "" {
+		return formData, c.JSON(http.StatusBadRequest, response.ErrorResponse{
+			Status:  "validation_error",
+			Message: "Product name is required",
+			Code:    http.StatusBadRequest,
+		})
+	}
+
+	formData.Description = strings.TrimSpace(c.FormValue("description"))
+	formData.Brand = strings.TrimSpace(c.FormValue("brand"))
+
+	formData.Price, err = strconv.Atoi(c.FormValue("price"))
+	if err != nil || formData.Price <= 0 {
+		return formData, c.JSON(http.StatusBadRequest, response.ErrorResponse{
+			Status:  "invalid_price",
+			Message: "Please provide a valid positive price",
+			Code:    http.StatusBadRequest,
+		})
+	}
+
+	formData.CountInStock, err = strconv.Atoi(c.FormValue("count_in_stock"))
+	if err != nil || formData.CountInStock < 0 {
+		return formData, c.JSON(http.StatusBadRequest, response.ErrorResponse{
+			Status:  "invalid_stock",
+			Message: "Please provide a valid stock count (zero or positive)",
+			Code:    http.StatusBadRequest,
+		})
+	}
+
+	formData.Weight, err = strconv.Atoi(c.FormValue("weight"))
+	if err != nil || formData.Weight <= 0 {
+		return formData, c.JSON(http.StatusBadRequest, response.ErrorResponse{
+			Status:  "invalid_weight",
+			Message: "Please provide a valid positive weight",
+			Code:    http.StatusBadRequest,
+		})
+	}
+
+	file, err := c.FormFile("image_product")
+	if err != nil {
+		if requireImage {
+			h.logger.Debug("Image upload error", zap.Error(err))
+			return formData, c.JSON(http.StatusBadRequest, response.ErrorResponse{
+				Status:  "image_required",
+				Message: "A product image is required",
+				Code:    http.StatusBadRequest,
+			})
+		}
+
+		return formData, nil
+	}
+
+	imagePath, err := h.upload_image.ProcessImageUpload(c, file)
+	if err != nil {
+		return formData, err
+	}
+
+	formData.ImagePath = imagePath
+	return formData, nil
 }
