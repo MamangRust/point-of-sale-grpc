@@ -25,6 +25,19 @@ type CreateOrderParams struct {
 	TotalPrice int64 `json:"total_price"`
 }
 
+// CreateOrder: Creates a new order record
+// Purpose: Register a new transaction in the system
+// Parameters:
+//
+//	$1: merchant_id - UUID of the merchant associated with the order
+//	$2: cashier_id - ID of the cashier processing the order
+//	$3: total_price - Numeric total amount of the order
+//
+// Returns: The complete created order record
+// Business Logic:
+//   - Automatically sets created_at timestamp
+//   - Requires merchant_id, cashier_id and total_price
+//   - Typically followed by order item creation
 func (q *Queries) CreateOrder(ctx context.Context, arg CreateOrderParams) (*Order, error) {
 	row := q.db.QueryRowContext(ctx, createOrder, arg.MerchantID, arg.CashierID, arg.TotalPrice)
 	var i Order
@@ -46,7 +59,13 @@ WHERE
     deleted_at IS NOT NULL
 `
 
-// Delete All Trashed Order Permanently
+// DeleteAllPermanentOrders: Purges all cancelled orders
+// Purpose: Clean up all soft-deleted order records
+// Business Logic:
+//   - Irreversible bulk deletion operation
+//   - Only affects already cancelled orders
+//   - Typically used during database maintenance
+//   - Should be restricted to admin users
 func (q *Queries) DeleteAllPermanentOrders(ctx context.Context) error {
 	_, err := q.db.ExecContext(ctx, deleteAllPermanentOrders)
 	return err
@@ -56,7 +75,17 @@ const deleteOrderPermanently = `-- name: DeleteOrderPermanently :exec
 DELETE FROM orders WHERE order_id = $1 AND deleted_at IS NOT NULL
 `
 
-// Delete Order Permanently
+// DeleteOrderPermanently: Hard-deletes an order
+// Purpose: Completely remove order from database
+// Parameters:
+//
+//	$1: order_id - UUID of order to delete
+//
+// Business Logic:
+//   - Permanent deletion of already cancelled orders
+//   - No return value (exec-only operation)
+//   - Irreversible action - use with caution
+//   - Should trigger deletion of related order_items
 func (q *Queries) DeleteOrderPermanently(ctx context.Context, orderID int32) error {
 	_, err := q.db.ExecContext(ctx, deleteOrderPermanently, orderID)
 	return err
@@ -104,6 +133,25 @@ type GetMonthlyOrderRow struct {
 	TotalItemsSold int64   `json:"total_items_sold"`
 }
 
+// GetMonthlyOrder: Retrieves monthly order summary within a 1-year period
+// Purpose: Provides monthly sales performance metrics for trend and operational analysis
+// Parameters:
+//
+//	$1: Reference date (timestamp) - determines the 12-month analysis window
+//
+// Returns:
+//
+//	month: 3-letter abbreviation of the month (e.g., 'Jan')
+//	order_count: Total number of orders in the month
+//	total_revenue: Sum of total price from all orders
+//	total_items_sold: Total quantity of items sold in that month
+//
+// Business Logic:
+//   - Analyzes a 12-month period starting from the month of the reference date
+//   - Ignores soft-deleted records for accurate reporting
+//   - Aggregates data by month for visualizations and monthly performance tracking
+//   - Uses short month format for dashboard/chart compactness
+//   - Sorts chronologically by month
 func (q *Queries) GetMonthlyOrder(ctx context.Context, dollar_1 time.Time) ([]*GetMonthlyOrderRow, error) {
 	rows, err := q.db.QueryContext(ctx, getMonthlyOrder, dollar_1)
 	if err != nil {
@@ -180,6 +228,26 @@ type GetMonthlyOrderByMerchantRow struct {
 	TotalItemsSold int64   `json:"total_items_sold"`
 }
 
+// GetMonthlyOrderByMerchant: Retrieves monthly order summary within a 1-year period by merchant_id
+// Purpose: Provides monthly sales performance metrics for trend and operational analysis
+// Parameters:
+//
+//	$1: Reference date (timestamp) - determines the 12-month analysis window
+//	$2: Merchant ID
+//
+// Returns:
+//
+//	month: 3-letter abbreviation of the month (e.g., 'Jan')
+//	order_count: Total number of orders in the month
+//	total_revenue: Sum of total price from all orders
+//	total_items_sold: Total quantity of items sold in that month
+//
+// Business Logic:
+//   - Analyzes a 12-month period starting from the month of the reference date
+//   - Ignores soft-deleted records for accurate reporting
+//   - Aggregates data by month for visualizations and monthly performance tracking
+//   - Uses short month format for dashboard/chart compactness
+//   - Sorts chronologically by month
 func (q *Queries) GetMonthlyOrderByMerchant(ctx context.Context, arg GetMonthlyOrderByMerchantParams) ([]*GetMonthlyOrderByMerchantRow, error) {
 	rows, err := q.db.QueryContext(ctx, getMonthlyOrderByMerchant, arg.Column1, arg.MerchantID)
 	if err != nil {
@@ -269,6 +337,26 @@ type GetMonthlyTotalRevenueRow struct {
 	TotalRevenue int32  `json:"total_revenue"`
 }
 
+// GetMonthlyTotalRevenue: Retrieves monthly total revenue across two custom date ranges
+// Purpose: Compare total revenue between two time periods (e.g., current month vs previous month)
+// Parameters:
+//
+//	$1: Start date of first period
+//	$2: End date of first period
+//	$3: Start date of second period
+//	$4: End date of second period
+//
+// Returns:
+//
+//	year: The year of the revenue data
+//	month: The full month name (e.g., "January")
+//	total_revenue: Total revenue (SUM of order totals) for that month (0 if no revenue)
+//
+// Business Logic:
+//   - Compares revenue between two customizable time periods
+//   - Ensures all selected months appear even if no revenue (gap filling)
+//   - Includes only non-deleted orders and order items
+//   - Output formatted for charting or reporting tools
 func (q *Queries) GetMonthlyTotalRevenue(ctx context.Context, arg GetMonthlyTotalRevenueParams) ([]*GetMonthlyTotalRevenueRow, error) {
 	rows, err := q.db.QueryContext(ctx, getMonthlyTotalRevenue,
 		arg.Extract,
@@ -360,6 +448,27 @@ type GetMonthlyTotalRevenueByIdRow struct {
 	TotalRevenue int32  `json:"total_revenue"`
 }
 
+// GetMonthlyTotalRevenueById: Retrieves monthly total revenue across two custom date ranges by order_id
+// Purpose: Compare total revenue between two time periods (e.g., current month vs previous month)
+// Parameters:
+//
+//	$1: Start date of first period
+//	$2: End date of first period
+//	$3: Start date of second period
+//	$4: End date of second period
+//	$5: Order ID
+//
+// Returns:
+//
+//	year: The year of the revenue data
+//	month: The full month name (e.g., "January")
+//	total_revenue: Total revenue (SUM of order totals) for that month (0 if no revenue)
+//
+// Business Logic:
+//   - Compares revenue between two customizable time periods
+//   - Ensures all selected months appear even if no revenue (gap filling)
+//   - Includes only non-deleted orders and order items
+//   - Output formatted for charting or reporting tools
 func (q *Queries) GetMonthlyTotalRevenueById(ctx context.Context, arg GetMonthlyTotalRevenueByIdParams) ([]*GetMonthlyTotalRevenueByIdRow, error) {
 	rows, err := q.db.QueryContext(ctx, getMonthlyTotalRevenueById,
 		arg.Extract,
@@ -452,6 +561,27 @@ type GetMonthlyTotalRevenueByMerchantRow struct {
 	TotalRevenue int32  `json:"total_revenue"`
 }
 
+// GetMonthlyTotalRevenueByMerchant: Retrieves monthly total revenue across two custom date ranges by merchant_id
+// Purpose: Compare total revenue between two time periods (e.g., current month vs previous month)
+// Parameters:
+//
+//	$1: Start date of first period
+//	$2: End date of first period
+//	$3: Start date of second period
+//	$4: End date of second period
+//	$5: Order ID
+//
+// Returns:
+//
+//	year: The year of the revenue data
+//	month: The full month name (e.g., "January")
+//	total_revenue: Total revenue (SUM of order totals) for that month (0 if no revenue)
+//
+// Business Logic:
+//   - Compares revenue between two customizable time periods
+//   - Ensures all selected months appear even if no revenue (gap filling)
+//   - Includes only non-deleted orders and order items
+//   - Output formatted for charting or reporting tools
 func (q *Queries) GetMonthlyTotalRevenueByMerchant(ctx context.Context, arg GetMonthlyTotalRevenueByMerchantParams) ([]*GetMonthlyTotalRevenueByMerchantRow, error) {
 	rows, err := q.db.QueryContext(ctx, getMonthlyTotalRevenueByMerchant,
 		arg.Extract,
@@ -488,6 +618,17 @@ WHERE order_id = $1
   AND deleted_at IS NULL
 `
 
+// GetOrderByID: Retrieves an active order by ID
+// Purpose: Fetch order details for display/processing
+// Parameters:
+//
+//	$1: order_id - UUID of the order to retrieve
+//
+// Returns: Full order record if found and active
+// Business Logic:
+//   - Excludes soft-deleted orders
+//   - Used for order viewing, receipts, and processing
+//   - Typically joined with order_items in application
 func (q *Queries) GetOrderByID(ctx context.Context, orderID int32) (*Order, error) {
 	row := q.db.QueryRowContext(ctx, getOrderByID, orderID)
 	var i Order
@@ -531,7 +672,24 @@ type GetOrdersRow struct {
 	TotalCount int64        `json:"total_count"`
 }
 
-// Get Orders with Pagination and Total Count
+// GetOrders: Retrieves paginated list of active orders with search capability
+// Purpose: List all active orders for management UI
+// Parameters:
+//
+//	$1: search_term - Optional text to filter orders by ID or total price (NULL for no filter)
+//	$2: limit - Maximum number of records to return (pagination limit)
+//	$3: offset - Number of records to skip (pagination offset)
+//
+// Returns:
+//
+//	All order fields plus total_count of matching records
+//
+// Business Logic:
+//   - Excludes soft-deleted orders (deleted_at IS NULL)
+//   - Supports partial text matching on order_id and total_price fields (case-insensitive)
+//   - Returns newest orders first (created_at DESC)
+//   - Provides total_count for client-side pagination
+//   - Uses window function COUNT(*) OVER() for efficient total count
 func (q *Queries) GetOrders(ctx context.Context, arg GetOrdersParams) ([]*GetOrdersRow, error) {
 	rows, err := q.db.QueryContext(ctx, getOrders, arg.Column1, arg.Limit, arg.Offset)
 	if err != nil {
@@ -592,7 +750,23 @@ type GetOrdersActiveRow struct {
 	TotalCount int64        `json:"total_count"`
 }
 
-// Get Active Orders with Pagination and Total Count
+// GetOrdersActive: Retrieves paginated list of active orders (identical to GetOrders)
+// Purpose: Maintains consistent API pattern with other active/trashed endpoints
+// Parameters:
+//
+//	$1: search_term - Optional filter text for order ID or price
+//	$2: limit - Pagination limit
+//	$3: offset - Pagination offset
+//
+// Returns:
+//
+//	Active order records with total_count
+//
+// Business Logic:
+//   - Same functionality as GetOrders
+//   - Exists for consistency in API design patterns
+//
+// Note: Could be consolidated with GetOrders if duplicate functionality is undesired
 func (q *Queries) GetOrdersActive(ctx context.Context, arg GetOrdersActiveParams) ([]*GetOrdersActiveRow, error) {
 	rows, err := q.db.QueryContext(ctx, getOrdersActive, arg.Column1, arg.Limit, arg.Offset)
 	if err != nil {
@@ -656,7 +830,24 @@ type GetOrdersByMerchantRow struct {
 	TotalCount int64        `json:"total_count"`
 }
 
-// Get Orders with Pagination and Total Count where merchant_id
+// GetOrdersByMerchant: Retrieves merchant-specific orders with pagination
+// Purpose: List orders filtered by merchant ID
+// Parameters:
+//
+//	$1: search_term - Optional text to filter orders
+//	$2: limit - Pagination limit
+//	$3: offset - Pagination offset
+//	$4: merchant_id - Optional merchant UUID to filter by (NULL for all merchants)
+//
+// Returns:
+//
+//	Order records with total_count
+//
+// Business Logic:
+//   - Combines merchant filtering with search functionality
+//   - Maintains same sorting and pagination as other order queries
+//   - Useful for merchant-specific order dashboards
+//   - NULL merchant_id parameter returns all merchants' orders
 func (q *Queries) GetOrdersByMerchant(ctx context.Context, arg GetOrdersByMerchantParams) ([]*GetOrdersByMerchantRow, error) {
 	rows, err := q.db.QueryContext(ctx, getOrdersByMerchant,
 		arg.Column1,
@@ -722,7 +913,24 @@ type GetOrdersTrashedRow struct {
 	TotalCount int64        `json:"total_count"`
 }
 
-// Get Trashed Orders with Pagination and Total Count
+// GetOrdersTrashed: Retrieves paginated list of soft-deleted orders
+// Purpose: View and manage deleted orders for potential restoration
+// Parameters:
+//
+//	$1: search_term - Optional text to filter trashed orders
+//	$2: limit - Maximum records per page
+//	$3: offset - Records to skip
+//
+// Returns:
+//
+//	Trashed order records with total_count
+//
+// Business Logic:
+//   - Only returns soft-deleted records (deleted_at IS NOT NULL)
+//   - Maintains same search functionality as active order queries
+//   - Preserves chronological sorting (newest first)
+//   - Used in order recovery/audit interfaces
+//   - Includes total_count for pagination in trash management UI
 func (q *Queries) GetOrdersTrashed(ctx context.Context, arg GetOrdersTrashedParams) ([]*GetOrdersTrashedRow, error) {
 	rows, err := q.db.QueryContext(ctx, getOrdersTrashed, arg.Column1, arg.Limit, arg.Offset)
 	if err != nil {
@@ -797,6 +1005,27 @@ type GetYearlyOrderRow struct {
 	UniqueProductsSold int64   `json:"unique_products_sold"`
 }
 
+// GetYearlyOrder: Retrieves yearly order summary over the past 5 years
+// Purpose: Enables long-term trend analysis of sales performance
+// Parameters:
+//
+//	$1: Reference date (timestamp) - defines the 5-year analysis window
+//
+// Returns:
+//
+//	year: 4-digit year as string
+//	order_count: Total number of orders in the year
+//	total_revenue: Sum of total price from all orders
+//	total_items_sold: Total quantity of items sold in the year
+//	active_cashiers: Number of distinct cashier IDs involved in transactions
+//	unique_products_sold: Number of unique products sold
+//
+// Business Logic:
+//   - Covers a rolling 5-year window up to the reference year
+//   - Filters out deleted records to ensure data consistency
+//   - Useful for high-level KPI tracking, forecasting, and strategic planning
+//   - Includes both volume and revenue metrics for comprehensive reporting
+//   - Results sorted by year in ascending order
 func (q *Queries) GetYearlyOrder(ctx context.Context, dollar_1 time.Time) ([]*GetYearlyOrderRow, error) {
 	rows, err := q.db.QueryContext(ctx, getYearlyOrder, dollar_1)
 	if err != nil {
@@ -875,6 +1104,27 @@ type GetYearlyOrderByMerchantRow struct {
 	UniqueProductsSold int64   `json:"unique_products_sold"`
 }
 
+// GetYearlyOrderByMerchant: Retrieves yearly order summary over the past 5 years by merchant_id
+// Purpose: Enables long-term trend analysis of sales performance
+// Parameters:
+//
+//	$1: Reference date (timestamp) - defines the 5-year analysis window
+//
+// Returns:
+//
+//	year: 4-digit year as string
+//	order_count: Total number of orders in the year
+//	total_revenue: Sum of total price from all orders
+//	total_items_sold: Total quantity of items sold in the year
+//	active_cashiers: Number of distinct cashier IDs involved in transactions
+//	unique_products_sold: Number of unique products sold
+//
+// Business Logic:
+//   - Covers a rolling 5-year window up to the reference year
+//   - Filters out deleted records to ensure data consistency
+//   - Useful for high-level KPI tracking, forecasting, and strategic planning
+//   - Includes both volume and revenue metrics for comprehensive reporting
+//   - Results sorted by year in ascending order
 func (q *Queries) GetYearlyOrderByMerchant(ctx context.Context, arg GetYearlyOrderByMerchantParams) ([]*GetYearlyOrderByMerchantRow, error) {
 	rows, err := q.db.QueryContext(ctx, getYearlyOrderByMerchant, arg.Column1, arg.MerchantID)
 	if err != nil {
@@ -945,6 +1195,21 @@ type GetYearlyTotalRevenueRow struct {
 	TotalRevenue int32  `json:"total_revenue"`
 }
 
+// GetYearlyTotalRevenue: Retrieves yearly total revenue for current and previous year
+// Purpose: Show year-over-year revenue trends
+// Parameters:
+//
+//	$1: The current year (integer)
+//
+// Returns:
+//
+//	year: Year (as string)
+//	total_revenue: Total revenue (SUM of order totals) for the year (0 if no revenue)
+//
+// Business Logic:
+//   - Automatically compares revenue between current and previous year
+//   - Includes zero-value years for complete data visualization
+//   - Filters only active/non-deleted orders and order items
 func (q *Queries) GetYearlyTotalRevenue(ctx context.Context, dollar_1 int32) ([]*GetYearlyTotalRevenueRow, error) {
 	rows, err := q.db.QueryContext(ctx, getYearlyTotalRevenue, dollar_1)
 	if err != nil {
@@ -1014,6 +1279,22 @@ type GetYearlyTotalRevenueByIdRow struct {
 	TotalRevenue int32  `json:"total_revenue"`
 }
 
+// GetYearlyTotalRevenueById: Retrieves yearly total revenue for current and previous year by order_id
+// Purpose: Show year-over-year revenue trends
+// Parameters:
+//
+//	$1: The current year (integer)
+//	$2: Order ID
+//
+// Returns:
+//
+//	year: Year (as string)
+//	total_revenue: Total revenue (SUM of order totals) for the year (0 if no revenue)
+//
+// Business Logic:
+//   - Automatically compares revenue between current and previous year
+//   - Includes zero-value years for complete data visualization
+//   - Filters only active/non-deleted orders and order items
 func (q *Queries) GetYearlyTotalRevenueById(ctx context.Context, arg GetYearlyTotalRevenueByIdParams) ([]*GetYearlyTotalRevenueByIdRow, error) {
 	rows, err := q.db.QueryContext(ctx, getYearlyTotalRevenueById, arg.Column1, arg.OrderID)
 	if err != nil {
@@ -1083,6 +1364,22 @@ type GetYearlyTotalRevenueByMerchantRow struct {
 	TotalRevenue int32  `json:"total_revenue"`
 }
 
+// GetYearlyTotalRevenueByMerchant: Retrieves yearly total revenue for current and previous year by merchant_id
+// Purpose: Show year-over-year revenue trends
+// Parameters:
+//
+//	$1: The current year (integer)
+//	$2: Order ID
+//
+// Returns:
+//
+//	year: Year (as string)
+//	total_revenue: Total revenue (SUM of order totals) for the year (0 if no revenue)
+//
+// Business Logic:
+//   - Automatically compares revenue between current and previous year
+//   - Includes zero-value years for complete data visualization
+//   - Filters only active/non-deleted orders and order items
 func (q *Queries) GetYearlyTotalRevenueByMerchant(ctx context.Context, arg GetYearlyTotalRevenueByMerchantParams) ([]*GetYearlyTotalRevenueByMerchantRow, error) {
 	rows, err := q.db.QueryContext(ctx, getYearlyTotalRevenueByMerchant, arg.Column1, arg.MerchantID)
 	if err != nil {
@@ -1114,7 +1411,12 @@ WHERE
     deleted_at IS NOT NULL
 `
 
-// Restore All Trashed Order
+// RestoreAllOrders: Mass restoration of cancelled orders
+// Purpose: Recover all trashed orders at once
+// Business Logic:
+//   - Reactivates all soft-deleted orders
+//   - No parameters needed (bulk operation)
+//   - Typically used during system recovery
 func (q *Queries) RestoreAllOrders(ctx context.Context) error {
 	_, err := q.db.ExecContext(ctx, restoreAllOrders)
 	return err
@@ -1130,7 +1432,17 @@ WHERE
   RETURNING order_id, merchant_id, cashier_id, total_price, created_at, updated_at, deleted_at
 `
 
-// Restore Trashed Order
+// RestoreOrder: Recovers a soft-deleted order
+// Purpose: Reactivate a cancelled order
+// Parameters:
+//
+//	$1: order_id - UUID of order to restore
+//
+// Returns: The restored order record
+// Business Logic:
+//   - Nullifies deleted_at field
+//   - Only works on previously cancelled orders
+//   - Maintains all original order data
 func (q *Queries) RestoreOrder(ctx context.Context, orderID int32) (*Order, error) {
 	row := q.db.QueryRowContext(ctx, restoreOrder, orderID)
 	var i Order
@@ -1156,7 +1468,18 @@ WHERE
     RETURNING order_id, merchant_id, cashier_id, total_price, created_at, updated_at, deleted_at
 `
 
-// Trash Order
+// TrashedOrder: Soft-deletes an order
+// Purpose: Cancel/void an order without permanent deletion
+// Parameters:
+//
+//	$1: order_id - UUID of order to cancel
+//
+// Returns: The soft-deleted order record
+// Business Logic:
+//   - Sets deleted_at to current timestamp
+//   - Preserves order data for reporting
+//   - Only processes active orders
+//   - Can be restored via RestoreOrder
 func (q *Queries) TrashedOrder(ctx context.Context, orderID int32) (*Order, error) {
 	row := q.db.QueryRowContext(ctx, trashedOrder, orderID)
 	var i Order
@@ -1186,6 +1509,19 @@ type UpdateOrderParams struct {
 	TotalPrice int64 `json:"total_price"`
 }
 
+// UpdateOrder: Modifies order information
+// Purpose: Update order details (primarily total price)
+// Parameters:
+//
+//	$1: order_id - UUID of order to update
+//	$2: total_price - New total amount
+//
+// Returns: Updated order record
+// Business Logic:
+//   - Auto-updates updated_at timestamp
+//   - Only modifies active (non-deleted) orders
+//   - Used when order items change
+//   - Should trigger recalculation of total_price
 func (q *Queries) UpdateOrder(ctx context.Context, arg UpdateOrderParams) (*Order, error) {
 	row := q.db.QueryRowContext(ctx, updateOrder, arg.OrderID, arg.TotalPrice)
 	var i Order

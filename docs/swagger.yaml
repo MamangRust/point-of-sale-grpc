@@ -3513,6 +3513,11 @@ paths:
       - application/json
       description: Update an existing merchant record with the provided details
       parameters:
+      - description: merchant ID
+        in: path
+        name: id
+        required: true
+        type: integer
       - description: Update merchant request
         in: body
         name: request
@@ -4232,7 +4237,7 @@ paths:
       tags:
       - Order
   /api/order/trashed/{id}:
-    get:
+    post:
       consumes:
       - application/json
       description: Retrieve a trashed order record by its ID.
@@ -4268,6 +4273,11 @@ paths:
       - application/json
       description: Update an existing order with provided details
       parameters:
+      - description: Order ID
+        in: path
+        name: id
+        required: true
+        type: integer
       - description: Order update details
         in: body
         name: request
@@ -4538,12 +4548,12 @@ paths:
         in: formData
         name: price
         required: true
-        type: string
+        type: number
       - description: Product count in stock
         in: formData
         name: count_in_stock
         required: true
-        type: string
+        type: integer
       - description: Product brand
         in: formData
         name: brand
@@ -4553,12 +4563,12 @@ paths:
         in: formData
         name: weight
         required: true
-        type: string
+        type: number
       - description: Product rating
         in: formData
         name: rating
         required: true
-        type: string
+        type: number
       - description: Product slug
         in: formData
         name: slug_product
@@ -4566,7 +4576,7 @@ paths:
         type: string
       - description: Product image file
         in: formData
-        name: image_product
+        name: image
         required: true
         type: file
       - description: Product barcode
@@ -4825,18 +4835,17 @@ paths:
       summary: Retrieve a trashed product
       tags:
       - Product
-  /api/product/update:
+  /api/product/update/{id}:
     post:
       consumes:
       - multipart/form-data
-      description: Update an existing product record with the provided details and
-        an optional image file
+      description: Update a product with the provided details and an image file
       parameters:
       - description: Product ID
-        in: formData
-        name: product_id
+        in: path
+        name: id
         required: true
-        type: string
+        type: integer
       - description: Merchant ID
         in: formData
         name: merchant_id
@@ -4861,12 +4870,12 @@ paths:
         in: formData
         name: price
         required: true
-        type: string
+        type: number
       - description: Product count in stock
         in: formData
         name: count_in_stock
         required: true
-        type: string
+        type: integer
       - description: Product brand
         in: formData
         name: brand
@@ -4876,20 +4885,21 @@ paths:
         in: formData
         name: weight
         required: true
-        type: string
+        type: number
       - description: Product rating
         in: formData
         name: rating
         required: true
-        type: string
+        type: number
       - description: Product slug
         in: formData
         name: slug_product
         required: true
         type: string
-      - description: New product image file
+      - description: Product image file
         in: formData
-        name: image_product
+        name: image
+        required: true
         type: file
       - description: Product barcode
         in: formData
@@ -4900,7 +4910,7 @@ paths:
       - application/json
       responses:
         "200":
-          description: Successfully updated product
+          description: Successfully created product
           schema:
             $ref: '#/definitions/response.ApiResponseProduct'
         "400":
@@ -4908,12 +4918,12 @@ paths:
           schema:
             $ref: '#/definitions/response.ErrorResponse'
         "500":
-          description: Failed to update product
+          description: Failed to create product
           schema:
             $ref: '#/definitions/response.ErrorResponse'
       security:
       - Bearer: []
-      summary: Update an existing product
+      summary: Update a product
       tags:
       - Product
   /api/role:

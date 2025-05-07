@@ -3,9 +3,9 @@ package api
 import (
 	"net/http"
 	"pointofsale/internal/domain/requests"
-	"pointofsale/internal/domain/response"
 	response_api "pointofsale/internal/mapper/response/api"
 	"pointofsale/internal/pb"
+	"pointofsale/pkg/errors/cashier_errors"
 	"pointofsale/pkg/logger"
 	"strconv"
 
@@ -104,11 +104,7 @@ func (h *cashierHandleApi) FindAllCashier(c echo.Context) error {
 	res, err := h.client.FindAll(ctx, req)
 	if err != nil {
 		h.logger.Error("Failed to fetch cashiers", zap.Error(err))
-		return c.JSON(http.StatusInternalServerError, response.ErrorResponse{
-			Status:  "server_error",
-			Message: "We couldn't retrieve the cashier list. Please try again later.",
-			Code:    http.StatusInternalServerError,
-		})
+		return cashier_errors.ErrApiCashierFailedFindAll(c)
 	}
 
 	return c.JSON(http.StatusOK, h.mapping.ToApiResponsePaginationCashier(res))
@@ -129,11 +125,7 @@ func (h *cashierHandleApi) FindById(c echo.Context) error {
 	id, err := strconv.Atoi(c.Param("id"))
 	if err != nil {
 		h.logger.Debug("Invalid cashier ID format", zap.Error(err))
-		return c.JSON(http.StatusBadRequest, response.ErrorResponse{
-			Status:  "invalid_input",
-			Message: "The cashier ID must be a valid number",
-			Code:    http.StatusBadRequest,
-		})
+		return cashier_errors.ErrApiCashierInvalidId(c)
 	}
 
 	ctx := c.Request().Context()
@@ -143,11 +135,7 @@ func (h *cashierHandleApi) FindById(c echo.Context) error {
 
 	if err != nil {
 		h.logger.Error("Failed to fetch cashier details", zap.Error(err))
-		return c.JSON(http.StatusInternalServerError, response.ErrorResponse{
-			Status:  "server_error",
-			Message: "We couldn't retrieve the cashier details. Please try again later.",
-			Code:    http.StatusInternalServerError,
-		})
+		return cashier_errors.ErrApiCashierFailedFindById(c)
 	}
 
 	return c.JSON(http.StatusOK, h.mapping.ToApiResponseCashier(cashier))
@@ -188,11 +176,7 @@ func (h *cashierHandleApi) FindByActive(c echo.Context) error {
 	res, err := h.client.FindByActive(ctx, req)
 	if err != nil {
 		h.logger.Error("Failed to fetch active cashiers", zap.Error(err))
-		return c.JSON(http.StatusInternalServerError, response.ErrorResponse{
-			Status:  "server_error",
-			Message: "We couldn't retrieve the active cashiers list. Please try again later.",
-			Code:    http.StatusInternalServerError,
-		})
+		return cashier_errors.ErrApiCashierFailedFindByActive(c)
 	}
 
 	return c.JSON(http.StatusOK, h.mapping.ToApiResponsePaginationCashierDeleteAt(res))
@@ -234,11 +218,7 @@ func (h *cashierHandleApi) FindByTrashed(c echo.Context) error {
 	res, err := h.client.FindByTrashed(ctx, req)
 	if err != nil {
 		h.logger.Error("Failed to fetch archived cashiers", zap.Error(err))
-		return c.JSON(http.StatusInternalServerError, response.ErrorResponse{
-			Status:  "server_error",
-			Message: "We couldn't retrieve the archived cashiers list. Please try again later.",
-			Code:    http.StatusInternalServerError,
-		})
+		return cashier_errors.ErrApiCashierFailedFindByTrashed(c)
 	}
 
 	return c.JSON(http.StatusOK, h.mapping.ToApiResponsePaginationCashierDeleteAt(res))
@@ -265,11 +245,7 @@ func (h *cashierHandleApi) FindMonthlyTotalSales(c echo.Context) error {
 
 	if err != nil {
 		h.logger.Debug("Invalid year parameter", zap.Error(err))
-		return c.JSON(http.StatusBadRequest, response.ErrorResponse{
-			Status:  "error",
-			Message: "Invalid year parameter",
-			Code:    http.StatusBadRequest,
-		})
+		return cashier_errors.ErrApiCashierInvalidYear(c)
 	}
 
 	monthStr := c.QueryParam("month")
@@ -278,11 +254,7 @@ func (h *cashierHandleApi) FindMonthlyTotalSales(c echo.Context) error {
 
 	if err != nil {
 		h.logger.Debug("Invalid month parameter", zap.Error(err))
-		return c.JSON(http.StatusBadRequest, response.ErrorResponse{
-			Status:  "error",
-			Message: "Invalid month parameter",
-			Code:    http.StatusBadRequest,
-		})
+		return cashier_errors.ErrApiCashierInvalidMonth(c)
 	}
 
 	ctx := c.Request().Context()
@@ -294,11 +266,7 @@ func (h *cashierHandleApi) FindMonthlyTotalSales(c echo.Context) error {
 
 	if err != nil {
 		h.logger.Debug("Failed to retrieve monthly cashier sales", zap.Error(err))
-		return c.JSON(http.StatusInternalServerError, response.ErrorResponse{
-			Status:  "error",
-			Message: "Failed to retrieve monthly cashier sales",
-			Code:    http.StatusInternalServerError,
-		})
+		return cashier_errors.ErrApiCashierFailedMonthlyTotalSales(c)
 	}
 
 	so := h.mapping.ToApiResponseMonthlyTotalSales(res)
@@ -325,11 +293,7 @@ func (h *cashierHandleApi) FindYearTotalSales(c echo.Context) error {
 
 	if err != nil {
 		h.logger.Debug("Invalid year parameter", zap.Error(err))
-		return c.JSON(http.StatusBadRequest, response.ErrorResponse{
-			Status:  "error",
-			Message: "Invalid year parameter",
-			Code:    http.StatusBadRequest,
-		})
+		return cashier_errors.ErrApiCashierInvalidYear(c)
 	}
 
 	ctx := c.Request().Context()
@@ -340,11 +304,7 @@ func (h *cashierHandleApi) FindYearTotalSales(c echo.Context) error {
 
 	if err != nil {
 		h.logger.Debug("Failed to retrieve yearly cashier sales", zap.Error(err))
-		return c.JSON(http.StatusInternalServerError, response.ErrorResponse{
-			Status:  "error",
-			Message: "Failed to retrieve yearly cashier sales",
-			Code:    http.StatusInternalServerError,
-		})
+		return cashier_errors.ErrApiCashierFailedYearlyTotalSales(c)
 	}
 
 	so := h.mapping.ToApiResponseYearlyTotalSales(res)
@@ -374,11 +334,7 @@ func (h *cashierHandleApi) FindMonthlyTotalSalesById(c echo.Context) error {
 
 	if err != nil {
 		h.logger.Debug("Invalid year parameter", zap.Error(err))
-		return c.JSON(http.StatusBadRequest, response.ErrorResponse{
-			Status:  "error",
-			Message: "Invalid year parameter",
-			Code:    http.StatusBadRequest,
-		})
+		return cashier_errors.ErrApiCashierInvalidYear(c)
 	}
 
 	monthStr := c.QueryParam("month")
@@ -387,11 +343,7 @@ func (h *cashierHandleApi) FindMonthlyTotalSalesById(c echo.Context) error {
 
 	if err != nil {
 		h.logger.Debug("Invalid month parameter", zap.Error(err))
-		return c.JSON(http.StatusBadRequest, response.ErrorResponse{
-			Status:  "error",
-			Message: "Invalid month parameter",
-			Code:    http.StatusBadRequest,
-		})
+		return cashier_errors.ErrApiCashierInvalidMonth(c)
 	}
 
 	cashierStr := c.QueryParam("cashier_id")
@@ -399,11 +351,7 @@ func (h *cashierHandleApi) FindMonthlyTotalSalesById(c echo.Context) error {
 	cashier, err := strconv.Atoi(cashierStr)
 	if err != nil {
 		h.logger.Debug("Invalid cashier id parameter", zap.Error(err))
-		return c.JSON(http.StatusBadRequest, response.ErrorResponse{
-			Status:  "error",
-			Message: "Invalid cashier id parameter",
-			Code:    http.StatusBadRequest,
-		})
+		return cashier_errors.ErrApiCashierInvalidId(c)
 	}
 
 	ctx := c.Request().Context()
@@ -416,11 +364,7 @@ func (h *cashierHandleApi) FindMonthlyTotalSalesById(c echo.Context) error {
 
 	if err != nil {
 		h.logger.Debug("Failed to retrieve monthly cashier sales", zap.Error(err))
-		return c.JSON(http.StatusInternalServerError, response.ErrorResponse{
-			Status:  "error",
-			Message: "Failed to retrieve monthly cashier sales",
-			Code:    http.StatusInternalServerError,
-		})
+		return cashier_errors.ErrApiCashierFailedMonthlyTotalSalesById(c)
 	}
 
 	so := h.mapping.ToApiResponseMonthlyTotalSales(res)
@@ -448,11 +392,7 @@ func (h *cashierHandleApi) FindYearTotalSalesById(c echo.Context) error {
 
 	if err != nil {
 		h.logger.Debug("Invalid year parameter", zap.Error(err))
-		return c.JSON(http.StatusBadRequest, response.ErrorResponse{
-			Status:  "error",
-			Message: "Invalid year parameter",
-			Code:    http.StatusBadRequest,
-		})
+		return cashier_errors.ErrApiCashierInvalidYear(c)
 	}
 
 	cashierStr := c.QueryParam("cashier_id")
@@ -461,11 +401,7 @@ func (h *cashierHandleApi) FindYearTotalSalesById(c echo.Context) error {
 
 	if err != nil {
 		h.logger.Debug("Invalid cashier id parameter", zap.Error(err))
-		return c.JSON(http.StatusBadRequest, response.ErrorResponse{
-			Status:  "error",
-			Message: "Invalid cashier id parameter",
-			Code:    http.StatusBadRequest,
-		})
+		return cashier_errors.ErrApiCashierInvalidId(c)
 	}
 
 	ctx := c.Request().Context()
@@ -477,11 +413,7 @@ func (h *cashierHandleApi) FindYearTotalSalesById(c echo.Context) error {
 
 	if err != nil {
 		h.logger.Debug("Failed to retrieve yearly cashier sales", zap.Error(err))
-		return c.JSON(http.StatusInternalServerError, response.ErrorResponse{
-			Status:  "error",
-			Message: "Failed to retrieve yearly cashier sales",
-			Code:    http.StatusInternalServerError,
-		})
+		return cashier_errors.ErrApiCashierFailedYearlyTotalSalesById(c)
 	}
 
 	so := h.mapping.ToApiResponseYearlyTotalSales(res)
@@ -509,11 +441,7 @@ func (h *cashierHandleApi) FindMonthlyTotalSalesByMerchant(c echo.Context) error
 	year, err := strconv.Atoi(yearStr)
 	if err != nil {
 		h.logger.Debug("Invalid year parameter", zap.Error(err))
-		return c.JSON(http.StatusBadRequest, response.ErrorResponse{
-			Status:  "error",
-			Message: "Invalid year parameter",
-			Code:    http.StatusBadRequest,
-		})
+		return cashier_errors.ErrApiCashierInvalidYear(c)
 	}
 
 	monthStr := c.QueryParam("month")
@@ -521,11 +449,7 @@ func (h *cashierHandleApi) FindMonthlyTotalSalesByMerchant(c echo.Context) error
 	month, err := strconv.Atoi(monthStr)
 	if err != nil {
 		h.logger.Debug("Invalid month parameter", zap.Error(err))
-		return c.JSON(http.StatusBadRequest, response.ErrorResponse{
-			Status:  "error",
-			Message: "Invalid month parameter",
-			Code:    http.StatusBadRequest,
-		})
+		return cashier_errors.ErrApiCashierInvalidMonth(c)
 	}
 
 	merchantStr := c.QueryParam("merchant_id")
@@ -533,11 +457,7 @@ func (h *cashierHandleApi) FindMonthlyTotalSalesByMerchant(c echo.Context) error
 	merchant, err := strconv.Atoi(merchantStr)
 	if err != nil {
 		h.logger.Debug("Invalid merchant id parameter", zap.Error(err))
-		return c.JSON(http.StatusBadRequest, response.ErrorResponse{
-			Status:  "error",
-			Message: "Invalid merchant id parameter",
-			Code:    http.StatusBadRequest,
-		})
+		return cashier_errors.ErrApiCashierInvalidMerchantId(c)
 	}
 
 	ctx := c.Request().Context()
@@ -550,11 +470,7 @@ func (h *cashierHandleApi) FindMonthlyTotalSalesByMerchant(c echo.Context) error
 
 	if err != nil {
 		h.logger.Debug("Failed to retrieve monthly cashier sales", zap.Error(err))
-		return c.JSON(http.StatusInternalServerError, response.ErrorResponse{
-			Status:  "error",
-			Message: "Failed to retrieve monthly cashier sales",
-			Code:    http.StatusInternalServerError,
-		})
+		return cashier_errors.ErrApiCashierFailedMonthlyTotalSalesByMerchant(c)
 	}
 
 	so := h.mapping.ToApiResponseMonthlyTotalSales(res)
@@ -582,11 +498,7 @@ func (h *cashierHandleApi) FindYearTotalSalesByMerchant(c echo.Context) error {
 
 	if err != nil {
 		h.logger.Debug("Invalid year parameter", zap.Error(err))
-		return c.JSON(http.StatusBadRequest, response.ErrorResponse{
-			Status:  "error",
-			Message: "Invalid year parameter",
-			Code:    http.StatusBadRequest,
-		})
+		return cashier_errors.ErrApiCashierInvalidYear(c)
 	}
 
 	merchantStr := c.QueryParam("merchant_id")
@@ -595,11 +507,7 @@ func (h *cashierHandleApi) FindYearTotalSalesByMerchant(c echo.Context) error {
 
 	if err != nil {
 		h.logger.Debug("Invalid merchant id parameter", zap.Error(err))
-		return c.JSON(http.StatusBadRequest, response.ErrorResponse{
-			Status:  "error",
-			Message: "Invalid merchant id parameter",
-			Code:    http.StatusBadRequest,
-		})
+		return cashier_errors.ErrApiCashierInvalidMerchantId(c)
 	}
 
 	ctx := c.Request().Context()
@@ -611,11 +519,7 @@ func (h *cashierHandleApi) FindYearTotalSalesByMerchant(c echo.Context) error {
 
 	if err != nil {
 		h.logger.Debug("Failed to retrieve yearly cashier sales", zap.Error(err))
-		return c.JSON(http.StatusInternalServerError, response.ErrorResponse{
-			Status:  "error",
-			Message: "Failed to retrieve yearly cashier sales",
-			Code:    http.StatusInternalServerError,
-		})
+		return cashier_errors.ErrApiCashierFailedYearlyTotalSalesByMerchant(c)
 	}
 
 	so := h.mapping.ToApiResponseYearlyTotalSales(res)
@@ -641,11 +545,7 @@ func (h *cashierHandleApi) FindMonthSales(c echo.Context) error {
 	year, err := strconv.Atoi(yearStr)
 	if err != nil {
 		h.logger.Debug("Invalid year parameter", zap.Error(err))
-		return c.JSON(http.StatusBadRequest, response.ErrorResponse{
-			Status:  "error",
-			Message: "Invalid year parameter",
-			Code:    http.StatusBadRequest,
-		})
+		return cashier_errors.ErrApiCashierInvalidYear(c)
 	}
 
 	ctx := c.Request().Context()
@@ -655,11 +555,7 @@ func (h *cashierHandleApi) FindMonthSales(c echo.Context) error {
 	})
 	if err != nil {
 		h.logger.Debug("Failed to retrieve monthly cashier sales", zap.Error(err))
-		return c.JSON(http.StatusInternalServerError, response.ErrorResponse{
-			Status:  "error",
-			Message: "Failed to retrieve monthly cashier sales",
-			Code:    http.StatusInternalServerError,
-		})
+		return cashier_errors.ErrApiCashierFailedMonthSales(c)
 	}
 
 	so := h.mapping.ToApiResponseCashierMonthlySale(res)
@@ -684,11 +580,7 @@ func (h *cashierHandleApi) FindYearSales(c echo.Context) error {
 	year, err := strconv.Atoi(yearStr)
 	if err != nil {
 		h.logger.Debug("Invalid year parameter", zap.Error(err))
-		return c.JSON(http.StatusBadRequest, response.ErrorResponse{
-			Status:  "error",
-			Message: "Invalid year parameter",
-			Code:    http.StatusBadRequest,
-		})
+		return cashier_errors.ErrApiCashierInvalidYear(c)
 	}
 
 	ctx := c.Request().Context()
@@ -698,11 +590,7 @@ func (h *cashierHandleApi) FindYearSales(c echo.Context) error {
 	})
 	if err != nil {
 		h.logger.Debug("Failed to retrieve yearly cashier sales", zap.Error(err))
-		return c.JSON(http.StatusInternalServerError, response.ErrorResponse{
-			Status:  "error",
-			Message: "Failed to retrieve yearly cashier sales",
-			Code:    http.StatusInternalServerError,
-		})
+		return cashier_errors.ErrApiCashierFailedYearSales(c)
 	}
 
 	so := h.mapping.ToApiResponseCashierYearlySale(res)
@@ -732,22 +620,14 @@ func (h *cashierHandleApi) FindMonthSalesByMerchant(c echo.Context) error {
 	year, err := strconv.Atoi(yearStr)
 	if err != nil {
 		h.logger.Debug("Invalid year parameter", zap.Error(err))
-		return c.JSON(http.StatusBadRequest, response.ErrorResponse{
-			Status:  "error",
-			Message: "Invalid year parameter",
-			Code:    http.StatusBadRequest,
-		})
+		return cashier_errors.ErrApiCashierInvalidYear(c)
 	}
 
 	merchant_id, err := strconv.Atoi(merchantIdStr)
 
 	if err != nil {
 		h.logger.Debug("Invalid merchant id parameter", zap.Error(err))
-		return c.JSON(http.StatusBadRequest, response.ErrorResponse{
-			Status:  "error",
-			Message: "Invalid merchant id parameter",
-			Code:    http.StatusBadRequest,
-		})
+		return cashier_errors.ErrApiCashierInvalidMerchantId(c)
 	}
 
 	ctx := c.Request().Context()
@@ -758,11 +638,7 @@ func (h *cashierHandleApi) FindMonthSalesByMerchant(c echo.Context) error {
 	})
 	if err != nil {
 		h.logger.Debug("Failed to retrieve monthly cashier sales", zap.Error(err))
-		return c.JSON(http.StatusInternalServerError, response.ErrorResponse{
-			Status:  "error",
-			Message: "Failed to retrieve monthly cashier sales",
-			Code:    http.StatusInternalServerError,
-		})
+		return cashier_errors.ErrApiCashierFailedMonthSalesByMerchant(c)
 	}
 
 	so := h.mapping.ToApiResponseCashierMonthlySale(res)
@@ -793,22 +669,14 @@ func (h *cashierHandleApi) FindYearSalesByMerchant(c echo.Context) error {
 
 	if err != nil {
 		h.logger.Debug("Invalid year parameter", zap.Error(err))
-		return c.JSON(http.StatusBadRequest, response.ErrorResponse{
-			Status:  "error",
-			Message: "Invalid year parameter",
-			Code:    http.StatusBadRequest,
-		})
+		return cashier_errors.ErrApiCashierInvalidYear(c)
 	}
 
 	merchant_id, err := strconv.Atoi(merchantIdStr)
 
 	if err != nil {
 		h.logger.Debug("Invalid merchant id parameter", zap.Error(err))
-		return c.JSON(http.StatusBadRequest, response.ErrorResponse{
-			Status:  "error",
-			Message: "Invalid merchant id parameter",
-			Code:    http.StatusBadRequest,
-		})
+		return cashier_errors.ErrApiCashierInvalidMerchantId(c)
 	}
 
 	ctx := c.Request().Context()
@@ -819,11 +687,7 @@ func (h *cashierHandleApi) FindYearSalesByMerchant(c echo.Context) error {
 	})
 	if err != nil {
 		h.logger.Debug("Failed to retrieve yearly cashier sales", zap.Error(err))
-		return c.JSON(http.StatusInternalServerError, response.ErrorResponse{
-			Status:  "error",
-			Message: "Failed to retrieve yearly cashier sales",
-			Code:    http.StatusBadRequest,
-		})
+		return cashier_errors.ErrApiCashierFailedYearSalesByMerchant(c)
 	}
 
 	so := h.mapping.ToApiResponseCashierYearlySale(res)
@@ -853,22 +717,14 @@ func (h *cashierHandleApi) FindMonthSalesById(c echo.Context) error {
 	year, err := strconv.Atoi(yearStr)
 	if err != nil {
 		h.logger.Debug("Invalid year parameter", zap.Error(err))
-		return c.JSON(http.StatusBadRequest, response.ErrorResponse{
-			Status:  "error",
-			Message: "Invalid year parameter",
-			Code:    http.StatusBadRequest,
-		})
+		return cashier_errors.ErrApiCashierInvalidYear(c)
 	}
 
 	cashier_id, err := strconv.Atoi(cashierIdStr)
 
 	if err != nil {
 		h.logger.Debug("Invalid cashier id parameter", zap.Error(err))
-		return c.JSON(http.StatusBadRequest, response.ErrorResponse{
-			Status:  "error",
-			Message: "Invalid cashier id parameter",
-			Code:    http.StatusBadRequest,
-		})
+		return cashier_errors.ErrApiCashierInvalidId(c)
 	}
 
 	ctx := c.Request().Context()
@@ -880,11 +736,7 @@ func (h *cashierHandleApi) FindMonthSalesById(c echo.Context) error {
 
 	if err != nil {
 		h.logger.Debug("Failed to retrieve monthly cashier sales", zap.Error(err))
-		return c.JSON(http.StatusInternalServerError, response.ErrorResponse{
-			Status:  "error",
-			Message: "Failed to retrieve monthly cashier sales",
-			Code:    http.StatusInternalServerError,
-		})
+		return cashier_errors.ErrApiCashierFailedMonthSalesById(c)
 	}
 
 	so := h.mapping.ToApiResponseCashierMonthlySale(res)
@@ -915,22 +767,14 @@ func (h *cashierHandleApi) FindYearSalesById(c echo.Context) error {
 
 	if err != nil {
 		h.logger.Debug("Invalid year parameter", zap.Error(err))
-		return c.JSON(http.StatusBadRequest, response.ErrorResponse{
-			Status:  "error",
-			Message: "Invalid year parameter",
-			Code:    http.StatusBadRequest,
-		})
+		return cashier_errors.ErrApiCashierInvalidYear(c)
 	}
 
 	cashier_id, err := strconv.Atoi(cashierIdStr)
 
 	if err != nil {
 		h.logger.Debug("Invalid cashier id parameter", zap.Error(err))
-		return c.JSON(http.StatusBadRequest, response.ErrorResponse{
-			Status:  "error",
-			Message: "Invalid cashier id parameter",
-			Code:    http.StatusBadRequest,
-		})
+		return cashier_errors.ErrApiCashierInvalidId(c)
 	}
 
 	ctx := c.Request().Context()
@@ -941,11 +785,7 @@ func (h *cashierHandleApi) FindYearSalesById(c echo.Context) error {
 	})
 	if err != nil {
 		h.logger.Debug("Failed to retrieve yearly cashier sales", zap.Error(err))
-		return c.JSON(http.StatusInternalServerError, response.ErrorResponse{
-			Status:  "error",
-			Message: "Failed to retrieve yearly cashier sales",
-			Code:    http.StatusInternalServerError,
-		})
+		return cashier_errors.ErrApiCashierFailedYearSalesById(c)
 	}
 
 	so := h.mapping.ToApiResponseCashierYearlySale(res)
@@ -970,20 +810,12 @@ func (h *cashierHandleApi) CreateCashier(c echo.Context) error {
 
 	if err := c.Bind(&body); err != nil {
 		h.logger.Debug("Invalid request format", zap.Error(err))
-		return c.JSON(http.StatusBadRequest, response.ErrorResponse{
-			Status:  "invalid_request",
-			Message: "Invalid request format. Please check your input.",
-			Code:    http.StatusBadRequest,
-		})
+		return cashier_errors.ErrApiBindCreateCashier(c)
 	}
 
 	if err := body.Validate(); err != nil {
 		h.logger.Debug("Validation failed", zap.Error(err))
-		return c.JSON(http.StatusBadRequest, response.ErrorResponse{
-			Status:  "validation_error",
-			Message: "Please provide valid cashier information.",
-			Code:    http.StatusBadRequest,
-		})
+		return cashier_errors.ErrApiValidateCreateCashier(c)
 	}
 
 	ctx := c.Request().Context()
@@ -996,11 +828,7 @@ func (h *cashierHandleApi) CreateCashier(c echo.Context) error {
 	res, err := h.client.CreateCashier(ctx, req)
 	if err != nil {
 		h.logger.Error("Cashier creation failed", zap.Error(err))
-		return c.JSON(http.StatusInternalServerError, response.ErrorResponse{
-			Status:  "creation_failed",
-			Message: "We couldn't create the cashier account. Please try again.",
-			Code:    http.StatusInternalServerError,
-		})
+		return cashier_errors.ErrApiCashierFailedCreate(c)
 	}
 
 	so := h.mapping.ToApiResponseCashier(res)
@@ -1029,31 +857,19 @@ func (h *cashierHandleApi) UpdateCashier(c echo.Context) error {
 	if err != nil {
 		h.logger.Debug("Invalid id parameter", zap.Error(err))
 
-		return c.JSON(http.StatusBadRequest, response.ErrorResponse{
-			Status:  "error",
-			Message: "Invalid id parameter",
-			Code:    http.StatusBadRequest,
-		})
+		return cashier_errors.ErrApiCashierInvalidId(c)
 	}
 
 	var body requests.UpdateCashierRequest
 
 	if err := c.Bind(&body); err != nil {
 		h.logger.Debug("Invalid request format", zap.Error(err))
-		return c.JSON(http.StatusBadRequest, response.ErrorResponse{
-			Status:  "invalid_request",
-			Message: "Invalid request format. Please check your input.",
-			Code:    http.StatusBadRequest,
-		})
+		return cashier_errors.ErrApiBindUpdateCashier(c)
 	}
 
 	if err := body.Validate(); err != nil {
 		h.logger.Debug("Validation failed", zap.Error(err))
-		return c.JSON(http.StatusBadRequest, response.ErrorResponse{
-			Status:  "validation_error",
-			Message: "Please provide valid cashier information.",
-			Code:    http.StatusBadRequest,
-		})
+		return cashier_errors.ErrApiValidateUpdateCashier(c)
 	}
 
 	ctx := c.Request().Context()
@@ -1065,11 +881,7 @@ func (h *cashierHandleApi) UpdateCashier(c echo.Context) error {
 	res, err := h.client.UpdateCashier(ctx, req)
 	if err != nil {
 		h.logger.Error("Cashier update failed", zap.Error(err))
-		return c.JSON(http.StatusInternalServerError, response.ErrorResponse{
-			Status:  "update_failed",
-			Message: "We couldn't update the cashier information. Please try again.",
-			Code:    http.StatusInternalServerError,
-		})
+		return cashier_errors.ErrApiCashierFailedUpdate(c)
 	}
 
 	so := h.mapping.ToApiResponseCashier(res)
@@ -1093,11 +905,7 @@ func (h *cashierHandleApi) TrashedCashier(c echo.Context) error {
 	id, err := strconv.Atoi(c.Param("id"))
 	if err != nil {
 		h.logger.Debug("Invalid cashier ID format", zap.Error(err))
-		return c.JSON(http.StatusBadRequest, response.ErrorResponse{
-			Status:  "invalid_input",
-			Message: "Please provide a valid cashier ID.",
-			Code:    http.StatusBadRequest,
-		})
+		return cashier_errors.ErrApiCashierInvalidId(c)
 	}
 
 	ctx := c.Request().Context()
@@ -1106,11 +914,7 @@ func (h *cashierHandleApi) TrashedCashier(c echo.Context) error {
 	cashier, err := h.client.TrashedCashier(ctx, req)
 	if err != nil {
 		h.logger.Error("Failed to archive cashier", zap.Error(err))
-		return c.JSON(http.StatusInternalServerError, response.ErrorResponse{
-			Status:  "archive_failed",
-			Message: "We couldn't archive the cashier account. Please try again.",
-			Code:    http.StatusInternalServerError,
-		})
+		return cashier_errors.ErrApiCashierFailedTrashed(c)
 	}
 
 	so := h.mapping.ToApiResponseCashierDeleteAt(cashier)
@@ -1134,11 +938,7 @@ func (h *cashierHandleApi) RestoreCashier(c echo.Context) error {
 	id, err := strconv.Atoi(c.Param("id"))
 	if err != nil {
 		h.logger.Debug("Invalid cashier ID format", zap.Error(err))
-		return c.JSON(http.StatusBadRequest, response.ErrorResponse{
-			Status:  "invalid_input",
-			Message: "Please provide a valid cashier ID.",
-			Code:    http.StatusBadRequest,
-		})
+		return cashier_errors.ErrApiCashierInvalidId(c)
 	}
 
 	ctx := c.Request().Context()
@@ -1147,11 +947,7 @@ func (h *cashierHandleApi) RestoreCashier(c echo.Context) error {
 	cashier, err := h.client.RestoreCashier(ctx, req)
 	if err != nil {
 		h.logger.Error("Failed to restore cashier", zap.Error(err))
-		return c.JSON(http.StatusInternalServerError, response.ErrorResponse{
-			Status:  "restore_failed",
-			Message: "We couldn't restore the cashier account. Please try again.",
-			Code:    http.StatusInternalServerError,
-		})
+		return cashier_errors.ErrApiCashierFailedRestore(c)
 	}
 
 	so := h.mapping.ToApiResponseCashierDeleteAt(cashier)
@@ -1175,11 +971,7 @@ func (h *cashierHandleApi) DeleteCashierPermanent(c echo.Context) error {
 	id, err := strconv.Atoi(c.Param("id"))
 	if err != nil {
 		h.logger.Debug("Invalid cashier ID format", zap.Error(err))
-		return c.JSON(http.StatusBadRequest, response.ErrorResponse{
-			Status:  "invalid_input",
-			Message: "Please provide a valid cashier ID.",
-			Code:    http.StatusBadRequest,
-		})
+		return cashier_errors.ErrApiCashierInvalidId(c)
 	}
 
 	ctx := c.Request().Context()
@@ -1188,11 +980,7 @@ func (h *cashierHandleApi) DeleteCashierPermanent(c echo.Context) error {
 	cashier, err := h.client.DeleteCashierPermanent(ctx, req)
 	if err != nil {
 		h.logger.Error("Failed to delete cashier", zap.Error(err))
-		return c.JSON(http.StatusInternalServerError, response.ErrorResponse{
-			Status:  "deletion_failed",
-			Message: "We couldn't permanently delete the cashier account. Please try again.",
-			Code:    http.StatusInternalServerError,
-		})
+		return cashier_errors.ErrApiCashierFailedDeletePermanent(c)
 	}
 
 	so := h.mapping.ToApiResponseCashierDelete(cashier)
@@ -1218,11 +1006,7 @@ func (h *cashierHandleApi) RestoreAllCashier(c echo.Context) error {
 	res, err := h.client.RestoreAllCashier(ctx, &emptypb.Empty{})
 	if err != nil {
 		h.logger.Error("Bulk cashier restoration failed", zap.Error(err))
-		return c.JSON(http.StatusInternalServerError, response.ErrorResponse{
-			Status:  "restoration_failed",
-			Message: "We couldn't restore all cashier accounts. Please try again later.",
-			Code:    http.StatusInternalServerError,
-		})
+		return cashier_errors.ErrApiCashierFailedRestoreAll(c)
 	}
 
 	h.logger.Info("All cashier accounts restored successfully")
@@ -1250,11 +1034,7 @@ func (h *cashierHandleApi) DeleteAllCashierPermanent(c echo.Context) error {
 	res, err := h.client.DeleteAllCashierPermanent(ctx, &emptypb.Empty{})
 	if err != nil {
 		h.logger.Error("Bulk cashier deletion failed", zap.Error(err))
-		return c.JSON(http.StatusInternalServerError, response.ErrorResponse{
-			Status:  "deletion_failed",
-			Message: "We couldn't permanently delete all cashier accounts. Please try again later.",
-			Code:    http.StatusInternalServerError,
-		})
+		return cashier_errors.ErrApiCashierFailedDeleteAllPermanent(c)
 	}
 
 	h.logger.Info("All cashier accounts permanently deleted")

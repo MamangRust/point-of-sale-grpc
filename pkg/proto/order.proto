@@ -15,6 +15,15 @@ message FindAllOrderRequest {
     string search = 3;
 }
 
+
+message FindAllOrderMerchantRequest {
+    int32 page = 1;
+    int32 page_size = 2;
+    string search = 3;
+    int32 merchant_id = 4;
+}
+
+
 message FindByIdOrderRequest {
     int32 id = 1;
 }
@@ -223,6 +232,8 @@ service OrderService{
 
 
     rpc FindAll(FindAllOrderRequest) returns(ApiResponsePaginationOrder);
+    rpc FindByMerchant(FindAllOrderMerchantRequest) returns(ApiResponsePaginationOrder);
+
     rpc FindById(FindByIdOrderRequest) returns(ApiResponseOrder);
     
     rpc FindMonthlyRevenue(FindYearOrder) returns(ApiResponseOrderMonthly);

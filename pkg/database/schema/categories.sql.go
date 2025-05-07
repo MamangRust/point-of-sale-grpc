@@ -23,6 +23,21 @@ type CreateCategoryParams struct {
 	SlugCategory sql.NullString `json:"slug_category"`
 }
 
+// CreateCategory: Inserts a new category into the system
+// Purpose: Adds a new product category for classification and reporting
+// Parameters:
+//
+//	$1: Category name
+//	$2: Category description
+//	$3: Slug for category (URL-friendly identifier)
+//
+// Returns:
+//
+//	Full category record including generated ID
+//
+// Business Logic:
+//   - Assumes unique slug for identification in URLs
+//   - Automatically populates timestamps via default DB behavior (if configured)
 func (q *Queries) CreateCategory(ctx context.Context, arg CreateCategoryParams) (*Category, error) {
 	row := q.db.QueryRowContext(ctx, createCategory, arg.Name, arg.Description, arg.SlugCategory)
 	var i Category
@@ -44,7 +59,12 @@ WHERE
     deleted_at IS NOT NULL
 `
 
-// Delete All Trashed Category Permanently
+// DeleteAllPermanentCategories: Permanently deletes all trashed categories
+// Purpose: Bulk purge of all soft-deleted category records
+// Parameters: None
+// Returns: None
+// Business Logic:
+//   - Only affects records marked as deleted
 func (q *Queries) DeleteAllPermanentCategories(ctx context.Context) error {
 	_, err := q.db.ExecContext(ctx, deleteAllPermanentCategories)
 	return err
@@ -54,7 +74,18 @@ const deleteCategoryPermanently = `-- name: DeleteCategoryPermanently :exec
 DELETE FROM categories WHERE category_id = $1 AND deleted_at IS NOT NULL
 `
 
-// Delete Category Permanently
+// DeleteCategoryPermanently: Removes a soft-deleted category permanently
+// Purpose: Final cleanup of trashed categories
+// Parameters:
+//
+//	$1: Category ID
+//
+// Returns:
+//
+//	Nothing (command only)
+//
+// Business Logic:
+//   - Ensures category is deleted only if it has been soft-deleted
 func (q *Queries) DeleteCategoryPermanently(ctx context.Context, categoryID int32) error {
 	_, err := q.db.ExecContext(ctx, deleteCategoryPermanently, categoryID)
 	return err
@@ -66,7 +97,7 @@ SELECT
     COUNT(*) OVER() AS total_count
 FROM categories
 WHERE deleted_at IS NULL
-AND ($1::TEXT IS NULL OR name ILIKE '%' || $1 || '%' OR slug_category ILIKE '%' || $1 || '%') --
+AND ($1::TEXT IS NULL OR name ILIKE '%' || $1 || '%' OR slug_category ILIKE '%' || $1 || '%')
 ORDER BY created_at DESC
 LIMIT $2 OFFSET $3
 `
@@ -88,7 +119,23 @@ type GetCategoriesRow struct {
 	TotalCount   int64          `json:"total_count"`
 }
 
-// Get Categories with Pagination and Total Count
+// GetCategories: Retrieves paginated list of active categories with search capability
+// Purpose: List all active product categories for management UI
+// Parameters:
+//
+//	$1: search_term - Optional text to filter categories by name or slug (NULL for no filter)
+//	$2: limit - Maximum number of records to return
+//	$3: offset - Number of records to skip for pagination
+//
+// Returns:
+//
+//	All category fields plus total_count of matching records
+//
+// Business Logic:
+//   - Excludes soft-deleted categories (deleted_at IS NULL)
+//   - Supports partial text matching on name and slug_category fields (case-insensitive)
+//   - Returns newest categories first (created_at DESC)
+//   - Provides total_count for pagination calculations
 func (q *Queries) GetCategories(ctx context.Context, arg GetCategoriesParams) ([]*GetCategoriesRow, error) {
 	rows, err := q.db.QueryContext(ctx, getCategories, arg.Column1, arg.Limit, arg.Offset)
 	if err != nil {
@@ -149,7 +196,23 @@ type GetCategoriesActiveRow struct {
 	TotalCount   int64          `json:"total_count"`
 }
 
-// Get Active Categories with Pagination and Total Count
+// GetCategoriesActive: Retrieves paginated list of active categories with search capability
+// Purpose: List all active product categories for management UI
+// Parameters:
+//
+//	$1: search_term - Optional text to filter categories by name or slug (NULL for no filter)
+//	$2: limit - Maximum number of records to return
+//	$3: offset - Number of records to skip for pagination
+//
+// Returns:
+//
+//	All category fields plus total_count of matching records
+//
+// Business Logic:
+//   - Excludes soft-deleted categories (deleted_at IS NULL)
+//   - Supports partial text matching on name and slug_category fields (case-insensitive)
+//   - Returns newest categories first (created_at DESC)
+//   - Provides total_count for pagination calculations
 func (q *Queries) GetCategoriesActive(ctx context.Context, arg GetCategoriesActiveParams) ([]*GetCategoriesActiveRow, error) {
 	rows, err := q.db.QueryContext(ctx, getCategoriesActive, arg.Column1, arg.Limit, arg.Offset)
 	if err != nil {
@@ -210,7 +273,23 @@ type GetCategoriesTrashedRow struct {
 	TotalCount   int64          `json:"total_count"`
 }
 
-// Get Trashed Categories with Pagination and Total Count
+// GetCategoriesTrashed: Retrieves paginated list of soft-deleted categories
+// Purpose: View/manage deleted categories for potential restoration
+// Parameters:
+//
+//	$1: search_term - Optional filter text (NULL for all trashed categories)
+//	$2: limit - Pagination limit
+//	$3: offset - Pagination offset
+//
+// Returns:
+//
+//	Trashed category records with total_count
+//
+// Business Logic:
+//   - Only returns soft-deleted records (deleted_at IS NOT NULL)
+//   - Same search functionality as active categories
+//   - Maintains consistent sorting with active records
+//   - Used in trash management/recovery interfaces
 func (q *Queries) GetCategoriesTrashed(ctx context.Context, arg GetCategoriesTrashedParams) ([]*GetCategoriesTrashedRow, error) {
 	rows, err := q.db.QueryContext(ctx, getCategoriesTrashed, arg.Column1, arg.Limit, arg.Offset)
 	if err != nil {
@@ -250,8 +329,94 @@ WHERE category_id = $1
   AND deleted_at IS NULL
 `
 
+// GetCategoryByID: Fetches a single category by its ID
+// Purpose: Retrieve details of an active (non-deleted) category
+// Parameters:
+//
+//	$1: Category ID to search for
+//
+// Returns:
+//
+//	Full category record if found and not deleted
+//
+// Business Logic:
+//   - Excludes soft-deleted categories
 func (q *Queries) GetCategoryByID(ctx context.Context, categoryID int32) (*Category, error) {
 	row := q.db.QueryRowContext(ctx, getCategoryByID, categoryID)
+	var i Category
+	err := row.Scan(
+		&i.CategoryID,
+		&i.Name,
+		&i.Description,
+		&i.SlugCategory,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.DeletedAt,
+	)
+	return &i, err
+}
+
+const getCategoryByName = `-- name: GetCategoryByName :one
+SELECT category_id, name, description, slug_category, created_at, updated_at, deleted_at
+FROM categories
+WHERE name = $1
+  AND deleted_at IS NULL
+`
+
+// GetCategoryByName: Fetches a single category by its name
+// Purpose: Retrieve details of an active (non-deleted) category
+// Parameters:
+//
+//	$1: Category name to search for
+//
+// Returns:
+//
+//	Full category record if found and not deleted
+//
+// Business Logic:
+//   - Excludes soft-deleted categories
+func (q *Queries) GetCategoryByName(ctx context.Context, name string) (*Category, error) {
+	row := q.db.QueryRowContext(ctx, getCategoryByName, name)
+	var i Category
+	err := row.Scan(
+		&i.CategoryID,
+		&i.Name,
+		&i.Description,
+		&i.SlugCategory,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.DeletedAt,
+	)
+	return &i, err
+}
+
+const getCategoryByNameAndId = `-- name: GetCategoryByNameAndId :one
+SELECT category_id, name, description, slug_category, created_at, updated_at, deleted_at
+FROM categories
+WHERE name = $1
+  AND category_id = $2
+  AND deleted_at IS NULL
+`
+
+type GetCategoryByNameAndIdParams struct {
+	Name       string `json:"name"`
+	CategoryID int32  `json:"category_id"`
+}
+
+// GetCategoryByNameAndId: Fetches a single category by its name and id
+// Purpose: Retrieve details of an active (non-deleted) category
+// Parameters:
+//
+//	$1: Category name or id to search for
+//
+// Returns:
+//
+//	Full category record if found and not deleted
+//
+// Business Logic:
+//   - Excludes soft-deleted categories
+func (q *Queries) GetCategoryByNameAndId(ctx context.Context, arg GetCategoryByNameAndIdParams) (*Category, error) {
+	row := q.db.QueryRowContext(ctx, getCategoryByNameAndId, arg.Name, arg.CategoryID)
 	var i Category
 	err := row.Scan(
 		&i.CategoryID,
@@ -319,6 +484,27 @@ type GetMonthlyCategoryRow struct {
 	TotalRevenue int32  `json:"total_revenue"`
 }
 
+// GetMonthlyCategory: Retrieves monthly sales activity for all categories within a 1-year period
+// Purpose: Provides category performance metrics by month for operational analysis
+// Parameters:
+//
+//	$1: Reference date (timestamp) - determines the 12-month analysis period
+//
+// Returns:
+//
+//	category_id: Unique identifier for the category
+//	category_name: Display name of the category
+//	month: 3-letter month abbreviation (e.g. 'Jan')
+//	order_count: Number of orders associated with the category
+//	items_sold: Total quantity of items sold from the category
+//	total_revenue: Total revenue generated from category items
+//
+// Business Logic:
+//   - Analyzes a rolling 12-month period from the reference date
+//   - Excludes deleted orders, items, products, and categories to ensure valid data
+//   - Aggregates by category and month for trend tracking
+//   - Uses abbreviated month names for compact visual reporting
+//   - Results sorted by month and revenue for time-series analysis
 func (q *Queries) GetMonthlyCategory(ctx context.Context, dollar_1 time.Time) ([]*GetMonthlyCategoryRow, error) {
 	rows, err := q.db.QueryContext(ctx, getMonthlyCategory, dollar_1)
 	if err != nil {
@@ -409,6 +595,28 @@ type GetMonthlyCategoryByIdRow struct {
 	TotalRevenue int32  `json:"total_revenue"`
 }
 
+// GetMonthlyCategoryById: Retrieves monthly sales activity for all categories within a 1-year period by category_id
+// Purpose: Provides category performance metrics by month for operational analysis
+// Parameters:
+//
+//	$1: Reference date (timestamp) - determines the 12-month analysis period
+//	$2: Category ID
+//
+// Returns:
+//
+//	category_id: Unique identifier for the category
+//	category_name: Display name of the category
+//	month: 3-letter month abbreviation (e.g. 'Jan')
+//	order_count: Number of orders associated with the category
+//	items_sold: Total quantity of items sold from the category
+//	total_revenue: Total revenue generated from category items
+//
+// Business Logic:
+//   - Analyzes a rolling 12-month period from the reference date
+//   - Excludes deleted orders, items, products, and categories to ensure valid data
+//   - Aggregates by category and month for trend tracking
+//   - Uses abbreviated month names for compact visual reporting
+//   - Results sorted by month and revenue for time-series analysis
 func (q *Queries) GetMonthlyCategoryById(ctx context.Context, arg GetMonthlyCategoryByIdParams) ([]*GetMonthlyCategoryByIdRow, error) {
 	rows, err := q.db.QueryContext(ctx, getMonthlyCategoryById, arg.Column1, arg.CategoryID)
 	if err != nil {
@@ -499,6 +707,28 @@ type GetMonthlyCategoryByMerchantRow struct {
 	TotalRevenue int32  `json:"total_revenue"`
 }
 
+// GetMonthlyCategoryByMerchant: Retrieves monthly sales activity for all categories within a 1-year period by merchant_id
+// Purpose: Provides category performance metrics by month for operational analysis
+// Parameters:
+//
+//	$1: Reference date (timestamp) - determines the 12-month analysis period
+//	$2: Merchant ID
+//
+// Returns:
+//
+//	category_id: Unique identifier for the category
+//	category_name: Display name of the category
+//	month: 3-letter month abbreviation (e.g. 'Jan')
+//	order_count: Number of orders associated with the category
+//	items_sold: Total quantity of items sold from the category
+//	total_revenue: Total revenue generated from category items
+//
+// Business Logic:
+//   - Analyzes a rolling 12-month period from the reference date
+//   - Excludes deleted orders, items, products, and categories to ensure valid data
+//   - Aggregates by category and month for trend tracking
+//   - Uses abbreviated month names for compact visual reporting
+//   - Results sorted by month and revenue for time-series analysis
 func (q *Queries) GetMonthlyCategoryByMerchant(ctx context.Context, arg GetMonthlyCategoryByMerchantParams) ([]*GetMonthlyCategoryByMerchantRow, error) {
 	rows, err := q.db.QueryContext(ctx, getMonthlyCategoryByMerchant, arg.Column1, arg.MerchantID)
 	if err != nil {
@@ -538,7 +768,11 @@ WITH monthly_totals AS (
     FROM
         orders o
     JOIN
-    order_items oi ON o.order_id = oi.order_id
+        order_items oi ON o.order_id = oi.order_id
+    JOIN
+        products p ON oi.product_id = p.product_id
+    JOIN
+        categories c ON p.category_id = c.category_id
     WHERE
         o.deleted_at IS NULL
         AND oi.deleted_at IS NULL
@@ -589,6 +823,27 @@ type GetMonthlyTotalPriceRow struct {
 	TotalRevenue int32  `json:"total_revenue"`
 }
 
+// GetMonthlyTotalPrice: Retrieves monthly revenue totals across two comparison periods
+// Purpose: Provides month-over-month revenue analytics for financial reporting
+// Parameters:
+//
+//	$1: Start date of first comparison period
+//	$2: End date of first comparison period
+//	$3: Start date of second comparison period
+//	$4: End date of second comparison period
+//
+// Returns:
+//
+//	year: Year of revenue data (text format)
+//	month_name: Full month name (e.g. "January")
+//	total_revenue: Sum of order totals for that month (0 if no sales)
+//
+// Business Logic:
+//   - Compares revenue between two customizable date ranges
+//   - Joins with order_items to ensure accurate order calculations
+//   - Excludes deleted orders and order items for data integrity
+//   - Uses gap-filling to show all months in both periods
+//   - Formats output for financial dashboards
 func (q *Queries) GetMonthlyTotalPrice(ctx context.Context, arg GetMonthlyTotalPriceParams) ([]*GetMonthlyTotalPriceRow, error) {
 	rows, err := q.db.QueryContext(ctx, getMonthlyTotalPrice,
 		arg.Extract,
@@ -626,7 +881,11 @@ WITH monthly_totals AS (
     FROM
         orders o
     JOIN
-    order_items oi ON o.order_id = oi.order_id
+        order_items oi ON o.order_id = oi.order_id
+    JOIN
+        products p ON oi.product_id = p.product_id
+    JOIN
+        categories c ON p.category_id = c.category_id
     WHERE
         o.deleted_at IS NULL
         AND oi.deleted_at IS NULL
@@ -634,7 +893,7 @@ WITH monthly_totals AS (
             (o.created_at >= $1 AND o.created_at <= $2)  
             OR (o.created_at >= $3 AND o.created_at <= $4)  
         )
-        AND o.order_id = $5
+        AND c.category_id = $5
     GROUP BY
         EXTRACT(YEAR FROM o.created_at),
         EXTRACT(MONTH FROM o.created_at)
@@ -670,7 +929,7 @@ type GetMonthlyTotalPriceByIdParams struct {
 	CreatedAt   sql.NullTime `json:"created_at"`
 	CreatedAt_2 sql.NullTime `json:"created_at_2"`
 	CreatedAt_3 sql.NullTime `json:"created_at_3"`
-	OrderID     int32        `json:"order_id"`
+	CategoryID  int32        `json:"category_id"`
 }
 
 type GetMonthlyTotalPriceByIdRow struct {
@@ -679,13 +938,35 @@ type GetMonthlyTotalPriceByIdRow struct {
 	TotalRevenue int32  `json:"total_revenue"`
 }
 
+// GetMonthlyTotalPriceById: Retrieves monthly revenue totals across two comparison periods by category_id
+// Purpose: Provides month-over-month revenue analytics for financial reporting
+// Parameters:
+//
+//	$1: Start date of first comparison period
+//	$2: End date of first comparison period
+//	$3: Start date of second comparison period
+//	$4: End date of second comparison period
+//	$5: Category ID
+//
+// Returns:
+//
+//	year: Year of revenue data (text format)
+//	month_name: Full month name (e.g. "January")
+//	total_revenue: Sum of order totals for that month (0 if no sales)
+//
+// Business Logic:
+//   - Compares revenue between two customizable date ranges
+//   - Joins with order_items to ensure accurate order calculations
+//   - Excludes deleted orders and order items for data integrity
+//   - Uses gap-filling to show all months in both periods
+//   - Formats output for financial dashboards
 func (q *Queries) GetMonthlyTotalPriceById(ctx context.Context, arg GetMonthlyTotalPriceByIdParams) ([]*GetMonthlyTotalPriceByIdRow, error) {
 	rows, err := q.db.QueryContext(ctx, getMonthlyTotalPriceById,
 		arg.Extract,
 		arg.CreatedAt,
 		arg.CreatedAt_2,
 		arg.CreatedAt_3,
-		arg.OrderID,
+		arg.CategoryID,
 	)
 	if err != nil {
 		return nil, err
@@ -717,7 +998,11 @@ WITH monthly_totals AS (
     FROM
         orders o
     JOIN
-    order_items oi ON o.order_id = oi.order_id
+        order_items oi ON o.order_id = oi.order_id
+    JOIN
+        products p ON oi.product_id = p.product_id
+    JOIN
+        categories c ON p.category_id = c.category_id
     WHERE
         o.deleted_at IS NULL
         AND oi.deleted_at IS NULL
@@ -770,6 +1055,28 @@ type GetMonthlyTotalPriceByMerchantRow struct {
 	TotalRevenue int32  `json:"total_revenue"`
 }
 
+// GetMonthlyTotalPriceByMerchant: Retrieves monthly revenue totals across two comparison periods by merchant_id
+// Purpose: Provides month-over-month revenue analytics for financial reporting
+// Parameters:
+//
+//	$1: Start date of first comparison period
+//	$2: End date of first comparison period
+//	$3: Start date of second comparison period
+//	$4: End date of second comparison period
+//	$5: Merchant ID
+//
+// Returns:
+//
+//	year: Year of revenue data (text format)
+//	month_name: Full month name (e.g. "January")
+//	total_revenue: Sum of order totals for that month (0 if no sales)
+//
+// Business Logic:
+//   - Compares revenue between two customizable date ranges
+//   - Joins with order_items to ensure accurate order calculations
+//   - Excludes deleted orders and order items for data integrity
+//   - Uses gap-filling to show all months in both periods
+//   - Formats output for financial dashboards
 func (q *Queries) GetMonthlyTotalPriceByMerchant(ctx context.Context, arg GetMonthlyTotalPriceByMerchantParams) ([]*GetMonthlyTotalPriceByMerchantRow, error) {
 	rows, err := q.db.QueryContext(ctx, getMonthlyTotalPriceByMerchant,
 		arg.Extract,
@@ -850,6 +1157,28 @@ type GetYearlyCategoryRow struct {
 	UniqueProductsSold int64  `json:"unique_products_sold"`
 }
 
+// GetYearlyCategory: Retrieves annual sales performance for categories over a 5-year span
+// Purpose: Enables long-term product category performance trend analysis
+// Parameters:
+//
+//	$1: Reference date (timestamp) - determines the 5-year analysis window
+//
+// Returns:
+//
+//	year: 4-digit year as text
+//	category_id: Unique category identifier
+//	category_name: Display name of the category
+//	order_count: Annual number of orders involving this category
+//	items_sold: Quantity of products sold from this category
+//	total_revenue: Total sales revenue from category products
+//	unique_products_sold: Count of unique products sold within the category
+//
+// Business Logic:
+//   - Covers the current year and previous four years (5-year window)
+//   - Filters out soft-deleted data from all related tables
+//   - Provides both volume and value metrics for category-level evaluation
+//   - Results sorted by year and revenue to show historical trends
+//   - Suitable for business reviews and strategic category planning
 func (q *Queries) GetYearlyCategory(ctx context.Context, dollar_1 time.Time) ([]*GetYearlyCategoryRow, error) {
 	rows, err := q.db.QueryContext(ctx, getYearlyCategory, dollar_1)
 	if err != nil {
@@ -938,6 +1267,29 @@ type GetYearlyCategoryByIdRow struct {
 	UniqueProductsSold int64  `json:"unique_products_sold"`
 }
 
+// GetYearlyCategoryById: Retrieves annual sales performance for categories over a 5-year span by category_id
+// Purpose: Enables long-term product category performance trend analysis
+// Parameters:
+//
+//	$1: Reference date (timestamp) - determines the 5-year analysis window
+//	$2: Category ID
+//
+// Returns:
+//
+//	year: 4-digit year as text
+//	category_id: Unique category identifier
+//	category_name: Display name of the category
+//	order_count: Annual number of orders involving this category
+//	items_sold: Quantity of products sold from this category
+//	total_revenue: Total sales revenue from category products
+//	unique_products_sold: Count of unique products sold within the category
+//
+// Business Logic:
+//   - Covers the current year and previous four years (5-year window)
+//   - Filters out soft-deleted data from all related tables
+//   - Provides both volume and value metrics for category-level evaluation
+//   - Results sorted by year and revenue to show historical trends
+//   - Suitable for business reviews and strategic category planning
 func (q *Queries) GetYearlyCategoryById(ctx context.Context, arg GetYearlyCategoryByIdParams) ([]*GetYearlyCategoryByIdRow, error) {
 	rows, err := q.db.QueryContext(ctx, getYearlyCategoryById, arg.Column1, arg.CategoryID)
 	if err != nil {
@@ -1026,6 +1378,29 @@ type GetYearlyCategoryByMerchantRow struct {
 	UniqueProductsSold int64  `json:"unique_products_sold"`
 }
 
+// GetYearlyCategoryByMerchant: Retrieves annual sales performance for categories over a 5-year span by merchant_id
+// Purpose: Enables long-term product category performance trend analysis
+// Parameters:
+//
+//	$1: Reference date (timestamp) - determines the 5-year analysis window
+//	$2: Merchant ID
+//
+// Returns:
+//
+//	year: 4-digit year as text
+//	category_id: Unique category identifier
+//	category_name: Display name of the category
+//	order_count: Annual number of orders involving this category
+//	items_sold: Quantity of products sold from this category
+//	total_revenue: Total sales revenue from category products
+//	unique_products_sold: Count of unique products sold within the category
+//
+// Business Logic:
+//   - Covers the current year and previous four years (5-year window)
+//   - Filters out soft-deleted data from all related tables
+//   - Provides both volume and value metrics for category-level evaluation
+//   - Results sorted by year and revenue to show historical trends
+//   - Suitable for business reviews and strategic category planning
 func (q *Queries) GetYearlyCategoryByMerchant(ctx context.Context, arg GetYearlyCategoryByMerchantParams) ([]*GetYearlyCategoryByMerchantRow, error) {
 	rows, err := q.db.QueryContext(ctx, getYearlyCategoryByMerchant, arg.Column1, arg.MerchantID)
 	if err != nil {
@@ -1103,6 +1478,23 @@ type GetYearlyTotalPriceRow struct {
 	TotalRevenue int32  `json:"total_revenue"`
 }
 
+// GetYearlyTotalPrice: Retrieves annual revenue with category/product validation
+// Purpose: Provides year-over-year revenue analysis with product hierarchy verification
+// Parameters:
+//
+//	$1: Reference year for comparison (current year)
+//
+// Returns:
+//
+//	year: Year as text
+//	total_revenue: Annual revenue total (0 if no sales)
+//
+// Business Logic:
+//   - Compares current year with previous year automatically
+//   - Validates product/category relationships through joins
+//   - Excludes deleted records across all joined tables
+//   - Ensures complete year reporting even with no sales
+//   - Orders results by most recent year first
 func (q *Queries) GetYearlyTotalPrice(ctx context.Context, dollar_1 int32) ([]*GetYearlyTotalPriceRow, error) {
 	rows, err := q.db.QueryContext(ctx, getYearlyTotalPrice, dollar_1)
 	if err != nil {
@@ -1148,7 +1540,7 @@ WITH yearly_data AS (
             EXTRACT(YEAR FROM o.created_at) = $1::integer
             OR EXTRACT(YEAR FROM o.created_at) = $1::integer - 1
         )
-        AND o.order_id = $2
+        AND c.category_id = $2
     GROUP BY
         EXTRACT(YEAR FROM o.created_at)
 ),
@@ -1169,8 +1561,8 @@ ORDER BY
 `
 
 type GetYearlyTotalPriceByIdParams struct {
-	Column1 int32 `json:"column_1"`
-	OrderID int32 `json:"order_id"`
+	Column1    int32 `json:"column_1"`
+	CategoryID int32 `json:"category_id"`
 }
 
 type GetYearlyTotalPriceByIdRow struct {
@@ -1178,8 +1570,26 @@ type GetYearlyTotalPriceByIdRow struct {
 	TotalRevenue int32  `json:"total_revenue"`
 }
 
+// GetYearlyTotalPriceById: Retrieves annual revenue with category/product validation by category_id
+// Purpose: Provides year-over-year revenue analysis with product hierarchy verification
+// Parameters:
+//
+//	$1: Reference year for comparison (current year)
+//	$2: Category ID
+//
+// Returns:
+//
+//	year: Year as text
+//	total_revenue: Annual revenue total (0 if no sales)
+//
+// Business Logic:
+//   - Compares current year with previous year automatically
+//   - Validates product/category relationships through joins
+//   - Excludes deleted records across all joined tables
+//   - Ensures complete year reporting even with no sales
+//   - Orders results by most recent year first
 func (q *Queries) GetYearlyTotalPriceById(ctx context.Context, arg GetYearlyTotalPriceByIdParams) ([]*GetYearlyTotalPriceByIdRow, error) {
-	rows, err := q.db.QueryContext(ctx, getYearlyTotalPriceById, arg.Column1, arg.OrderID)
+	rows, err := q.db.QueryContext(ctx, getYearlyTotalPriceById, arg.Column1, arg.CategoryID)
 	if err != nil {
 		return nil, err
 	}
@@ -1253,6 +1663,24 @@ type GetYearlyTotalPriceByMerchantRow struct {
 	TotalRevenue int32  `json:"total_revenue"`
 }
 
+// GetYearlyTotalPriceByMerchant: Retrieves annual revenue with category/product validation by merchant_id
+// Purpose: Provides year-over-year revenue analysis with product hierarchy verification
+// Parameters:
+//
+//	$1: Reference year for comparison (current year)
+//	$2: Merchant ID
+//
+// Returns:
+//
+//	year: Year as text
+//	total_revenue: Annual revenue total (0 if no sales)
+//
+// Business Logic:
+//   - Compares current year with previous year automatically
+//   - Validates product/category relationships through joins
+//   - Excludes deleted records across all joined tables
+//   - Ensures complete year reporting even with no sales
+//   - Orders results by most recent year first
 func (q *Queries) GetYearlyTotalPriceByMerchant(ctx context.Context, arg GetYearlyTotalPriceByMerchantParams) ([]*GetYearlyTotalPriceByMerchantRow, error) {
 	rows, err := q.db.QueryContext(ctx, getYearlyTotalPriceByMerchant, arg.Column1, arg.MerchantID)
 	if err != nil {
@@ -1284,7 +1712,12 @@ WHERE
     deleted_at IS NOT NULL
 `
 
-// Restore All Trashed Category
+// RestoreAllCategories: Recovers all trashed categories
+// Purpose: Bulk restore of all soft-deleted category records
+// Parameters: None
+// Returns: None
+// Business Logic:
+//   - Resets deleted_at for all soft-deleted records
 func (q *Queries) RestoreAllCategories(ctx context.Context) error {
 	_, err := q.db.ExecContext(ctx, restoreAllCategories)
 	return err
@@ -1300,7 +1733,18 @@ WHERE
   RETURNING category_id, name, description, slug_category, created_at, updated_at, deleted_at
 `
 
-// Restore Trashed Category
+// RestoreCategory: Recovers a previously trashed category
+// Purpose: Restores a soft-deleted category for reuse
+// Parameters:
+//
+//	$1: Category ID
+//
+// Returns:
+//
+//	Restored category record
+//
+// Business Logic:
+//   - Only applies to categories currently marked as deleted
 func (q *Queries) RestoreCategory(ctx context.Context, categoryID int32) (*Category, error) {
 	row := q.db.QueryRowContext(ctx, restoreCategory, categoryID)
 	var i Category
@@ -1326,7 +1770,19 @@ WHERE
     RETURNING category_id, name, description, slug_category, created_at, updated_at, deleted_at
 `
 
-// Trash Category
+// TrashCategory: Soft-deletes a category
+// Purpose: Moves category to trash without permanent deletion
+// Parameters:
+//
+//	$1: Category ID
+//
+// Returns:
+//
+//	The soft-deleted category record
+//
+// Business Logic:
+//   - Updates deleted_at with current timestamp
+//   - Prevents repeat trashing of already-deleted records
 func (q *Queries) TrashCategory(ctx context.Context, categoryID int32) (*Category, error) {
 	row := q.db.QueryRowContext(ctx, trashCategory, categoryID)
 	var i Category
@@ -1360,6 +1816,22 @@ type UpdateCategoryParams struct {
 	SlugCategory sql.NullString `json:"slug_category"`
 }
 
+// UpdateCategory: Updates category details
+// Purpose: Modify existing category data while maintaining soft delete integrity
+// Parameters:
+//
+//	$1: Category ID
+//	$2: Updated name
+//	$3: Updated description
+//	$4: Updated slug
+//
+// Returns:
+//
+//	Updated category record
+//
+// Business Logic:
+//   - Automatically updates the updated_at field
+//   - Skips if category has been soft-deleted
 func (q *Queries) UpdateCategory(ctx context.Context, arg UpdateCategoryParams) (*Category, error) {
 	row := q.db.QueryRowContext(ctx, updateCategory,
 		arg.CategoryID,

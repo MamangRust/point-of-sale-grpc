@@ -2,6 +2,40 @@ package requests
 
 import "github.com/go-playground/validator/v10"
 
+type MonthAmountTransaction struct {
+	Year  int `json:"year" validate:"required"`
+	Month int `json:"month" validate:"required"`
+}
+
+type MonthAmountTransactionMerchant struct {
+	MerchantID int `json:"merchant_id" validate:"required"`
+	Year       int `json:"year" validate:"required"`
+	Month      int `json:"month" validate:"required"`
+}
+
+type YearAmountTransactionMerchant struct {
+	MerchantID int `json:"merchant_id" validate:"required"`
+	Year       int `json:"year" validate:"required"`
+}
+
+type MonthlyYearTransactionMethodMerchant struct {
+	MerchantID int `json:"merchant_id" validate:"required"`
+	Year       int `json:"year" validate:"required"`
+}
+
+type FindAllTransaction struct {
+	Search   string `json:"search" validate:"required"`
+	Page     int    `json:"page" validate:"min=1"`
+	PageSize int    `json:"page_size" validate:"min=1,max=100"`
+}
+
+type FindAllTransactionByMerchant struct {
+	MerchantID int    `json:"merchant_id" validate:"required"`
+	Search     string `json:"search" validate:"required"`
+	Page       int    `json:"page" validate:"min=1"`
+	PageSize   int    `json:"page_size" validate:"min=1,max=100"`
+}
+
 type CreateTransactionRequest struct {
 	OrderID       int     `json:"order_id" validate:"required"`
 	CashierID     int     `json:"cashier_id" validate:"required"`

@@ -27,6 +27,7 @@ const (
 	OrderService_FindMonthlyTotalRevenueByMerchant_FullMethodName = "/pb.OrderService/FindMonthlyTotalRevenueByMerchant"
 	OrderService_FindYearlyTotalRevenueByMerchant_FullMethodName  = "/pb.OrderService/FindYearlyTotalRevenueByMerchant"
 	OrderService_FindAll_FullMethodName                           = "/pb.OrderService/FindAll"
+	OrderService_FindByMerchant_FullMethodName                    = "/pb.OrderService/FindByMerchant"
 	OrderService_FindById_FullMethodName                          = "/pb.OrderService/FindById"
 	OrderService_FindMonthlyRevenue_FullMethodName                = "/pb.OrderService/FindMonthlyRevenue"
 	OrderService_FindYearlyRevenue_FullMethodName                 = "/pb.OrderService/FindYearlyRevenue"
@@ -54,6 +55,7 @@ type OrderServiceClient interface {
 	FindMonthlyTotalRevenueByMerchant(ctx context.Context, in *FindYearMonthTotalRevenueByMerchant, opts ...grpc.CallOption) (*ApiResponseOrderMonthlyTotalRevenue, error)
 	FindYearlyTotalRevenueByMerchant(ctx context.Context, in *FindYearTotalRevenueByMerchant, opts ...grpc.CallOption) (*ApiResponseOrderYearlyTotalRevenue, error)
 	FindAll(ctx context.Context, in *FindAllOrderRequest, opts ...grpc.CallOption) (*ApiResponsePaginationOrder, error)
+	FindByMerchant(ctx context.Context, in *FindAllOrderMerchantRequest, opts ...grpc.CallOption) (*ApiResponsePaginationOrder, error)
 	FindById(ctx context.Context, in *FindByIdOrderRequest, opts ...grpc.CallOption) (*ApiResponseOrder, error)
 	FindMonthlyRevenue(ctx context.Context, in *FindYearOrder, opts ...grpc.CallOption) (*ApiResponseOrderMonthly, error)
 	FindYearlyRevenue(ctx context.Context, in *FindYearOrder, opts ...grpc.CallOption) (*ApiResponseOrderYearly, error)
@@ -142,6 +144,16 @@ func (c *orderServiceClient) FindAll(ctx context.Context, in *FindAllOrderReques
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(ApiResponsePaginationOrder)
 	err := c.cc.Invoke(ctx, OrderService_FindAll_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *orderServiceClient) FindByMerchant(ctx context.Context, in *FindAllOrderMerchantRequest, opts ...grpc.CallOption) (*ApiResponsePaginationOrder, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ApiResponsePaginationOrder)
+	err := c.cc.Invoke(ctx, OrderService_FindByMerchant_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -299,6 +311,7 @@ type OrderServiceServer interface {
 	FindMonthlyTotalRevenueByMerchant(context.Context, *FindYearMonthTotalRevenueByMerchant) (*ApiResponseOrderMonthlyTotalRevenue, error)
 	FindYearlyTotalRevenueByMerchant(context.Context, *FindYearTotalRevenueByMerchant) (*ApiResponseOrderYearlyTotalRevenue, error)
 	FindAll(context.Context, *FindAllOrderRequest) (*ApiResponsePaginationOrder, error)
+	FindByMerchant(context.Context, *FindAllOrderMerchantRequest) (*ApiResponsePaginationOrder, error)
 	FindById(context.Context, *FindByIdOrderRequest) (*ApiResponseOrder, error)
 	FindMonthlyRevenue(context.Context, *FindYearOrder) (*ApiResponseOrderMonthly, error)
 	FindYearlyRevenue(context.Context, *FindYearOrder) (*ApiResponseOrderYearly, error)
@@ -343,6 +356,9 @@ func (UnimplementedOrderServiceServer) FindYearlyTotalRevenueByMerchant(context.
 }
 func (UnimplementedOrderServiceServer) FindAll(context.Context, *FindAllOrderRequest) (*ApiResponsePaginationOrder, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method FindAll not implemented")
+}
+func (UnimplementedOrderServiceServer) FindByMerchant(context.Context, *FindAllOrderMerchantRequest) (*ApiResponsePaginationOrder, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method FindByMerchant not implemented")
 }
 func (UnimplementedOrderServiceServer) FindById(context.Context, *FindByIdOrderRequest) (*ApiResponseOrder, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method FindById not implemented")
@@ -529,6 +545,24 @@ func _OrderService_FindAll_Handler(srv interface{}, ctx context.Context, dec fun
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(OrderServiceServer).FindAll(ctx, req.(*FindAllOrderRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _OrderService_FindByMerchant_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(FindAllOrderMerchantRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(OrderServiceServer).FindByMerchant(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: OrderService_FindByMerchant_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(OrderServiceServer).FindByMerchant(ctx, req.(*FindAllOrderMerchantRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -819,6 +853,10 @@ var OrderService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "FindAll",
 			Handler:    _OrderService_FindAll_Handler,
+		},
+		{
+			MethodName: "FindByMerchant",
+			Handler:    _OrderService_FindByMerchant_Handler,
 		},
 		{
 			MethodName: "FindById",

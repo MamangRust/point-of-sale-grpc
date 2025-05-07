@@ -3,13 +3,12 @@ package gapi
 import (
 	"context"
 	"math"
+	"pointofsale/internal/domain/requests"
+	"pointofsale/internal/domain/response"
 	protomapper "pointofsale/internal/mapper/proto"
 	"pointofsale/internal/pb"
 	"pointofsale/internal/service"
-	"pointofsale/pkg/errors_custom"
-
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
+	orderitem_errors "pointofsale/pkg/errors/order_item_errors"
 )
 
 type orderItemHandleGrpc struct {
@@ -40,16 +39,16 @@ func (s *orderItemHandleGrpc) FindAll(ctx context.Context, request *pb.FindAllOr
 		pageSize = 10
 	}
 
-	orderItems, totalRecords, err := s.orderItemService.FindAllOrderItems(search, page, pageSize)
+	reqService := requests.FindAllOrderItems{
+		Search:   search,
+		Page:     page,
+		PageSize: pageSize,
+	}
+
+	orderItems, totalRecords, err := s.orderItemService.FindAllOrderItems(&reqService)
+
 	if err != nil {
-		return nil, status.Errorf(
-			codes.Code(err.Code),
-			errors_custom.GrpcErrorToJson(&pb.ErrorResponse{
-				Status:  err.Status,
-				Message: err.Message,
-				Code:    int32(err.Code),
-			}),
-		)
+		return nil, response.ToGrpcErrorFromErrorResponse(err)
 	}
 
 	totalPages := int(math.Ceil(float64(*totalRecords) / float64(pageSize)))
@@ -77,16 +76,16 @@ func (s *orderItemHandleGrpc) FindByActive(ctx context.Context, request *pb.Find
 		pageSize = 10
 	}
 
-	orderItems, totalRecords, err := s.orderItemService.FindByActive(search, page, pageSize)
+	reqService := requests.FindAllOrderItems{
+		Search:   search,
+		Page:     page,
+		PageSize: pageSize,
+	}
+
+	orderItems, totalRecords, err := s.orderItemService.FindByActive(&reqService)
+
 	if err != nil {
-		return nil, status.Errorf(
-			codes.Code(err.Code),
-			errors_custom.GrpcErrorToJson(&pb.ErrorResponse{
-				Status:  err.Status,
-				Message: err.Message,
-				Code:    int32(err.Code),
-			}),
-		)
+		return nil, response.ToGrpcErrorFromErrorResponse(err)
 	}
 
 	totalPages := int(math.Ceil(float64(*totalRecords) / float64(pageSize)))
@@ -114,16 +113,16 @@ func (s *orderItemHandleGrpc) FindByTrashed(ctx context.Context, request *pb.Fin
 		pageSize = 10
 	}
 
-	orderItems, totalRecords, err := s.orderItemService.FindByTrashed(search, page, pageSize)
+	reqService := requests.FindAllOrderItems{
+		Search:   search,
+		Page:     page,
+		PageSize: pageSize,
+	}
+
+	orderItems, totalRecords, err := s.orderItemService.FindByTrashed(&reqService)
+
 	if err != nil {
-		return nil, status.Errorf(
-			codes.Code(err.Code),
-			errors_custom.GrpcErrorToJson(&pb.ErrorResponse{
-				Status:  err.Status,
-				Message: err.Message,
-				Code:    int32(err.Code),
-			}),
-		)
+		return nil, response.ToGrpcErrorFromErrorResponse(err)
 	}
 
 	totalPages := int(math.Ceil(float64(*totalRecords) / float64(pageSize)))
@@ -140,27 +139,15 @@ func (s *orderItemHandleGrpc) FindByTrashed(ctx context.Context, request *pb.Fin
 }
 
 func (s *orderItemHandleGrpc) FindOrderItemByOrder(ctx context.Context, request *pb.FindByIdOrderItemRequest) (*pb.ApiResponsesOrderItem, error) {
-	if request.GetId() == 0 {
-		return nil, status.Error(
-			codes.InvalidArgument,
-			errors_custom.GrpcErrorToJson(&pb.ErrorResponse{
-				Status:  "invalid_request",
-				Message: "Valid order item ID is required",
-				Code:    int32(codes.InvalidArgument),
-			}),
-		)
+	id := int(request.GetId())
+
+	if id == 0 {
+		return nil, orderitem_errors.ErrGrpcInvalidID
 	}
 
-	orderItems, err := s.orderItemService.FindOrderItemByOrder(int(request.GetId()))
+	orderItems, err := s.orderItemService.FindOrderItemByOrder(id)
 	if err != nil {
-		return nil, status.Errorf(
-			codes.Code(err.Code),
-			errors_custom.GrpcErrorToJson(&pb.ErrorResponse{
-				Status:  err.Status,
-				Message: err.Message,
-				Code:    int32(err.Code),
-			}),
-		)
+		return nil, response.ToGrpcErrorFromErrorResponse(err)
 	}
 
 	so := s.mapping.ToProtoResponsesOrderItem("success", "Successfully fetched order items by order", orderItems)

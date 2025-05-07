@@ -2,12 +2,11 @@ package repository
 
 import (
 	"context"
-	"errors"
-	"fmt"
 	"pointofsale/internal/domain/record"
 	"pointofsale/internal/domain/requests"
 	recordmapper "pointofsale/internal/mapper/record"
 	db "pointofsale/pkg/database/schema"
+	orderitem_errors "pointofsale/pkg/errors/order_item_errors"
 )
 
 type orderItemRepository struct {
@@ -24,19 +23,19 @@ func NewOrderItemRepository(db *db.Queries, ctx context.Context, mapping recordm
 	}
 }
 
-func (r *orderItemRepository) FindAllOrderItems(search string, page, pageSize int) ([]*record.OrderItemRecord, int, error) {
-	offset := (page - 1) * pageSize
+func (r *orderItemRepository) FindAllOrderItems(req *requests.FindAllOrderItems) ([]*record.OrderItemRecord, *int, error) {
+	offset := (req.Page - 1) * req.PageSize
 
-	req := db.GetOrderItemsParams{
-		Column1: search,
-		Limit:   int32(pageSize),
+	reqDb := db.GetOrderItemsParams{
+		Column1: req.Search,
+		Limit:   int32(req.PageSize),
 		Offset:  int32(offset),
 	}
 
-	res, err := r.db.GetOrderItems(r.ctx, req)
+	res, err := r.db.GetOrderItems(r.ctx, reqDb)
 
 	if err != nil {
-		return nil, 0, fmt.Errorf("failed to find order items : %w", err)
+		return nil, nil, orderitem_errors.ErrFindAllOrderItems
 	}
 
 	var totalCount int
@@ -46,22 +45,22 @@ func (r *orderItemRepository) FindAllOrderItems(search string, page, pageSize in
 		totalCount = 0
 	}
 
-	return r.mapping.ToOrderItemsRecordPagination(res), totalCount, nil
+	return r.mapping.ToOrderItemsRecordPagination(res), &totalCount, nil
 }
 
-func (r *orderItemRepository) FindByActive(search string, page, pageSize int) ([]*record.OrderItemRecord, int, error) {
-	offset := (page - 1) * pageSize
+func (r *orderItemRepository) FindByActive(req *requests.FindAllOrderItems) ([]*record.OrderItemRecord, *int, error) {
+	offset := (req.Page - 1) * req.PageSize
 
-	req := db.GetOrderItemsActiveParams{
-		Column1: search,
-		Limit:   int32(pageSize),
+	reqDb := db.GetOrderItemsActiveParams{
+		Column1: req.Search,
+		Limit:   int32(req.PageSize),
 		Offset:  int32(offset),
 	}
 
-	res, err := r.db.GetOrderItemsActive(r.ctx, req)
+	res, err := r.db.GetOrderItemsActive(r.ctx, reqDb)
 
 	if err != nil {
-		return nil, 0, fmt.Errorf("failed to find users: %w", err)
+		return nil, nil, orderitem_errors.ErrFindByActive
 	}
 
 	var totalCount int
@@ -71,22 +70,22 @@ func (r *orderItemRepository) FindByActive(search string, page, pageSize int) ([
 		totalCount = 0
 	}
 
-	return r.mapping.ToOrderItemsRecordActivePagination(res), totalCount, nil
+	return r.mapping.ToOrderItemsRecordActivePagination(res), &totalCount, nil
 }
 
-func (r *orderItemRepository) FindByTrashed(search string, page, pageSize int) ([]*record.OrderItemRecord, int, error) {
-	offset := (page - 1) * pageSize
+func (r *orderItemRepository) FindByTrashed(req *requests.FindAllOrderItems) ([]*record.OrderItemRecord, *int, error) {
+	offset := (req.Page - 1) * req.PageSize
 
-	req := db.GetOrderItemsTrashedParams{
-		Column1: search,
-		Limit:   int32(pageSize),
+	reqDb := db.GetOrderItemsTrashedParams{
+		Column1: req.Search,
+		Limit:   int32(req.PageSize),
 		Offset:  int32(offset),
 	}
 
-	res, err := r.db.GetOrderItemsTrashed(r.ctx, req)
+	res, err := r.db.GetOrderItemsTrashed(r.ctx, reqDb)
 
 	if err != nil {
-		return nil, 0, fmt.Errorf("failed to find users: %w", err)
+		return nil, nil, orderitem_errors.ErrFindByTrashed
 	}
 
 	var totalCount int
@@ -96,14 +95,14 @@ func (r *orderItemRepository) FindByTrashed(search string, page, pageSize int) (
 		totalCount = 0
 	}
 
-	return r.mapping.ToOrderItemsRecordTrashedPagination(res), totalCount, nil
+	return r.mapping.ToOrderItemsRecordTrashedPagination(res), &totalCount, nil
 }
 
 func (r *orderItemRepository) FindOrderItemByOrder(order_id int) ([]*record.OrderItemRecord, error) {
 	res, err := r.db.GetOrderItemsByOrder(r.ctx, int32(order_id))
 
 	if err != nil {
-		return nil, fmt.Errorf("failed to find order by order_id: %w", err)
+		return nil, orderitem_errors.ErrFindOrderItemByOrder
 	}
 
 	return r.mapping.ToOrderItemsRecord(res), nil
@@ -113,11 +112,10 @@ func (r *orderItemRepository) CalculateTotalPrice(order_id int) (*int32, error) 
 	res, err := r.db.CalculateTotalPrice(r.ctx, int32(order_id))
 
 	if err != nil {
-		return nil, fmt.Errorf("failed to find order by order_id: %w", err)
+		return nil, orderitem_errors.ErrCalculateTotalPrice
 	}
 
 	return &res, nil
-
 }
 
 func (r *orderItemRepository) CreateOrderItem(req *requests.CreateOrderItemRecordRequest) (*record.OrderItemRecord, error) {
@@ -129,7 +127,7 @@ func (r *orderItemRepository) CreateOrderItem(req *requests.CreateOrderItemRecor
 	})
 
 	if err != nil {
-		return nil, errors.New("failed create order item")
+		return nil, orderitem_errors.ErrCreateOrderItem
 	}
 
 	return r.mapping.ToOrderItemRecord(res), nil
@@ -143,56 +141,57 @@ func (r *orderItemRepository) UpdateOrderItem(req *requests.UpdateOrderItemRecor
 	})
 
 	if err != nil {
-		return nil, errors.New("failed update order item")
+		return nil, orderitem_errors.ErrUpdateOrderItem
 	}
 
 	return r.mapping.ToOrderItemRecord(res), nil
 }
 
-func (r *orderItemRepository) TrashedOrderItem(order_id int) (*record.OrderItemRecord, error) {
-	res, err := r.db.TrashOrderItem(r.ctx, int32(order_id))
+func (r *orderItemRepository) TrashedOrderItem(order_item_id int) (*record.OrderItemRecord, error) {
+	res, err := r.db.TrashOrderItem(r.ctx, int32(order_item_id))
 
 	if err != nil {
-		return nil, fmt.Errorf("failed to trash order item: %w", err)
+		return nil, orderitem_errors.ErrTrashedOrderItem
 	}
 
 	return r.mapping.ToOrderItemRecord(res), nil
 }
 
-func (r *orderItemRepository) RestoreOrderItem(order_id int) (*record.OrderItemRecord, error) {
-	res, err := r.db.RestoreOrderItem(r.ctx, int32(order_id))
+func (r *orderItemRepository) RestoreOrderItem(order_item_id int) (*record.OrderItemRecord, error) {
+	res, err := r.db.RestoreOrderItem(r.ctx, int32(order_item_id))
 
 	if err != nil {
-		return nil, fmt.Errorf("failed to restore order item: %w", err)
+		return nil, orderitem_errors.ErrRestoreOrderItem
 	}
 
 	return r.mapping.ToOrderItemRecord(res), nil
 }
 
-func (r *orderItemRepository) DeleteOrderItemPermanent(order_id int) (bool, error) {
-	err := r.db.DeleteOrderItemPermanently(r.ctx, int32(order_id))
+func (r *orderItemRepository) DeleteOrderItemPermanent(order_item_id int) (bool, error) {
+	err := r.db.DeleteOrderItemPermanently(r.ctx, int32(order_item_id))
 
 	if err != nil {
-		return false, fmt.Errorf("failed to delete order_item: %w", err)
+		return false, orderitem_errors.ErrDeleteOrderItemPermanent
 	}
 
 	return true, nil
 }
 
 func (r *orderItemRepository) RestoreAllOrderItem() (bool, error) {
-	err := r.db.RestoreAllUsers(r.ctx)
+	err := r.db.RestoreAllOrdersItem(r.ctx)
 
 	if err != nil {
-		return false, fmt.Errorf("failed to restore all order_item: %w", err)
+		return false, orderitem_errors.ErrRestoreAllOrderItem
 	}
 	return true, nil
 }
 
 func (r *orderItemRepository) DeleteAllOrderPermanent() (bool, error) {
-	err := r.db.DeleteAllPermanentOrders(r.ctx)
+	err := r.db.DeleteAllPermanentOrdersItem(r.ctx)
 
 	if err != nil {
-		return false, fmt.Errorf("failed to delete all order_item permanently: %w", err)
+		return false, orderitem_errors.ErrDeleteAllOrderPermanent
 	}
+
 	return true, nil
 }

@@ -22,6 +22,18 @@ type CreateCashierParams struct {
 	Name       string `json:"name"`
 }
 
+// CreateCashier: Creates a new cashier record
+// Purpose: Add new cashier to the system
+// Parameters:
+//
+//	$1: merchant_id - Associated merchant ID
+//	$2: user_id - User account ID for the cashier
+//	$3: name - Full name of the cashier
+//
+// Returns: Complete created cashier record
+// Business Logic:
+//   - Sets created_at timestamp automatically
+//   - Requires all mandatory fields
 func (q *Queries) CreateCashier(ctx context.Context, arg CreateCashierParams) (*Cashier, error) {
 	row := q.db.QueryRowContext(ctx, createCashier, arg.MerchantID, arg.UserID, arg.Name)
 	var i Cashier
@@ -43,7 +55,12 @@ WHERE
     deleted_at IS NOT NULL
 `
 
-// Delete All Trashed Cashier Permanently
+// DeleteAllPermanentCashiers: Purges all trashed cashiers
+// Purpose: Clean up all soft-deleted records
+// Business Logic:
+//   - Irreversible bulk deletion
+//   - Only affects already soft-deleted records
+//   - Typically used during database maintenance
 func (q *Queries) DeleteAllPermanentCashiers(ctx context.Context) error {
 	_, err := q.db.ExecContext(ctx, deleteAllPermanentCashiers)
 	return err
@@ -53,21 +70,40 @@ const deleteCashierPermanently = `-- name: DeleteCashierPermanently :exec
 DELETE FROM cashiers WHERE cashier_id = $1 AND deleted_at IS NOT NULL
 `
 
-// Delete Cashier Permanently
+// DeleteCashierPermanently: Hard-deletes a cashier
+// Purpose: Completely remove cashier from database
+// Parameters:
+//
+//	$1: cashier_id - ID of cashier to delete
+//
+// Business Logic:
+//   - Permanent deletion of already soft-deleted records
+//   - No return value (exec-only)
+//   - Use with caution - irreversible operation
 func (q *Queries) DeleteCashierPermanently(ctx context.Context, cashierID int32) error {
 	_, err := q.db.ExecContext(ctx, deleteCashierPermanently, cashierID)
 	return err
 }
 
-const getCashierByID = `-- name: GetCashierByID :one
+const getCashierById = `-- name: GetCashierById :one
 SELECT cashier_id, merchant_id, user_id, name, created_at, updated_at, deleted_at
 FROM cashiers
 WHERE cashier_id = $1
   AND deleted_at IS NULL
 `
 
-func (q *Queries) GetCashierByID(ctx context.Context, cashierID int32) (*Cashier, error) {
-	row := q.db.QueryRowContext(ctx, getCashierByID, cashierID)
+// GetCashierByID: Retrieves active cashier by ID
+// Purpose: Fetch cashier details for display/editing
+// Parameters:
+//
+//	$1: cashier_id - ID of the cashier to retrieve
+//
+// Returns: Full cashier record if found and active
+// Business Logic:
+//   - Excludes soft-deleted records
+//   - Returns single record or nothing
+func (q *Queries) GetCashierById(ctx context.Context, cashierID int32) (*Cashier, error) {
+	row := q.db.QueryRowContext(ctx, getCashierById, cashierID)
 	var i Cashier
 	err := row.Scan(
 		&i.CashierID,
@@ -87,7 +123,7 @@ SELECT
     COUNT(*) OVER() AS total_count
 FROM cashiers
 WHERE deleted_at IS NULL
-  AND ($1::TEXT IS NULL OR name ILIKE '%' || $1 || '%')
+  AND ($1::TEXT IS NULL OR name ILIKE '%' || $1 || '%' OR username ILIKE '%' || $1 || '%')
 ORDER BY created_at DESC
 LIMIT $2 OFFSET $3
 `
@@ -109,6 +145,23 @@ type GetCashiersRow struct {
 	TotalCount int64        `json:"total_count"`
 }
 
+// GetCashiers: Retrieves paginated list of active cashiers with search capability
+// Purpose: List all active cashiers for management UI
+// Parameters:
+//
+//	$1: search_term - Optional text to filter cashiers by name or username (NULL for no filter)
+//	$2: limit - Maximum number of records to return
+//	$3: offset - Number of records to skip for pagination
+//
+// Returns:
+//
+//	All cashier fields plus total_count of matching records
+//
+// Business Logic:
+//   - Excludes soft-deleted cashiers (deleted_at IS NULL)
+//   - Supports partial text matching on name and username fields (case-insensitive)
+//   - Returns newest cashiers first (created_at DESC)
+//   - Provides total_count for pagination calculations
 func (q *Queries) GetCashiers(ctx context.Context, arg GetCashiersParams) ([]*GetCashiersRow, error) {
 	rows, err := q.db.QueryContext(ctx, getCashiers, arg.Column1, arg.Limit, arg.Offset)
 	if err != nil {
@@ -147,7 +200,7 @@ SELECT
     COUNT(*) OVER() AS total_count
 FROM cashiers
 WHERE deleted_at IS NULL
-  AND ($1::TEXT IS NULL OR name ILIKE '%' || $1 || '%')
+  AND ($1::TEXT IS NULL OR name ILIKE '%' || $1 || '%' OR username ILIKE '%' || $1 || '%')
 ORDER BY created_at DESC
 LIMIT $2 OFFSET $3
 `
@@ -169,6 +222,23 @@ type GetCashiersActiveRow struct {
 	TotalCount int64        `json:"total_count"`
 }
 
+// GetCashiersActive: Retrieves paginated list of active cashiers with search capability
+// Purpose: List all active cashiers for management UI
+// Parameters:
+//
+//	$1: search_term - Optional text to filter cashiers by name or username (NULL for no filter)
+//	$2: limit - Maximum number of records to return
+//	$3: offset - Number of records to skip for pagination
+//
+// Returns:
+//
+//	All cashier fields plus total_count of matching records
+//
+// Business Logic:
+//   - Excludes soft-deleted cashiers (deleted_at IS NULL)
+//   - Supports partial text matching on name and username fields (case-insensitive)
+//   - Returns newest cashiers first (created_at DESC)
+//   - Provides total_count for pagination calculations
 func (q *Queries) GetCashiersActive(ctx context.Context, arg GetCashiersActiveParams) ([]*GetCashiersActiveRow, error) {
 	rows, err := q.db.QueryContext(ctx, getCashiersActive, arg.Column1, arg.Limit, arg.Offset)
 	if err != nil {
@@ -231,6 +301,17 @@ type GetCashiersByMerchantRow struct {
 	TotalCount int64        `json:"total_count"`
 }
 
+// GetCashiersByMerchant: Retrieves active cashiers filtered by merchant_id
+// Parameters:
+//
+//	$1: Merchant ID (required)
+//	$2: Search term for cashier name (optional)
+//	$3: Limit
+//	$4: Offset
+//
+// Returns:
+//
+//	Cashier records belonging to specified merchant with total_count
 func (q *Queries) GetCashiersByMerchant(ctx context.Context, arg GetCashiersByMerchantParams) ([]*GetCashiersByMerchantRow, error) {
 	rows, err := q.db.QueryContext(ctx, getCashiersByMerchant,
 		arg.MerchantID,
@@ -274,7 +355,7 @@ SELECT
     COUNT(*) OVER() AS total_count
 FROM cashiers
 WHERE deleted_at IS NOT NULL
-  AND ($1::TEXT IS NULL OR name ILIKE '%' || $1 || '%')
+  AND ($1::TEXT IS NULL OR name ILIKE '%' || $1 || '%' OR username ILIKE '%' || $1 || '%')
 ORDER BY created_at DESC
 LIMIT $2 OFFSET $3
 `
@@ -296,6 +377,23 @@ type GetCashiersTrashedRow struct {
 	TotalCount int64        `json:"total_count"`
 }
 
+// GetCashiersTrashed: Retrieves paginated list of soft-deleted cashiers with search capability
+// Purpose: List all trashed (soft-deleted) cashiers for recovery or audit purposes
+// Parameters:
+//
+//	$1: search_term - Optional text to filter cashiers by name or username (NULL for no filter)
+//	$2: limit - Maximum number of records to return
+//	$3: offset - Number of records to skip for pagination
+//
+// Returns:
+//
+//	All cashier fields plus total_count of matching records
+//
+// Business Logic:
+//   - Includes only soft-deleted cashiers (deleted_at IS NOT NULL)
+//   - Supports partial text matching on name and username fields (case-insensitive)
+//   - Returns newest deleted cashiers first (created_at DESC)
+//   - Provides total_count for pagination calculations
 func (q *Queries) GetCashiersTrashed(ctx context.Context, arg GetCashiersTrashedParams) ([]*GetCashiersTrashedRow, error) {
 	rows, err := q.db.QueryContext(ctx, getCashiersTrashed, arg.Column1, arg.Limit, arg.Offset)
 	if err != nil {
@@ -373,6 +471,26 @@ type GetMonthlyCashierRow struct {
 	TotalSales  float64 `json:"total_sales"`
 }
 
+// GetMonthlyCashier: Retrieves monthly sales activity for all cashiers within a 1-year period
+// Purpose: Provides cashier performance metrics by month for operational analysis
+// Parameters:
+//
+//	$1: Reference date (timestamp) - determines the 12-month analysis period
+//
+// Returns:
+//
+//	cashier_id: Unique identifier for the cashier
+//	cashier_name: Full name of the cashier
+//	month: 3-letter month abbreviation (e.g. 'Jan')
+//	order_count: Number of orders processed
+//	total_sales: Gross sales amount generated
+//
+// Business Logic:
+//   - Analyzes a rolling 12-month period from the reference date
+//   - Excludes deleted records to maintain data integrity
+//   - Groups results by cashier and month for granular performance tracking
+//   - Uses abbreviated month names for compact visual reporting
+//   - Orders chronologically for trend analysis
 func (q *Queries) GetMonthlyCashier(ctx context.Context, dollar_1 time.Time) ([]*GetMonthlyCashierRow, error) {
 	rows, err := q.db.QueryContext(ctx, getMonthlyCashier, dollar_1)
 	if err != nil {
@@ -453,6 +571,27 @@ type GetMonthlyCashierByCashierIdRow struct {
 	TotalSales  int64  `json:"total_sales"`
 }
 
+// GetMonthlyCashierByCashierId: Retrieves monthly sales activity for all cashiers within a 1-year period by cashier id
+// Purpose: Provides cashier performance metrics by month for operational analysis
+// Parameters:
+//
+//	$1: Reference date (timestamp) - determines the 12-month analysis period
+//	$2: Reference cashier_id
+//
+// Returns:
+//
+//	cashier_id: Unique identifier for the cashier
+//	cashier_name: Full name of the cashier
+//	month: 3-letter month abbreviation (e.g. 'Jan')
+//	order_count: Number of orders processed
+//	total_sales: Gross sales amount generated
+//
+// Business Logic:
+//   - Analyzes a rolling 12-month period from the reference date
+//   - Excludes deleted records to maintain data integrity
+//   - Groups results by cashier and month for granular performance tracking
+//   - Uses abbreviated month names for compact visual reporting
+//   - Orders chronologically for trend analysis
 func (q *Queries) GetMonthlyCashierByCashierId(ctx context.Context, arg GetMonthlyCashierByCashierIdParams) ([]*GetMonthlyCashierByCashierIdRow, error) {
 	rows, err := q.db.QueryContext(ctx, getMonthlyCashierByCashierId, arg.Column1, arg.CashierID)
 	if err != nil {
@@ -533,6 +672,27 @@ type GetMonthlyCashierByMerchantRow struct {
 	TotalSales  int64  `json:"total_sales"`
 }
 
+// GetMonthlyCashierByMerchant: Retrieves monthly sales activity for all cashiers within a 1-year period by merchant id
+// Purpose: Provides cashier performance metrics by month for operational analysis
+// Parameters:
+//
+//	$1: Reference date (timestamp) - determines the 12-month analysis period
+//	$2: Reference merchant_id
+//
+// Returns:
+//
+//	cashier_id: Unique identifier for the cashier
+//	cashier_name: Full name of the cashier
+//	month: 3-letter month abbreviation (e.g. 'Jan')
+//	order_count: Number of orders processed
+//	total_sales: Gross sales amount generated
+//
+// Business Logic:
+//   - Analyzes a rolling 12-month period from the reference date
+//   - Excludes deleted records to maintain data integrity
+//   - Groups results by cashier and month for granular performance tracking
+//   - Uses abbreviated month names for compact visual reporting
+//   - Orders chronologically for trend analysis
 func (q *Queries) GetMonthlyCashierByMerchant(ctx context.Context, arg GetMonthlyCashierByMerchantParams) ([]*GetMonthlyCashierByMerchantRow, error) {
 	rows, err := q.db.QueryContext(ctx, getMonthlyCashierByMerchant, arg.Column1, arg.MerchantID)
 	if err != nil {
@@ -624,6 +784,27 @@ type GetMonthlyTotalSalesByIdRow struct {
 	TotalSales int32  `json:"total_sales"`
 }
 
+// GetMonthlyTotalSalesById: Retrieves monthly sales totals filtered by cashier ID
+// Purpose: Provides monthly sales analytics for a specific merchant across two time periods
+// Parameters:
+//
+//	$1: Start date of first comparison period
+//	$2: End date of first comparison period
+//	$3: Start date of second comparison period
+//	$4: End date of second comparison period
+//	$5: Cashier ID to filter by
+//
+// Returns:
+//
+//	year: Year of sales data (text format)
+//	month_name: Full month name (e.g. "January")
+//	total_sales: Sum of order totals for that month (0 if no sales)
+//
+// Business Logic:
+//   - Compares sales between two customizable time windows (e.g. this month vs last month)
+//   - Ensures all months appear in results even with no sales (gap filling)
+//   - Only includes active/non-deleted orders and cashiers
+//   - Formats output for easy display in reports/dashboards
 func (q *Queries) GetMonthlyTotalSalesById(ctx context.Context, arg GetMonthlyTotalSalesByIdParams) ([]*GetMonthlyTotalSalesByIdRow, error) {
 	rows, err := q.db.QueryContext(ctx, getMonthlyTotalSalesById,
 		arg.Extract,
@@ -715,6 +896,27 @@ type GetMonthlyTotalSalesByMerchantRow struct {
 	TotalSales int32  `json:"total_sales"`
 }
 
+// GetMonthlyTotalSalesByMerchant: Retrieves monthly sales totals filtered by merchant ID
+// Purpose: Provides monthly sales analytics for a specific merchant across two time periods
+// Parameters:
+//
+//	$1: Start date of first comparison period
+//	$2: End date of first comparison period
+//	$3: Start date of second comparison period
+//	$4: End date of second comparison period
+//	$5: Merchant ID to filter by
+//
+// Returns:
+//
+//	year: Year of sales data (text format)
+//	month_name: Full month name (e.g. "January")
+//	total_sales: Sum of order totals for that month (0 if no sales)
+//
+// Business Logic:
+//   - Compares sales between two customizable time windows (e.g. this month vs last month)
+//   - Ensures all months appear in results even with no sales (gap filling)
+//   - Only includes active/non-deleted orders and cashiers
+//   - Formats output for easy display in reports/dashboards
 func (q *Queries) GetMonthlyTotalSalesByMerchant(ctx context.Context, arg GetMonthlyTotalSalesByMerchantParams) ([]*GetMonthlyTotalSalesByMerchantRow, error) {
 	rows, err := q.db.QueryContext(ctx, getMonthlyTotalSalesByMerchant,
 		arg.Extract,
@@ -804,6 +1006,26 @@ type GetMonthlyTotalSalesCashierRow struct {
 	TotalSales int32  `json:"total_sales"`
 }
 
+// GetMonthlyTotalSalesCashier: Retrieves monthly sales totals for cashiers across two date ranges
+// Purpose: Compare sales performance between two time periods (typically current vs previous period)
+// Parameters:
+//
+//	$1: Start date of first period
+//	$2: End date of first period
+//	$3: Start date of second period
+//	$4: End date of second period
+//
+// Returns:
+//
+//	year: The year of the sales data
+//	month_name: The full month name (e.g., "January")
+//	total_sales: Sum of order totals for that month (0 if no sales)
+//
+// Business Logic:
+//   - Compares sales between two customizable time windows (e.g. this month vs last month)
+//   - Ensures all months appear in results even with no sales (gap filling)
+//   - Only includes active/non-deleted orders and cashiers
+//   - Formats output for easy display in reports/dashboards
 func (q *Queries) GetMonthlyTotalSalesCashier(ctx context.Context, arg GetMonthlyTotalSalesCashierParams) ([]*GetMonthlyTotalSalesCashierRow, error) {
 	rows, err := q.db.QueryContext(ctx, getMonthlyTotalSalesCashier,
 		arg.Extract,
@@ -871,6 +1093,26 @@ type GetYearlyCashierRow struct {
 	TotalSales  int64  `json:"total_sales"`
 }
 
+// GetYearlyCashier: Retrieves annual sales performance for cashiers over 5-year span
+// Purpose: Enables long-term cashier productivity trend analysis
+// Parameters:
+//
+//	$1: Reference date (timestamp) - determines the 5-year analysis window
+//
+// Returns:
+//
+//	year: 4-digit year as text
+//	cashier_id: Unique cashier identifier
+//	cashier_name: Full name of the cashier
+//	order_count: Annual transaction volume
+//	total_sales: Yearly revenue generated
+//
+// Business Logic:
+//   - Covers current year plus previous 4 years (5-year total window)
+//   - Maintains data quality by excluding soft-deleted records
+//   - Provides both quantitative (order count) and financial (sales) metrics
+//   - Orders results chronologically then by cashier for consistent reporting
+//   - Designed for workforce planning and incentive calculations
 func (q *Queries) GetYearlyCashier(ctx context.Context, dollar_1 time.Time) ([]*GetYearlyCashierRow, error) {
 	rows, err := q.db.QueryContext(ctx, getYearlyCashier, dollar_1)
 	if err != nil {
@@ -945,6 +1187,27 @@ type GetYearlyCashierByCashierIdRow struct {
 	TotalSales  int64  `json:"total_sales"`
 }
 
+// GetYearlyCashierByCashierId: Retrieves annual sales performance for cashiers over 5-year span by cashier id
+// Purpose: Enables long-term cashier productivity trend analysis
+// Parameters:
+//
+//	$1: Reference date (timestamp) - determines the 5-year analysis window
+//	$2: Reference cashier_id
+//
+// Returns:
+//
+//	year: 4-digit year as text
+//	cashier_id: Unique cashier identifier
+//	cashier_name: Full name of the cashier
+//	order_count: Annual transaction volume
+//	total_sales: Yearly revenue generated
+//
+// Business Logic:
+//   - Covers current year plus previous 4 years (5-year total window)
+//   - Maintains data quality by excluding soft-deleted records
+//   - Provides both quantitative (order count) and financial (sales) metrics
+//   - Orders results chronologically then by cashier for consistent reporting
+//   - Designed for workforce planning and incentive calculations
 func (q *Queries) GetYearlyCashierByCashierId(ctx context.Context, arg GetYearlyCashierByCashierIdParams) ([]*GetYearlyCashierByCashierIdRow, error) {
 	rows, err := q.db.QueryContext(ctx, getYearlyCashierByCashierId, arg.Column1, arg.CashierID)
 	if err != nil {
@@ -1019,6 +1282,27 @@ type GetYearlyCashierByMerchantRow struct {
 	TotalSales  int64  `json:"total_sales"`
 }
 
+// GetYearlyCashierByMerchant: Retrieves annual sales performance for cashiers over 5-year span by merchant id
+// Purpose: Enables long-term cashier productivity trend analysis
+// Parameters:
+//
+//	$1: Reference date (timestamp) - determines the 5-year analysis window
+//	$2: Reference cashier_id
+//
+// Returns:
+//
+//	year: 4-digit year as text
+//	cashier_id: Unique cashier identifier
+//	cashier_name: Full name of the cashier
+//	order_count: Annual transaction volume
+//	total_sales: Yearly revenue generated
+//
+// Business Logic:
+//   - Covers current year plus previous 4 years (5-year total window)
+//   - Maintains data quality by excluding soft-deleted records
+//   - Provides both quantitative (order count) and financial (sales) metrics
+//   - Orders results chronologically then by cashier for consistent reporting
+//   - Designed for workforce planning and incentive calculations
 func (q *Queries) GetYearlyCashierByMerchant(ctx context.Context, arg GetYearlyCashierByMerchantParams) ([]*GetYearlyCashierByMerchantRow, error) {
 	rows, err := q.db.QueryContext(ctx, getYearlyCashierByMerchant, arg.Column1, arg.MerchantID)
 	if err != nil {
@@ -1094,6 +1378,22 @@ type GetYearlyTotalSalesByIdRow struct {
 	TotalSales int32  `json:"total_sales"`
 }
 
+// GetYearlyTotalSalesById: Retrieves yearly sales totals filtered by cashier ID
+// Purpose: Provides year-over-year sales comparison for a specific cashier
+// Parameters:
+//
+//	$1: Current year to analyze (integer)
+//	$2: Merchant ID to filter by
+//
+// Returns:
+//
+//	year: Year as text
+//	total_sales: Annual sales total (0 if no sales)
+//
+// Business Logic:
+//   - Automatically compares current year with previous year
+//   - Includes zero-value years for complete reporting
+//   - Filters by cashier while maintaining data integrity
 func (q *Queries) GetYearlyTotalSalesById(ctx context.Context, arg GetYearlyTotalSalesByIdParams) ([]*GetYearlyTotalSalesByIdRow, error) {
 	rows, err := q.db.QueryContext(ctx, getYearlyTotalSalesById, arg.Column1, arg.CashierID)
 	if err != nil {
@@ -1163,6 +1463,22 @@ type GetYearlyTotalSalesByMerchantRow struct {
 	TotalSales int32  `json:"total_sales"`
 }
 
+// GetYearlyTotalSalesByMerchant: Retrieves yearly sales totals filtered by merchant ID
+// Purpose: Provides year-over-year sales comparison for a specific merchant
+// Parameters:
+//
+//	$1: Current year to analyze (integer)
+//	$2: Merchant ID to filter by
+//
+// Returns:
+//
+//	year: Year as text
+//	total_sales: Annual sales total (0 if no sales)
+//
+// Business Logic:
+//   - Automatically compares current year with previous year
+//   - Includes zero-value years for complete reporting
+//   - Filters by merchant while maintaining data integrity
 func (q *Queries) GetYearlyTotalSalesByMerchant(ctx context.Context, arg GetYearlyTotalSalesByMerchantParams) ([]*GetYearlyTotalSalesByMerchantRow, error) {
 	rows, err := q.db.QueryContext(ctx, getYearlyTotalSalesByMerchant, arg.Column1, arg.MerchantID)
 	if err != nil {
@@ -1226,6 +1542,21 @@ type GetYearlyTotalSalesCashierRow struct {
 	TotalSales int32  `json:"total_sales"`
 }
 
+// GetYearlyTotalSalesCashier: Retrieves yearly sales totals for cashiers across current and previous year
+// Purpose: Year-over-year sales comparison
+// Parameters:
+//
+//	$1: The current year (integer)
+//
+// Returns:
+//
+//	year: The year as text
+//	total_sales: Sum of order totals for that year (0 if no sales)
+//
+// Business Logic:
+//   - Automatically compares current year with previous year
+//   - Includes zero-value years for complete reporting
+//   - Filters by merchant while maintaining data integrity
 func (q *Queries) GetYearlyTotalSalesCashier(ctx context.Context, dollar_1 int32) ([]*GetYearlyTotalSalesCashierRow, error) {
 	rows, err := q.db.QueryContext(ctx, getYearlyTotalSalesCashier, dollar_1)
 	if err != nil {
@@ -1257,7 +1588,12 @@ WHERE
     deleted_at IS NOT NULL
 `
 
-// Restore All Trashed Cashier
+// RestoreAllCashiers: Mass restoration of deleted cashiers
+// Purpose: Recover all trashed cashiers at once
+// Business Logic:
+//   - Reactivates all soft-deleted cashiers
+//   - No parameters needed
+//   - Useful for system recovery scenarios
 func (q *Queries) RestoreAllCashiers(ctx context.Context) error {
 	_, err := q.db.ExecContext(ctx, restoreAllCashiers)
 	return err
@@ -1273,7 +1609,17 @@ WHERE
   RETURNING cashier_id, merchant_id, user_id, name, created_at, updated_at, deleted_at
 `
 
-// Restore Trashed Cashier
+// RestoreCashier: Recovers a soft-deleted cashier
+// Purpose: Reactivate a previously trashed cashier
+// Parameters:
+//
+//	$1: cashier_id - ID of cashier to restore
+//
+// Returns: The restored cashier record
+// Business Logic:
+//   - Nullifies the deleted_at field
+//   - Only works on previously deleted records
+//   - Maintains all original data
 func (q *Queries) RestoreCashier(ctx context.Context, cashierID int32) (*Cashier, error) {
 	row := q.db.QueryRowContext(ctx, restoreCashier, cashierID)
 	var i Cashier
@@ -1299,7 +1645,17 @@ WHERE
     RETURNING cashier_id, merchant_id, user_id, name, created_at, updated_at, deleted_at
 `
 
-// Trash Cashier
+// TrashCashier: Soft-deletes a cashier record
+// Purpose: Remove cashier from active use without permanent deletion
+// Parameters:
+//
+//	$1: cashier_id - ID of cashier to deactivate
+//
+// Returns: The soft-deleted cashier record
+// Business Logic:
+//   - Sets deleted_at timestamp to current time
+//   - Only works on currently active records
+//   - Allows for recovery via restore function
 func (q *Queries) TrashCashier(ctx context.Context, cashierID int32) (*Cashier, error) {
 	row := q.db.QueryRowContext(ctx, trashCashier, cashierID)
 	var i Cashier
@@ -1329,6 +1685,18 @@ type UpdateCashierParams struct {
 	Name      string `json:"name"`
 }
 
+// UpdateCashier: Modifies cashier information
+// Purpose: Update cashier details
+// Parameters:
+//
+//	$1: cashier_id - ID of cashier to update
+//	$2: name - New name value
+//
+// Returns: Updated cashier record
+// Business Logic:
+//   - Automatically updates updated_at timestamp
+//   - Only affects active (non-deleted) records
+//   - Returns the modified record for confirmation
 func (q *Queries) UpdateCashier(ctx context.Context, arg UpdateCashierParams) (*Cashier, error) {
 	row := q.db.QueryRowContext(ctx, updateCashier, arg.CashierID, arg.Name)
 	var i Cashier

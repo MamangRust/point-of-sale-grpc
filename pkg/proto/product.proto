@@ -19,9 +19,9 @@ message FindAllProductRequest {
 message FindAllProductMerchantRequest {
     int32 merchant_id = 1;
     string search = 2;
-    google.protobuf.Int32Value category_id = 3;
-    google.protobuf.Int32Value min_price = 4;
-    google.protobuf.Int32Value max_price = 5;
+    int32 category_id = 3;
+    int32 min_price = 4;
+    int32 max_price = 5;
     int32 page = 6;
     int32 page_size = 7;
 }
@@ -31,6 +31,8 @@ message FindAllProductCategoryRequest {
     int32 page = 2;
     int32 page_size = 3;
     string search = 4;
+    int32 minprice = 5;
+    int32 maxprice = 6;
 }
 
 

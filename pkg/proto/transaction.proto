@@ -255,7 +255,6 @@ service TransactionService {
     rpc FindYearMethodByMerchant(FindYearTransactionByMerchant) returns(ApiResponseTransactionYearPaymentmethod);
     
 
-
     rpc FindByActive(FindAllTransactionRequest) returns (ApiResponsePaginationTransactionDeleteAt) {}
     rpc FindByTrashed(FindAllTransactionRequest) returns (ApiResponsePaginationTransactionDeleteAt) {}
 

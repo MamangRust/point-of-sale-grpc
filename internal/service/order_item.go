@@ -1,12 +1,11 @@
 package service
 
 import (
-	"database/sql"
-	"errors"
-	"net/http"
+	"pointofsale/internal/domain/requests"
 	"pointofsale/internal/domain/response"
 	response_service "pointofsale/internal/mapper/response/service"
 	"pointofsale/internal/repository"
+	orderitem_errors "pointofsale/pkg/errors/order_item_errors"
 	"pointofsale/pkg/logger"
 
 	"go.uber.org/zap"
@@ -30,7 +29,11 @@ func NewOrderItemService(
 	}
 }
 
-func (s *orderItemService) FindAllOrderItems(search string, page, pageSize int) ([]*response.OrderItemResponse, *int, *response.ErrorResponse) {
+func (s *orderItemService) FindAllOrderItems(req *requests.FindAllOrderItems) ([]*response.OrderItemResponse, *int, *response.ErrorResponse) {
+	page := req.Page
+	pageSize := req.PageSize
+	search := req.Search
+
 	s.logger.Debug("Fetching all order items",
 		zap.String("search", search),
 		zap.Int("page", page),
@@ -44,24 +47,30 @@ func (s *orderItemService) FindAllOrderItems(search string, page, pageSize int) 
 		pageSize = 10
 	}
 
-	orderItems, total, err := s.orderItemRepository.FindAllOrderItems(search, page, pageSize)
+	orderItems, totalRecords, err := s.orderItemRepository.FindAllOrderItems(req)
 	if err != nil {
-		s.logger.Error("Failed to retrieve order items list",
+		s.logger.Error("Failed to fetch all order items",
 			zap.Error(err),
-			zap.String("search", search),
-			zap.Int("page", page))
-		return nil, nil, &response.ErrorResponse{
-			Status:  "error",
-			Message: "Unable to retrieve order items at this time",
-			Code:    http.StatusInternalServerError,
-		}
-	}
+			zap.Int("page", page),
+			zap.Int("pageSize", pageSize),
+			zap.String("search", search))
 
-	return s.mapping.ToOrderItemsResponse(orderItems), &total, nil
+		return nil, nil, orderitem_errors.ErrFailedFindAllOrderItems
+	}
+	s.logger.Debug("Successfully fetched order-item",
+		zap.Int("totalRecords", *totalRecords),
+		zap.Int("page", page),
+		zap.Int("pageSize", pageSize))
+
+	return s.mapping.ToOrderItemsResponse(orderItems), totalRecords, nil
 }
 
-func (s *orderItemService) FindByActive(search string, page, pageSize int) ([]*response.OrderItemResponseDeleteAt, *int, *response.ErrorResponse) {
-	s.logger.Debug("Fetching active order items",
+func (s *orderItemService) FindByActive(req *requests.FindAllOrderItems) ([]*response.OrderItemResponseDeleteAt, *int, *response.ErrorResponse) {
+	page := req.Page
+	pageSize := req.PageSize
+	search := req.Search
+
+	s.logger.Debug("Fetching all order items active",
 		zap.String("search", search),
 		zap.Int("page", page),
 		zap.Int("pageSize", pageSize))
@@ -74,23 +83,31 @@ func (s *orderItemService) FindByActive(search string, page, pageSize int) ([]*r
 		pageSize = 10
 	}
 
-	orderItems, total, err := s.orderItemRepository.FindByActive(search, page, pageSize)
+	orderItems, totalRecords, err := s.orderItemRepository.FindByActive(req)
 	if err != nil {
-		s.logger.Error("Failed to retrieve active order items",
+		s.logger.Error("Failed to retrieve order-item active",
 			zap.Error(err),
-			zap.String("search", search))
-		return nil, nil, &response.ErrorResponse{
-			Status:  "error",
-			Message: "Unable to retrieve active order items",
-			Code:    http.StatusInternalServerError,
-		}
+			zap.String("search", req.Search),
+			zap.Int("page", req.Page),
+			zap.Int("pageSize", req.PageSize))
+
+		return nil, nil, orderitem_errors.ErrFailedFindOrderItemsByActive
 	}
 
-	return s.mapping.ToOrderItemsResponseDeleteAt(orderItems), &total, nil
+	s.logger.Debug("Successfully fetched order-items",
+		zap.Int("totalRecords", *totalRecords),
+		zap.Int("page", page),
+		zap.Int("pageSize", pageSize))
+
+	return s.mapping.ToOrderItemsResponseDeleteAt(orderItems), totalRecords, nil
 }
 
-func (s *orderItemService) FindByTrashed(search string, page, pageSize int) ([]*response.OrderItemResponseDeleteAt, *int, *response.ErrorResponse) {
-	s.logger.Debug("Fetching archived order items",
+func (s *orderItemService) FindByTrashed(req *requests.FindAllOrderItems) ([]*response.OrderItemResponseDeleteAt, *int, *response.ErrorResponse) {
+	page := req.Page
+	pageSize := req.PageSize
+	search := req.Search
+
+	s.logger.Debug("Fetching all order items trashed",
 		zap.String("search", search),
 		zap.Int("page", page),
 		zap.Int("pageSize", pageSize))
@@ -103,50 +120,36 @@ func (s *orderItemService) FindByTrashed(search string, page, pageSize int) ([]*
 		pageSize = 10
 	}
 
-	orderItems, total, err := s.orderItemRepository.FindByTrashed(search, page, pageSize)
+	orderItems, totalRecords, err := s.orderItemRepository.FindByTrashed(req)
+
 	if err != nil {
-		s.logger.Error("Failed to retrieve archived order items",
+		s.logger.Error("Failed to retrieve trashed order-items",
 			zap.Error(err),
+			zap.Int("page", page),
+			zap.Int("pageSize", pageSize),
 			zap.String("search", search))
-		return nil, nil, &response.ErrorResponse{
-			Status:  "error",
-			Message: "Unable to retrieve archived order items",
-			Code:    http.StatusInternalServerError,
-		}
+
+		return nil, nil, orderitem_errors.ErrFailedFindOrderItemsByTrashed
 	}
 
-	return s.mapping.ToOrderItemsResponseDeleteAt(orderItems), &total, nil
+	s.logger.Debug("Successfully fetched order-items trashed",
+		zap.Int("totalRecords", *totalRecords),
+		zap.Int("page", page),
+		zap.Int("pageSize", pageSize))
+
+	return s.mapping.ToOrderItemsResponseDeleteAt(orderItems), totalRecords, nil
 }
 
 func (s *orderItemService) FindOrderItemByOrder(orderID int) ([]*response.OrderItemResponse, *response.ErrorResponse) {
 	s.logger.Debug("Fetching order items for order",
 		zap.Int("order_id", orderID))
 
-	if orderID <= 0 {
-		return nil, &response.ErrorResponse{
-			Status:  "error",
-			Message: "Invalid order ID",
-			Code:    http.StatusBadRequest,
-		}
-	}
-
 	orderItems, err := s.orderItemRepository.FindOrderItemByOrder(orderID)
 	if err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
-			return nil, &response.ErrorResponse{
-				Status:  "error",
-				Message: "No items found for the specified order",
-				Code:    http.StatusNotFound,
-			}
-		}
 		s.logger.Error("Failed to retrieve order items",
 			zap.Error(err),
 			zap.Int("order_id", orderID))
-		return nil, &response.ErrorResponse{
-			Status:  "error",
-			Message: "Unable to retrieve order items",
-			Code:    http.StatusInternalServerError,
-		}
+		return nil, orderitem_errors.ErrFailedFindOrderItemByOrder
 	}
 
 	return s.mapping.ToOrderItemsResponse(orderItems), nil

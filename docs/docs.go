@@ -3209,6 +3209,13 @@ const docTemplate = `{
                 "summary": "Update an existing merchant",
                 "parameters": [
                     {
+                        "type": "integer",
+                        "description": "merchant ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
                         "description": "Update merchant request",
                         "name": "request",
                         "in": "body",
@@ -4324,7 +4331,7 @@ const docTemplate = `{
             }
         },
         "/api/order/trashed/{id}": {
-            "get": {
+            "post": {
                 "security": [
                     {
                         "Bearer": []
@@ -4391,6 +4398,13 @@ const docTemplate = `{
                 ],
                 "summary": "Update an existing order",
                 "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Order ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
                     {
                         "description": "Order update details",
                         "name": "request",
@@ -4805,14 +4819,14 @@ const docTemplate = `{
                         "required": true
                     },
                     {
-                        "type": "string",
+                        "type": "number",
                         "description": "Product price",
                         "name": "price",
                         "in": "formData",
                         "required": true
                     },
                     {
-                        "type": "string",
+                        "type": "integer",
                         "description": "Product count in stock",
                         "name": "count_in_stock",
                         "in": "formData",
@@ -4826,14 +4840,14 @@ const docTemplate = `{
                         "required": true
                     },
                     {
-                        "type": "string",
+                        "type": "number",
                         "description": "Product weight",
                         "name": "weight",
                         "in": "formData",
                         "required": true
                     },
                     {
-                        "type": "string",
+                        "type": "number",
                         "description": "Product rating",
                         "name": "rating",
                         "in": "formData",
@@ -4849,7 +4863,7 @@ const docTemplate = `{
                     {
                         "type": "file",
                         "description": "Product image file",
-                        "name": "image_product",
+                        "name": "image",
                         "in": "formData",
                         "required": true
                     },
@@ -5244,14 +5258,14 @@ const docTemplate = `{
                 }
             }
         },
-        "/api/product/update": {
+        "/api/product/update/{id}": {
             "post": {
                 "security": [
                     {
                         "Bearer": []
                     }
                 ],
-                "description": "Update an existing product record with the provided details and an optional image file",
+                "description": "Update a product with the provided details and an image file",
                 "consumes": [
                     "multipart/form-data"
                 ],
@@ -5261,13 +5275,13 @@ const docTemplate = `{
                 "tags": [
                     "Product"
                 ],
-                "summary": "Update an existing product",
+                "summary": "Update a product",
                 "parameters": [
                     {
-                        "type": "string",
+                        "type": "integer",
                         "description": "Product ID",
-                        "name": "product_id",
-                        "in": "formData",
+                        "name": "id",
+                        "in": "path",
                         "required": true
                     },
                     {
@@ -5299,14 +5313,14 @@ const docTemplate = `{
                         "required": true
                     },
                     {
-                        "type": "string",
+                        "type": "number",
                         "description": "Product price",
                         "name": "price",
                         "in": "formData",
                         "required": true
                     },
                     {
-                        "type": "string",
+                        "type": "integer",
                         "description": "Product count in stock",
                         "name": "count_in_stock",
                         "in": "formData",
@@ -5320,14 +5334,14 @@ const docTemplate = `{
                         "required": true
                     },
                     {
-                        "type": "string",
+                        "type": "number",
                         "description": "Product weight",
                         "name": "weight",
                         "in": "formData",
                         "required": true
                     },
                     {
-                        "type": "string",
+                        "type": "number",
                         "description": "Product rating",
                         "name": "rating",
                         "in": "formData",
@@ -5342,9 +5356,10 @@ const docTemplate = `{
                     },
                     {
                         "type": "file",
-                        "description": "New product image file",
-                        "name": "image_product",
-                        "in": "formData"
+                        "description": "Product image file",
+                        "name": "image",
+                        "in": "formData",
+                        "required": true
                     },
                     {
                         "type": "string",
@@ -5356,7 +5371,7 @@ const docTemplate = `{
                 ],
                 "responses": {
                     "200": {
-                        "description": "Successfully updated product",
+                        "description": "Successfully created product",
                         "schema": {
                             "$ref": "#/definitions/response.ApiResponseProduct"
                         }
@@ -5368,7 +5383,7 @@ const docTemplate = `{
                         }
                     },
                     "500": {
-                        "description": "Failed to update product",
+                        "description": "Failed to create product",
                         "schema": {
                             "$ref": "#/definitions/response.ErrorResponse"
                         }

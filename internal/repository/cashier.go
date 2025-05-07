@@ -3,12 +3,11 @@ package repository
 import (
 	"context"
 	"database/sql"
-	"errors"
-	"fmt"
 	"pointofsale/internal/domain/record"
 	"pointofsale/internal/domain/requests"
 	recordmapper "pointofsale/internal/mapper/record"
 	db "pointofsale/pkg/database/schema"
+	"pointofsale/pkg/errors/cashier_errors"
 	"time"
 )
 
@@ -26,19 +25,19 @@ func NewCashierRepository(db *db.Queries, ctx context.Context, mapping recordmap
 	}
 }
 
-func (r *cashierRepository) FindAllCashiers(search string, page, pageSize int) ([]*record.CashierRecord, int, error) {
-	offset := (page - 1) * pageSize
+func (r *cashierRepository) FindAllCashiers(req *requests.FindAllCashiers) ([]*record.CashierRecord, *int, error) {
+	offset := (req.Page - 1) * req.PageSize
 
-	req := db.GetCashiersParams{
-		Column1: search,
-		Limit:   int32(pageSize),
+	reqDb := db.GetCashiersParams{
+		Column1: req.Search,
+		Limit:   int32(req.PageSize),
 		Offset:  int32(offset),
 	}
 
-	res, err := r.db.GetCashiers(r.ctx, req)
+	res, err := r.db.GetCashiers(r.ctx, reqDb)
 
 	if err != nil {
-		return nil, 0, fmt.Errorf("failed to find cashiers: %w", err)
+		return nil, nil, cashier_errors.ErrFindAllCashiers
 	}
 
 	var totalCount int
@@ -49,71 +48,97 @@ func (r *cashierRepository) FindAllCashiers(search string, page, pageSize int) (
 		totalCount = 0
 	}
 
-	return r.mapping.ToCashiersRecordPagination(res), totalCount, nil
+	return r.mapping.ToCashiersRecordPagination(res), &totalCount, nil
 }
 
-func (r *cashierRepository) FindById(user_id int) (*record.CashierRecord, error) {
-	res, err := r.db.GetCashierByID(r.ctx, int32(user_id))
+func (r *cashierRepository) FindByActive(req *requests.FindAllCashiers) ([]*record.CashierRecord, *int, error) {
+	offset := (req.Page - 1) * req.PageSize
+
+	reqDb := db.GetCashiersActiveParams{
+		Column1: req.Search,
+		Limit:   int32(req.PageSize),
+		Offset:  int32(offset),
+	}
+
+	res, err := r.db.GetCashiersActive(r.ctx, reqDb)
 
 	if err != nil {
-		return nil, fmt.Errorf("failed to find cashier: %w", err)
+		return nil, nil, cashier_errors.ErrFindActiveCashiers
+	}
+
+	var totalCount int
+	if len(res) > 0 {
+		totalCount = int(res[0].TotalCount)
+	} else {
+		totalCount = 0
+	}
+
+	return r.mapping.ToCashiersRecordActivePagination(res), &totalCount, nil
+}
+
+func (r *cashierRepository) FindByTrashed(req *requests.FindAllCashiers) ([]*record.CashierRecord, *int, error) {
+	offset := (req.Page - 1) * req.PageSize
+
+	reqDb := db.GetCashiersTrashedParams{
+		Column1: req.Search,
+		Limit:   int32(req.PageSize),
+		Offset:  int32(offset),
+	}
+
+	res, err := r.db.GetCashiersTrashed(r.ctx, reqDb)
+
+	if err != nil {
+		return nil, nil, cashier_errors.ErrFindTrashedCashiers
+	}
+
+	var totalCount int
+	if len(res) > 0 {
+		totalCount = int(res[0].TotalCount)
+	} else {
+		totalCount = 0
+	}
+
+	return r.mapping.ToCashiersRecordTrashedPagination(res), &totalCount, nil
+}
+
+func (r *cashierRepository) FindByMerchant(req *requests.FindAllCashierMerchant) ([]*record.CashierRecord, *int, error) {
+	offset := (req.Page - 1) * req.PageSize
+
+	reqDb := db.GetCashiersByMerchantParams{
+		MerchantID: int32(req.MerchantID),
+		Column2:    req.Search,
+		Limit:      int32(req.PageSize),
+		Offset:     int32(offset),
+	}
+
+	res, err := r.db.GetCashiersByMerchant(r.ctx, reqDb)
+
+	if err != nil {
+		return nil, nil, cashier_errors.ErrFindCashiersByMerchant
+	}
+
+	var totalCount int
+	if len(res) > 0 {
+		totalCount = int(res[0].TotalCount)
+	} else {
+		totalCount = 0
+	}
+
+	return r.mapping.ToCashiersMerchantRecordPagination(res), &totalCount, nil
+}
+
+func (r *cashierRepository) FindById(cashier_id int) (*record.CashierRecord, error) {
+	res, err := r.db.GetCashierById(r.ctx, int32(cashier_id))
+
+	if err != nil {
+		return nil, cashier_errors.ErrFindCashierById
 	}
 
 	return r.mapping.ToCashierRecord(res), nil
 }
 
-func (r *cashierRepository) FindByActive(search string, page, pageSize int) ([]*record.CashierRecord, int, error) {
-	offset := (page - 1) * pageSize
-
-	req := db.GetCashiersActiveParams{
-		Column1: search,
-		Limit:   int32(pageSize),
-		Offset:  int32(offset),
-	}
-
-	res, err := r.db.GetCashiersActive(r.ctx, req)
-
-	if err != nil {
-		return nil, 0, fmt.Errorf("failed to find cashier: %w", err)
-	}
-
-	var totalCount int
-	if len(res) > 0 {
-		totalCount = int(res[0].TotalCount)
-	} else {
-		totalCount = 0
-	}
-
-	return r.mapping.ToCashiersRecordActivePagination(res), totalCount, nil
-}
-
-func (r *cashierRepository) FindByTrashed(search string, page, pageSize int) ([]*record.CashierRecord, int, error) {
-	offset := (page - 1) * pageSize
-
-	req := db.GetCashiersTrashedParams{
-		Column1: search,
-		Limit:   int32(pageSize),
-		Offset:  int32(offset),
-	}
-
-	res, err := r.db.GetCashiersTrashed(r.ctx, req)
-
-	if err != nil {
-		return nil, 0, fmt.Errorf("failed to find cashiers: %w", err)
-	}
-
-	var totalCount int
-	if len(res) > 0 {
-		totalCount = int(res[0].TotalCount)
-	} else {
-		totalCount = 0
-	}
-
-	return r.mapping.ToCashiersRecordTrashedPagination(res), totalCount, nil
-}
-
-func (r *cashierRepository) GetMonthlyTotalSales(year int, month int) ([]*record.CashierRecordMonthTotalSales, error) {
-	currentMonthStart := time.Date(year, time.Month(month), 1, 0, 0, 0, 0, time.UTC)
+func (r *cashierRepository) GetMonthlyTotalSales(req *requests.MonthTotalSales) ([]*record.CashierRecordMonthTotalSales, error) {
+	currentMonthStart := time.Date(req.Year, time.Month(req.Month), 1, 0, 0, 0, 0, time.UTC)
 	currentMonthEnd := currentMonthStart.AddDate(0, 1, -1)
 
 	prevMonthStart := currentMonthStart.AddDate(0, -1, 0)
@@ -127,19 +152,19 @@ func (r *cashierRepository) GetMonthlyTotalSales(year int, month int) ([]*record
 	}
 
 	res, err := r.db.GetMonthlyTotalSalesCashier(r.ctx, params)
+
 	if err != nil {
-		return nil, fmt.Errorf("failed to get monthly total sales cashier: %w", err)
+		return nil, cashier_errors.ErrGetMonthlyTotalSales
 	}
 
 	return r.mapping.ToCashierMonthlyTotalSales(res), nil
 }
 
 func (r *cashierRepository) GetYearlyTotalSales(year int) ([]*record.CashierRecordYearTotalSales, error) {
-
 	res, err := r.db.GetYearlyTotalSalesCashier(r.ctx, int32(year))
 
 	if err != nil {
-		return nil, fmt.Errorf("failed to get yearly total sales cashier: %w", err)
+		return nil, cashier_errors.ErrGetYearlyTotalSales
 	}
 
 	so := r.mapping.ToCashierYearlyTotalSales(res)
@@ -147,8 +172,8 @@ func (r *cashierRepository) GetYearlyTotalSales(year int) ([]*record.CashierReco
 	return so, nil
 }
 
-func (r *cashierRepository) GetMonthlyTotalSalesById(year int, month int, cashier_id int) ([]*record.CashierRecordMonthTotalSales, error) {
-	currentMonthStart := time.Date(year, time.Month(month), 1, 0, 0, 0, 0, time.UTC)
+func (r *cashierRepository) GetMonthlyTotalSalesById(req *requests.MonthTotalSalesCashier) ([]*record.CashierRecordMonthTotalSales, error) {
+	currentMonthStart := time.Date(req.Year, time.Month(req.Month), 1, 0, 0, 0, 0, time.UTC)
 	currentMonthEnd := currentMonthStart.AddDate(0, 1, -1)
 
 	prevMonthStart := currentMonthStart.AddDate(0, -1, 0)
@@ -159,11 +184,11 @@ func (r *cashierRepository) GetMonthlyTotalSalesById(year int, month int, cashie
 		CreatedAt:   sql.NullTime{Time: currentMonthEnd, Valid: true},
 		CreatedAt_2: sql.NullTime{Time: prevMonthStart, Valid: true},
 		CreatedAt_3: sql.NullTime{Time: prevMonthEnd, Valid: true},
-		CashierID:   int32(cashier_id),
+		CashierID:   int32(req.CashierID),
 	})
 
 	if err != nil {
-		return nil, fmt.Errorf("failed to get monthly total sales cashier: %w", err)
+		return nil, cashier_errors.ErrGetMonthlyTotalSalesById
 	}
 
 	so := r.mapping.ToCashierMonthlyTotalSalesById(res)
@@ -171,14 +196,14 @@ func (r *cashierRepository) GetMonthlyTotalSalesById(year int, month int, cashie
 	return so, nil
 }
 
-func (r *cashierRepository) GetYearlyTotalSalesById(year int, cashier_id int) ([]*record.CashierRecordYearTotalSales, error) {
+func (r *cashierRepository) GetYearlyTotalSalesById(req *requests.YearTotalSalesCashier) ([]*record.CashierRecordYearTotalSales, error) {
 	res, err := r.db.GetYearlyTotalSalesById(r.ctx, db.GetYearlyTotalSalesByIdParams{
-		Column1:   int32(year),
-		CashierID: int32(cashier_id),
+		Column1:   int32(req.Year),
+		CashierID: int32(req.CashierID),
 	})
 
 	if err != nil {
-		return nil, fmt.Errorf("failed to get yearly total sales cashier: %w", err)
+		return nil, cashier_errors.ErrGetYearlyTotalSalesById
 	}
 
 	so := r.mapping.ToCashierYearlyTotalSalesById(res)
@@ -186,8 +211,8 @@ func (r *cashierRepository) GetYearlyTotalSalesById(year int, cashier_id int) ([
 	return so, nil
 }
 
-func (r *cashierRepository) GetMonthlyTotalSalesByMerchant(year int, month int, merchant_id int) ([]*record.CashierRecordMonthTotalSales, error) {
-	currentMonthStart := time.Date(year, time.Month(month), 1, 0, 0, 0, 0, time.UTC)
+func (r *cashierRepository) GetMonthlyTotalSalesByMerchant(req *requests.MonthTotalSalesMerchant) ([]*record.CashierRecordMonthTotalSales, error) {
+	currentMonthStart := time.Date(req.Year, time.Month(req.Month), 1, 0, 0, 0, 0, time.UTC)
 	currentMonthEnd := currentMonthStart.AddDate(0, 1, -1)
 	prevMonthStart := currentMonthStart.AddDate(0, -1, 0)
 	prevMonthEnd := prevMonthStart.AddDate(0, 1, -1)
@@ -197,11 +222,11 @@ func (r *cashierRepository) GetMonthlyTotalSalesByMerchant(year int, month int, 
 		CreatedAt:   sql.NullTime{Time: currentMonthEnd, Valid: true},
 		CreatedAt_2: sql.NullTime{Time: prevMonthStart, Valid: true},
 		CreatedAt_3: sql.NullTime{Time: prevMonthEnd, Valid: true},
-		MerchantID:  int32(merchant_id),
+		MerchantID:  int32(req.MerchantID),
 	})
 
 	if err != nil {
-		return nil, fmt.Errorf("failed to get monthly total sales cashier: %w", err)
+		return nil, cashier_errors.ErrGetMonthlyTotalSalesByMerchant
 	}
 
 	so := r.mapping.ToCashierMonthlyTotalSalesByMerchant(res)
@@ -209,14 +234,14 @@ func (r *cashierRepository) GetMonthlyTotalSalesByMerchant(year int, month int, 
 	return so, nil
 }
 
-func (r *cashierRepository) GetYearlyTotalSalesByMerchant(year int, merchant_id int) ([]*record.CashierRecordYearTotalSales, error) {
+func (r *cashierRepository) GetYearlyTotalSalesByMerchant(req *requests.YearTotalSalesMerchant) ([]*record.CashierRecordYearTotalSales, error) {
 	res, err := r.db.GetYearlyTotalSalesByMerchant(r.ctx, db.GetYearlyTotalSalesByMerchantParams{
-		Column1:    int32(year),
-		MerchantID: int32(merchant_id),
+		Column1:    int32(req.Year),
+		MerchantID: int32(req.MerchantID),
 	})
 
 	if err != nil {
-		return nil, fmt.Errorf("failed to get yearly total sales cashier: %w", err)
+		return nil, cashier_errors.ErrGetYearlyTotalSalesByMerchant
 	}
 
 	so := r.mapping.ToCashierYearlyTotalSalesByMerchant(res)
@@ -230,7 +255,7 @@ func (r *cashierRepository) GetMonthyCashier(year int) ([]*record.CashierRecordM
 	res, err := r.db.GetMonthlyCashier(r.ctx, yearStart)
 
 	if err != nil {
-		return nil, fmt.Errorf("failed to retrieve monthly sales data for year %d: %w", year, err)
+		return nil, cashier_errors.ErrGetMonthlyCashier
 	}
 
 	return r.mapping.ToCashierMonthlySales(res), nil
@@ -243,97 +268,71 @@ func (r *cashierRepository) GetYearlyCashier(year int) ([]*record.CashierRecordY
 	res, err := r.db.GetYearlyCashier(r.ctx, yearStart)
 
 	if err != nil {
-		return nil, fmt.Errorf("failed to retrieve yearly sales data for year %d: %w", year, err)
+		return nil, cashier_errors.ErrGetYearlyCashier
 	}
 
 	return r.mapping.ToCashierYearlySales(res), nil
 }
 
-func (r *cashierRepository) GetMonthlyCashierByMerchant(year int, merchant_id int) ([]*record.CashierRecordMonthSales, error) {
-	yearStart := time.Date(year, 1, 1, 0, 0, 0, 0, time.UTC)
+func (r *cashierRepository) GetMonthlyCashierByMerchant(req *requests.MonthCashierMerchant) ([]*record.CashierRecordMonthSales, error) {
+	yearStart := time.Date(req.Year, 1, 1, 0, 0, 0, 0, time.UTC)
 
 	res, err := r.db.GetMonthlyCashierByMerchant(r.ctx, db.GetMonthlyCashierByMerchantParams{
 		Column1:    yearStart,
-		MerchantID: int32(merchant_id),
+		MerchantID: int32(req.MerchantID),
 	})
 
 	if err != nil {
-		return nil, fmt.Errorf("failed to retrieve monthly sales data for merchant %d in year %d: %w", merchant_id, year, err)
+		return nil, cashier_errors.ErrGetMonthlyCashierByMerchant
 	}
 
 	return r.mapping.ToCashierMonthlySalesByMerchant(res), nil
 
 }
 
-func (r *cashierRepository) GetYearlyCashierByMerchant(year int, merchant_id int) ([]*record.CashierRecordYearSales, error) {
-	yearStart := time.Date(year, 1, 1, 0, 0, 0, 0, time.UTC)
+func (r *cashierRepository) GetYearlyCashierByMerchant(req *requests.YearCashierMerchant) ([]*record.CashierRecordYearSales, error) {
+	yearStart := time.Date(req.Year, 1, 1, 0, 0, 0, 0, time.UTC)
 
 	res, err := r.db.GetYearlyCashierByMerchant(r.ctx, db.GetYearlyCashierByMerchantParams{
 		Column1:    yearStart,
-		MerchantID: int32(merchant_id),
+		MerchantID: int32(req.Year),
 	})
 
 	if err != nil {
-		return nil, fmt.Errorf("failed to retrieve monthly sales data for merchant %d in year %d: %w", merchant_id, year, err)
+		return nil, cashier_errors.ErrGetYearlyCashierByMerchant
 	}
 
 	return r.mapping.ToCashierYearlySalesByMerchant(res), nil
 }
 
-func (r *cashierRepository) GetMonthlyCashierById(year int, cashier_id int) ([]*record.CashierRecordMonthSales, error) {
-	yearStart := time.Date(year, 1, 1, 0, 0, 0, 0, time.UTC)
+func (r *cashierRepository) GetMonthlyCashierById(req *requests.MonthCashierId) ([]*record.CashierRecordMonthSales, error) {
+	yearStart := time.Date(req.Year, 1, 1, 0, 0, 0, 0, time.UTC)
 
 	res, err := r.db.GetMonthlyCashierByCashierId(r.ctx, db.GetMonthlyCashierByCashierIdParams{
 		Column1:   yearStart,
-		CashierID: int32(cashier_id),
+		CashierID: int32(req.Year),
 	})
 
 	if err != nil {
-		return nil, fmt.Errorf("failed to retrieve yearly sales data for cashier ID %d in year %d: %w", cashier_id, year, err)
+		return nil, cashier_errors.ErrGetMonthlyCashierById
 	}
 
 	return r.mapping.ToCashierMonthlySalesById(res), nil
 }
 
-func (r *cashierRepository) GetYearlyCashierById(year int, cashier_id int) ([]*record.CashierRecordYearSales, error) {
-	yearStart := time.Date(year, 1, 1, 0, 0, 0, 0, time.UTC)
+func (r *cashierRepository) GetYearlyCashierById(req *requests.YearCashierId) ([]*record.CashierRecordYearSales, error) {
+	yearStart := time.Date(req.Year, 1, 1, 0, 0, 0, 0, time.UTC)
 
 	res, err := r.db.GetYearlyCashierByCashierId(r.ctx, db.GetYearlyCashierByCashierIdParams{
 		Column1:   yearStart,
-		CashierID: int32(cashier_id),
+		CashierID: int32(req.CashierID),
 	})
 
 	if err != nil {
-		return nil, fmt.Errorf("failed to retrieve yearly sales data for cashier ID %d in year %d: %w", cashier_id, year, err)
+		return nil, cashier_errors.ErrGetYearlyCashierById
 	}
 
 	return r.mapping.ToCashierYearlySalesById(res), nil
-}
-
-func (r *cashierRepository) FindByMerchant(merchant_id int, search string, page, pageSize int) ([]*record.CashierRecord, int, error) {
-	offset := (page - 1) * pageSize
-
-	req := db.GetCashiersByMerchantParams{
-		MerchantID: int32(merchant_id),
-		Column2:    search,
-		Limit:      int32(pageSize),
-		Offset:     int32(offset),
-	}
-
-	res, err := r.db.GetCashiersByMerchant(r.ctx, req)
-
-	if err != nil {
-		return nil, 0, fmt.Errorf("failed to find cashiers: %w", err)
-	}
-
-	var totalCount int
-	if len(res) > 0 {
-		totalCount = int(res[0].TotalCount)
-	} else {
-		totalCount = 0
-	}
-
-	return r.mapping.ToCashiersMerchantRecordPagination(res), totalCount, nil
 }
 
 func (r *cashierRepository) CreateCashier(request *requests.CreateCashierRequest) (*record.CashierRecord, error) {
@@ -346,7 +345,7 @@ func (r *cashierRepository) CreateCashier(request *requests.CreateCashierRequest
 	cashier, err := r.db.CreateCashier(r.ctx, req)
 
 	if err != nil {
-		return nil, errors.New("failed create user")
+		return nil, cashier_errors.ErrCreateCashier
 	}
 
 	return r.mapping.ToCashierRecord(cashier), nil
@@ -361,7 +360,7 @@ func (r *cashierRepository) UpdateCashier(request *requests.UpdateCashierRequest
 	res, err := r.db.UpdateCashier(r.ctx, req)
 
 	if err != nil {
-		return nil, fmt.Errorf("failed to find user: %w", err)
+		return nil, cashier_errors.ErrUpdateCashier
 	}
 
 	return r.mapping.ToCashierRecord(res), nil
@@ -371,7 +370,7 @@ func (r *cashierRepository) TrashedCashier(cashier_id int) (*record.CashierRecor
 	res, err := r.db.TrashCashier(r.ctx, int32(cashier_id))
 
 	if err != nil {
-		return nil, fmt.Errorf("failed to trash user: %w", err)
+		return nil, cashier_errors.ErrTrashedCashier
 	}
 
 	return r.mapping.ToCashierRecord(res), nil
@@ -381,7 +380,7 @@ func (r *cashierRepository) RestoreCashier(cashier_id int) (*record.CashierRecor
 	res, err := r.db.RestoreCashier(r.ctx, int32(cashier_id))
 
 	if err != nil {
-		return nil, fmt.Errorf("failed to restore cashier: %w", err)
+		return nil, cashier_errors.ErrRestoreCashier
 	}
 
 	return r.mapping.ToCashierRecord(res), nil
@@ -391,7 +390,7 @@ func (r *cashierRepository) DeleteCashierPermanent(cashier_id int) (bool, error)
 	err := r.db.DeleteCashierPermanently(r.ctx, int32(cashier_id))
 
 	if err != nil {
-		return false, fmt.Errorf("failed to delete cashier: %w", err)
+		return false, cashier_errors.ErrDeleteCashierPermanent
 	}
 
 	return true, nil
@@ -401,8 +400,9 @@ func (r *cashierRepository) RestoreAllCashier() (bool, error) {
 	err := r.db.RestoreAllCashiers(r.ctx)
 
 	if err != nil {
-		return false, fmt.Errorf("failed to restore all cashier: %w", err)
+		return false, cashier_errors.ErrRestoreAllCashiers
 	}
+
 	return true, nil
 }
 
@@ -410,7 +410,8 @@ func (r *cashierRepository) DeleteAllCashierPermanent() (bool, error) {
 	err := r.db.DeleteAllPermanentCashiers(r.ctx)
 
 	if err != nil {
-		return false, fmt.Errorf("failed to delete all cashier permanently: %w", err)
+		return false, cashier_errors.ErrDeleteAllCashiersPermanent
 	}
+
 	return true, nil
 }

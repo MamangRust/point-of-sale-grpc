@@ -34,11 +34,11 @@ type RoleProtoMapper interface {
 type CategoryProtoMapper interface {
 	ToProtoResponseMonthlyTotalPrice(status string, message string, row []*response.CategoriesMonthlyTotalPriceResponse) *pb.ApiResponseCategoryMonthlyTotalPrice
 	ToProtoResponseYearlyTotalPrice(status string, message string, row []*response.CategoriesYearlyTotalPriceResponse) *pb.ApiResponseCategoryYearlyTotalPrice
+	ToProtoResponseCategoryMonthlyPrice(status string, message string, row []*response.CategoryMonthPriceResponse) *pb.ApiResponseCategoryMonthPrice
+	ToProtoResponseCategoryYearlyPrice(status string, message string, row []*response.CategoryYearPriceResponse) *pb.ApiResponseCategoryYearPrice
 
 	ToProtoResponsesCategory(status string, message string, pbResponse []*response.CategoryResponse) *pb.ApiResponsesCategory
 	ToProtoResponseCategoryDeleteAt(status string, message string, pbResponse *response.CategoryResponseDeleteAt) *pb.ApiResponseCategoryDeleteAt
-	ToProtoResponseCategoryMonthlyPrice(status string, message string, row []*response.CategoryMonthPriceResponse) *pb.ApiResponseCategoryMonthPrice
-	ToProtoResponseCategoryYearlyPrice(status string, message string, row []*response.CategoryYearPriceResponse) *pb.ApiResponseCategoryYearPrice
 
 	ToProtoResponseCategoryAll(status string, message string) *pb.ApiResponseCategoryAll
 	ToProtoResponseCategory(status string, message string, pbResponse *response.CategoryResponse) *pb.ApiResponseCategory

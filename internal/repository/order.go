@@ -3,12 +3,11 @@ package repository
 import (
 	"context"
 	"database/sql"
-	"errors"
-	"fmt"
 	"pointofsale/internal/domain/record"
 	"pointofsale/internal/domain/requests"
 	recordmapper "pointofsale/internal/mapper/record"
 	db "pointofsale/pkg/database/schema"
+	"pointofsale/pkg/errors/order_errors"
 	"time"
 )
 
@@ -26,19 +25,19 @@ func NewOrderRepository(db *db.Queries, ctx context.Context, mapping recordmappe
 	}
 }
 
-func (r *orderRepository) FindAllOrders(search string, page, pageSize int) ([]*record.OrderRecord, int, error) {
-	offset := (page - 1) * pageSize
+func (r *orderRepository) FindAllOrders(req *requests.FindAllOrders) ([]*record.OrderRecord, *int, error) {
+	offset := (req.Page - 1) * req.PageSize
 
-	req := db.GetOrdersParams{
-		Column1: search,
-		Limit:   int32(pageSize),
+	reqDb := db.GetOrdersParams{
+		Column1: req.Search,
+		Limit:   int32(req.PageSize),
 		Offset:  int32(offset),
 	}
 
-	res, err := r.db.GetOrders(r.ctx, req)
+	res, err := r.db.GetOrders(r.ctx, reqDb)
 
 	if err != nil {
-		return nil, 0, fmt.Errorf("failed to find users: %w", err)
+		return nil, nil, order_errors.ErrFindAllOrders
 	}
 
 	var totalCount int
@@ -48,22 +47,22 @@ func (r *orderRepository) FindAllOrders(search string, page, pageSize int) ([]*r
 		totalCount = 0
 	}
 
-	return r.mapping.ToOrdersRecordPagination(res), totalCount, nil
+	return r.mapping.ToOrdersRecordPagination(res), &totalCount, nil
 }
 
-func (r *orderRepository) FindByActive(search string, page, pageSize int) ([]*record.OrderRecord, int, error) {
-	offset := (page - 1) * pageSize
+func (r *orderRepository) FindByActive(req *requests.FindAllOrders) ([]*record.OrderRecord, *int, error) {
+	offset := (req.Page - 1) * req.PageSize
 
-	req := db.GetOrdersActiveParams{
-		Column1: search,
-		Limit:   int32(pageSize),
+	reqDb := db.GetOrdersActiveParams{
+		Column1: req.Search,
+		Limit:   int32(req.PageSize),
 		Offset:  int32(offset),
 	}
 
-	res, err := r.db.GetOrdersActive(r.ctx, req)
+	res, err := r.db.GetOrdersActive(r.ctx, reqDb)
 
 	if err != nil {
-		return nil, 0, fmt.Errorf("failed to find users: %w", err)
+		return nil, nil, order_errors.ErrFindByActive
 	}
 
 	var totalCount int
@@ -73,22 +72,22 @@ func (r *orderRepository) FindByActive(search string, page, pageSize int) ([]*re
 		totalCount = 0
 	}
 
-	return r.mapping.ToOrdersRecordActivePagination(res), totalCount, nil
+	return r.mapping.ToOrdersRecordActivePagination(res), &totalCount, nil
 }
 
-func (r *orderRepository) FindByTrashed(search string, page, pageSize int) ([]*record.OrderRecord, int, error) {
-	offset := (page - 1) * pageSize
+func (r *orderRepository) FindByTrashed(req *requests.FindAllOrders) ([]*record.OrderRecord, *int, error) {
+	offset := (req.Page - 1) * req.PageSize
 
-	req := db.GetOrdersTrashedParams{
-		Column1: search,
-		Limit:   int32(pageSize),
+	reqDb := db.GetOrdersTrashedParams{
+		Column1: req.Search,
+		Limit:   int32(req.PageSize),
 		Offset:  int32(offset),
 	}
 
-	res, err := r.db.GetOrdersTrashed(r.ctx, req)
+	res, err := r.db.GetOrdersTrashed(r.ctx, reqDb)
 
 	if err != nil {
-		return nil, 0, fmt.Errorf("failed to find users: %w", err)
+		return nil, nil, order_errors.ErrFindByTrashed
 	}
 
 	var totalCount int
@@ -98,11 +97,36 @@ func (r *orderRepository) FindByTrashed(search string, page, pageSize int) ([]*r
 		totalCount = 0
 	}
 
-	return r.mapping.ToOrdersRecordTrashedPagination(res), totalCount, nil
+	return r.mapping.ToOrdersRecordTrashedPagination(res), &totalCount, nil
 }
 
-func (r *orderRepository) GetMonthlyTotalRevenue(year int, month int) ([]*record.OrderMonthlyTotalRevenueRecord, error) {
-	currentMonthStart := time.Date(year, time.Month(month), 1, 0, 0, 0, 0, time.UTC)
+func (r *orderRepository) FindByMerchant(req *requests.FindAllOrderMerchant) ([]*record.OrderRecord, *int, error) {
+	offset := (req.Page - 1) * req.PageSize
+
+	reqDb := db.GetOrdersByMerchantParams{
+		Column1: req.Search,
+		Limit:   int32(req.PageSize),
+		Offset:  int32(offset),
+	}
+
+	res, err := r.db.GetOrdersByMerchant(r.ctx, reqDb)
+
+	if err != nil {
+		return nil, nil, order_errors.ErrFindByMerchant
+	}
+
+	var totalCount int
+	if len(res) > 0 {
+		totalCount = int(res[0].TotalCount)
+	} else {
+		totalCount = 0
+	}
+
+	return r.mapping.ToOrdersRecordByMerchantPagination(res), &totalCount, nil
+}
+
+func (r *orderRepository) GetMonthlyTotalRevenue(req *requests.MonthTotalRevenue) ([]*record.OrderMonthlyTotalRevenueRecord, error) {
+	currentMonthStart := time.Date(req.Year, time.Month(req.Month), 1, 0, 0, 0, 0, time.UTC)
 	currentMonthEnd := currentMonthStart.AddDate(0, 1, -1)
 	prevMonthStart := currentMonthStart.AddDate(0, -1, 0)
 	prevMonthEnd := prevMonthStart.AddDate(0, 1, -1)
@@ -115,7 +139,7 @@ func (r *orderRepository) GetMonthlyTotalRevenue(year int, month int) ([]*record
 	})
 
 	if err != nil {
-		return nil, fmt.Errorf("failed to get month total revenue order: %w", err)
+		return nil, order_errors.ErrGetMonthlyTotalRevenue
 	}
 
 	so := r.mapping.ToOrderMonthlyTotalRevenues(res)
@@ -127,7 +151,7 @@ func (r *orderRepository) GetYearlyTotalRevenue(year int) ([]*record.OrderYearly
 	res, err := r.db.GetYearlyTotalRevenue(r.ctx, int32(year))
 
 	if err != nil {
-		return nil, fmt.Errorf("failed to get yearly total revenue order: %w", err)
+		return nil, order_errors.ErrGetYearlyTotalRevenue
 	}
 
 	so := r.mapping.ToOrderYearlyTotalRevenues(res)
@@ -135,8 +159,8 @@ func (r *orderRepository) GetYearlyTotalRevenue(year int) ([]*record.OrderYearly
 	return so, nil
 }
 
-func (r *orderRepository) GetMonthlyTotalRevenueById(year int, month int, order_id int) ([]*record.OrderMonthlyTotalRevenueRecord, error) {
-	currentMonthStart := time.Date(year, time.Month(month), 1, 0, 0, 0, 0, time.UTC)
+func (r *orderRepository) GetMonthlyTotalRevenueById(req *requests.MonthTotalRevenueOrder) ([]*record.OrderMonthlyTotalRevenueRecord, error) {
+	currentMonthStart := time.Date(req.Year, time.Month(req.Month), 1, 0, 0, 0, 0, time.UTC)
 	currentMonthEnd := currentMonthStart.AddDate(0, 1, -1)
 	prevMonthStart := currentMonthStart.AddDate(0, -1, 0)
 	prevMonthEnd := prevMonthStart.AddDate(0, 1, -1)
@@ -146,11 +170,11 @@ func (r *orderRepository) GetMonthlyTotalRevenueById(year int, month int, order_
 		CreatedAt:   sql.NullTime{Time: currentMonthEnd, Valid: true},
 		CreatedAt_2: sql.NullTime{Time: prevMonthStart, Valid: true},
 		CreatedAt_3: sql.NullTime{Time: prevMonthEnd, Valid: true},
-		OrderID:     int32(order_id),
+		OrderID:     int32(req.OrderID),
 	})
 
 	if err != nil {
-		return nil, fmt.Errorf("failed to get month total revenue order: %w", err)
+		return nil, order_errors.ErrGetMonthlyTotalRevenue
 	}
 
 	so := r.mapping.ToOrderMonthlyTotalRevenuesById(res)
@@ -158,14 +182,14 @@ func (r *orderRepository) GetMonthlyTotalRevenueById(year int, month int, order_
 	return so, nil
 }
 
-func (r *orderRepository) GetYearlyTotalRevenueById(year int, order_id int) ([]*record.OrderYearlyTotalRevenueRecord, error) {
+func (r *orderRepository) GetYearlyTotalRevenueById(req *requests.YearTotalRevenueOrder) ([]*record.OrderYearlyTotalRevenueRecord, error) {
 	res, err := r.db.GetYearlyTotalRevenueById(r.ctx, db.GetYearlyTotalRevenueByIdParams{
-		Column1: int32(year),
-		OrderID: int32(order_id),
+		Column1: int32(req.Year),
+		OrderID: int32(req.OrderID),
 	})
 
 	if err != nil {
-		return nil, fmt.Errorf("failed to get yearly total revenue order: %w", err)
+		return nil, order_errors.ErrGetYearlyTotalRevenue
 	}
 
 	so := r.mapping.ToOrderYearlyTotalRevenuesById(res)
@@ -173,8 +197,8 @@ func (r *orderRepository) GetYearlyTotalRevenueById(year int, order_id int) ([]*
 	return so, nil
 }
 
-func (r *orderRepository) GetMonthlyTotalRevenueByMerchant(year int, month int, merchant_id int) ([]*record.OrderMonthlyTotalRevenueRecord, error) {
-	currentMonthStart := time.Date(year, time.Month(month), 1, 0, 0, 0, 0, time.UTC)
+func (r *orderRepository) GetMonthlyTotalRevenueByMerchant(req *requests.MonthTotalRevenueMerchant) ([]*record.OrderMonthlyTotalRevenueRecord, error) {
+	currentMonthStart := time.Date(req.Year, time.Month(req.Month), 1, 0, 0, 0, 0, time.UTC)
 	currentMonthEnd := currentMonthStart.AddDate(0, 1, -1)
 	prevMonthStart := currentMonthStart.AddDate(0, -1, 0)
 	prevMonthEnd := prevMonthStart.AddDate(0, 1, -1)
@@ -184,11 +208,11 @@ func (r *orderRepository) GetMonthlyTotalRevenueByMerchant(year int, month int, 
 		CreatedAt:   sql.NullTime{Time: currentMonthEnd, Valid: true},
 		CreatedAt_2: sql.NullTime{Time: prevMonthStart, Valid: true},
 		CreatedAt_3: sql.NullTime{Time: prevMonthEnd, Valid: true},
-		MerchantID:  int32(merchant_id),
+		MerchantID:  int32(req.MerchantID),
 	})
 
 	if err != nil {
-		return nil, fmt.Errorf("failed to get month total revenue order: %w", err)
+		return nil, order_errors.ErrGetMonthlyTotalRevenue
 	}
 
 	so := r.mapping.ToOrderMonthlyTotalRevenuesByMerchant(res)
@@ -196,14 +220,14 @@ func (r *orderRepository) GetMonthlyTotalRevenueByMerchant(year int, month int, 
 	return so, nil
 }
 
-func (r *orderRepository) GetYearlyTotalRevenueByMerchant(year int, merchant_id int) ([]*record.OrderYearlyTotalRevenueRecord, error) {
+func (r *orderRepository) GetYearlyTotalRevenueByMerchant(req *requests.YearTotalRevenueMerchant) ([]*record.OrderYearlyTotalRevenueRecord, error) {
 	res, err := r.db.GetYearlyTotalRevenueByMerchant(r.ctx, db.GetYearlyTotalRevenueByMerchantParams{
-		Column1:    int32(year),
-		MerchantID: int32(merchant_id),
+		Column1:    int32(req.Year),
+		MerchantID: int32(req.MerchantID),
 	})
 
 	if err != nil {
-		return nil, fmt.Errorf("failed to get yearly total revenue order: %w", err)
+		return nil, order_errors.ErrGetYearlyTotalRevenue
 	}
 
 	so := r.mapping.ToOrderYearlyTotalRevenuesByMerchant(res)
@@ -216,7 +240,7 @@ func (r *orderRepository) GetMonthlyOrder(year int) ([]*record.OrderMonthlyRecor
 	res, err := r.db.GetMonthlyOrder(r.ctx, yearStart)
 
 	if err != nil {
-		return nil, fmt.Errorf("failed to get monthly orders: %w", err)
+		return nil, order_errors.ErrGetMonthlyOrder
 	}
 
 	return r.mapping.ToOrderMonthlyPrices(res), nil
@@ -227,70 +251,46 @@ func (r *orderRepository) GetYearlyOrder(year int) ([]*record.OrderYearlyRecord,
 
 	res, err := r.db.GetYearlyOrder(r.ctx, yearStart)
 	if err != nil {
-		return nil, fmt.Errorf("failed to get yearly orders: %w", err)
+		return nil, order_errors.ErrGetYearlyOrder
 	}
 
 	return r.mapping.ToOrderYearlyPrices(res), nil
 }
 
-func (r *orderRepository) GetMonthlyOrderByMerchant(year int, merchant_id int) ([]*record.OrderMonthlyRecord, error) {
-	yearStart := time.Date(year, 1, 1, 0, 0, 0, 0, time.UTC)
+func (r *orderRepository) GetMonthlyOrderByMerchant(req *requests.MonthOrderMerchant) ([]*record.OrderMonthlyRecord, error) {
+	yearStart := time.Date(req.Year, 1, 1, 0, 0, 0, 0, time.UTC)
 
 	res, err := r.db.GetMonthlyOrderByMerchant(r.ctx, db.GetMonthlyOrderByMerchantParams{
 		Column1:    yearStart,
-		MerchantID: int32(merchant_id),
+		MerchantID: int32(req.MerchantID),
 	})
 	if err != nil {
-		return nil, fmt.Errorf("failed to get monthly orders for merchant %d: %w", merchant_id, err)
+		return nil, order_errors.ErrGetMonthlyOrderByMerchant
 	}
 
 	return r.mapping.ToOrderMonthlyPricesByMerchant(res), nil
 }
 
-func (r *orderRepository) GetYearlyOrderByMerchant(year int, merchant_id int) ([]*record.OrderYearlyRecord, error) {
-	yearStart := time.Date(year, 1, 1, 0, 0, 0, 0, time.UTC)
+func (r *orderRepository) GetYearlyOrderByMerchant(req *requests.YearOrderMerchant) ([]*record.OrderYearlyRecord, error) {
+	yearStart := time.Date(req.Year, 1, 1, 0, 0, 0, 0, time.UTC)
 
 	res, err := r.db.GetYearlyOrderByMerchant(r.ctx, db.GetYearlyOrderByMerchantParams{
 		Column1:    yearStart,
-		MerchantID: int32(merchant_id),
+		MerchantID: int32(req.MerchantID),
 	})
+
 	if err != nil {
-		return nil, fmt.Errorf("failed to get yearly orders for merchant %d: %w", merchant_id, err)
+		return nil, order_errors.ErrGetYearlyOrderByMerchant
 	}
 
 	return r.mapping.ToOrderYearlyPricesByMerchant(res), nil
 }
 
-func (r *orderRepository) FindByMerchant(merchant_id int, search string, page, pageSize int) ([]*record.OrderRecord, int, error) {
-	offset := (page - 1) * pageSize
-
-	req := db.GetOrdersByMerchantParams{
-		Column1: search,
-		Limit:   int32(pageSize),
-		Offset:  int32(offset),
-	}
-
-	res, err := r.db.GetOrdersByMerchant(r.ctx, req)
+func (r *orderRepository) FindById(order_id int) (*record.OrderRecord, error) {
+	res, err := r.db.GetOrderByID(r.ctx, int32(order_id))
 
 	if err != nil {
-		return nil, 0, fmt.Errorf("failed to find users: %w", err)
-	}
-
-	var totalCount int
-	if len(res) > 0 {
-		totalCount = int(res[0].TotalCount)
-	} else {
-		totalCount = 0
-	}
-
-	return r.mapping.ToOrdersRecordByMerchantPagination(res), totalCount, nil
-}
-
-func (r *orderRepository) FindById(user_id int) (*record.OrderRecord, error) {
-	res, err := r.db.GetOrderByID(r.ctx, int32(user_id))
-
-	if err != nil {
-		return nil, fmt.Errorf("failed to find users: %w", err)
+		return nil, order_errors.ErrFindById
 	}
 
 	return r.mapping.ToOrderRecord(res), nil
@@ -306,7 +306,7 @@ func (r *orderRepository) CreateOrder(request *requests.CreateOrderRecordRequest
 	user, err := r.db.CreateOrder(r.ctx, req)
 
 	if err != nil {
-		return nil, errors.New("failed create order")
+		return nil, order_errors.ErrCreateOrder
 	}
 
 	return r.mapping.ToOrderRecord(user), nil
@@ -321,37 +321,37 @@ func (r *orderRepository) UpdateOrder(request *requests.UpdateOrderRecordRequest
 	res, err := r.db.UpdateOrder(r.ctx, req)
 
 	if err != nil {
-		return nil, fmt.Errorf("failed to update order: %w", err)
+		return nil, order_errors.ErrUpdateOrder
 	}
 
 	return r.mapping.ToOrderRecord(res), nil
 }
 
-func (r *orderRepository) TrashedOrder(user_id int) (*record.OrderRecord, error) {
-	res, err := r.db.TrashedOrder(r.ctx, int32(user_id))
+func (r *orderRepository) TrashedOrder(order_id int) (*record.OrderRecord, error) {
+	res, err := r.db.TrashedOrder(r.ctx, int32(order_id))
 
 	if err != nil {
-		return nil, fmt.Errorf("failed to trash order: %w", err)
+		return nil, order_errors.ErrTrashedOrder
 	}
 
 	return r.mapping.ToOrderRecord(res), nil
 }
 
-func (r *orderRepository) RestoreOrder(user_id int) (*record.OrderRecord, error) {
-	res, err := r.db.RestoreOrder(r.ctx, int32(user_id))
+func (r *orderRepository) RestoreOrder(order_id int) (*record.OrderRecord, error) {
+	res, err := r.db.RestoreOrder(r.ctx, int32(order_id))
 
 	if err != nil {
-		return nil, fmt.Errorf("failed to restore order: %w", err)
+		return nil, order_errors.ErrRestoreOrder
 	}
 
 	return r.mapping.ToOrderRecord(res), nil
 }
 
-func (r *orderRepository) DeleteOrderPermanent(user_id int) (bool, error) {
-	err := r.db.DeleteOrderPermanently(r.ctx, int32(user_id))
+func (r *orderRepository) DeleteOrderPermanent(order_id int) (bool, error) {
+	err := r.db.DeleteOrderPermanently(r.ctx, int32(order_id))
 
 	if err != nil {
-		return false, fmt.Errorf("failed to delete order: %w", err)
+		return false, order_errors.ErrDeleteOrderPermanent
 	}
 
 	return true, nil
@@ -361,8 +361,9 @@ func (r *orderRepository) RestoreAllOrder() (bool, error) {
 	err := r.db.RestoreAllOrders(r.ctx)
 
 	if err != nil {
-		return false, fmt.Errorf("failed to restore all orders: %w", err)
+		return false, order_errors.ErrRestoreAllOrder
 	}
+
 	return true, nil
 }
 
@@ -370,7 +371,8 @@ func (r *orderRepository) DeleteAllOrderPermanent() (bool, error) {
 	err := r.db.DeleteAllPermanentOrders(r.ctx)
 
 	if err != nil {
-		return false, fmt.Errorf("failed to delete all orders permanently: %w", err)
+		return false, order_errors.ErrDeleteAllOrderPermanent
 	}
+
 	return true, nil
 }

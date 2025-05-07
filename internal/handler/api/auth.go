@@ -3,9 +3,9 @@ package api
 import (
 	"net/http"
 	"pointofsale/internal/domain/requests"
-	"pointofsale/internal/domain/response"
 	response_api "pointofsale/internal/mapper/response/api"
 	"pointofsale/internal/pb"
+	"pointofsale/pkg/errors/auth_errors"
 	"pointofsale/pkg/logger"
 	"strings"
 
@@ -65,20 +65,12 @@ func (h *authHandleApi) Register(c echo.Context) error {
 
 	if err := c.Bind(&body); err != nil {
 		h.logger.Debug("Invalid request format", zap.Error(err))
-		return c.JSON(http.StatusBadRequest, response.ErrorResponse{
-			Status:  "invalid_request",
-			Message: "Invalid request format. Please check your input.",
-			Code:    http.StatusBadRequest,
-		})
+		return auth_errors.ErrBindRegister(c)
 	}
 
 	if err := body.Validate(); err != nil {
 		h.logger.Debug("Validation failed", zap.Error(err))
-		return c.JSON(http.StatusBadRequest, response.ErrorResponse{
-			Status:  "validation_error",
-			Message: "Please correct the invalid fields in your registration.",
-			Code:    http.StatusBadRequest,
-		})
+		return auth_errors.ErrValidateRegister(c)
 	}
 
 	data := &pb.RegisterRequest{
@@ -93,11 +85,7 @@ func (h *authHandleApi) Register(c echo.Context) error {
 
 	if err != nil {
 		h.logger.Error("Registration failed", zap.Error(err))
-		return c.JSON(http.StatusInternalServerError, response.ErrorResponse{
-			Status:  "registration_failed",
-			Message: "We couldn't complete your registration. Please try again.",
-			Code:    http.StatusInternalServerError,
-		})
+		return auth_errors.ErrApiRegister(c)
 	}
 
 	return c.JSON(http.StatusCreated, h.mapping.ToResponseRegister(res))
@@ -119,20 +107,12 @@ func (h *authHandleApi) Login(c echo.Context) error {
 
 	if err := c.Bind(&body); err != nil {
 		h.logger.Debug("Invalid request format", zap.Error(err))
-		return c.JSON(http.StatusBadRequest, response.ErrorResponse{
-			Status:  "invalid_request",
-			Message: "Invalid request format. Please check your input.",
-			Code:    http.StatusBadRequest,
-		})
+		return auth_errors.ErrBindLogin(c)
 	}
 
 	if err := body.Validate(); err != nil {
 		h.logger.Debug("Validation failed", zap.Error(err))
-		return c.JSON(http.StatusBadRequest, response.ErrorResponse{
-			Status:  "validation_error",
-			Message: err.Error(),
-			Code:    http.StatusBadRequest,
-		})
+		return auth_errors.ErrValidateRegister(c)
 	}
 
 	res, err := h.client.LoginUser(c.Request().Context(), &pb.LoginRequest{
@@ -143,39 +123,23 @@ func (h *authHandleApi) Login(c echo.Context) error {
 	if err != nil {
 		if status.Code(err) == codes.Unauthenticated {
 			h.logger.Debug("Invalid login attempt", zap.String("email", body.Email))
-			return c.JSON(http.StatusUnauthorized, response.ErrorResponse{
-				Status:  "unauthorized",
-				Message: "Invalid email or password",
-				Code:    http.StatusUnauthorized,
-			})
+			return auth_errors.ErrInvalidLogin(c)
 		}
 
 		h.logger.Error("Login failed", zap.Error(err))
 
 		if status.Code(err) == codes.Internal && strings.Contains(err.Error(), "empty token") {
-			return c.JSON(http.StatusInternalServerError, response.ErrorResponse{
-				Status:  "token_generation_failed",
-				Message: "Failed to generate authentication token",
-				Code:    http.StatusInternalServerError,
-			})
+			return auth_errors.ErrInvalidAccessToken(c)
 		}
 
-		return c.JSON(http.StatusInternalServerError, response.ErrorResponse{
-			Status:  "server_error",
-			Message: "An error occurred while processing your request",
-			Code:    http.StatusInternalServerError,
-		})
+		return auth_errors.ErrApiLogin(c)
 	}
 
 	mappedResponse := h.mapping.ToResponseLogin(res)
 
 	if mappedResponse.Data == nil || mappedResponse.Data.AccessToken == "" {
 		h.logger.Error("Empty token in final response", zap.Any("response", mappedResponse))
-		return c.JSON(http.StatusInternalServerError, response.ErrorResponse{
-			Status:  "token_generation_failed",
-			Message: "Failed to generate valid authentication token",
-			Code:    http.StatusInternalServerError,
-		})
+		return auth_errors.ErrApiLogin(c)
 	}
 
 	return c.JSON(http.StatusOK, mappedResponse)
@@ -198,20 +162,12 @@ func (h *authHandleApi) RefreshToken(c echo.Context) error {
 
 	if err := c.Bind(&body); err != nil {
 		h.logger.Debug("Invalid request format", zap.Error(err))
-		return c.JSON(http.StatusBadRequest, response.ErrorResponse{
-			Status:  "invalid_request",
-			Message: "Invalid request format. Please check your input.",
-			Code:    http.StatusBadRequest,
-		})
+		return auth_errors.ErrBindRefreshToken(c)
 	}
 
 	if err := body.Validate(); err != nil {
 		h.logger.Debug("Validation failed", zap.Error(err))
-		return c.JSON(http.StatusBadRequest, response.ErrorResponse{
-			Status:  "validation_error",
-			Message: "Please provide a valid refresh token.",
-			Code:    http.StatusBadRequest,
-		})
+		return auth_errors.ErrValidateRefreshToken(c)
 	}
 
 	res, err := h.client.RefreshToken(c.Request().Context(), &pb.RefreshTokenRequest{
@@ -219,11 +175,7 @@ func (h *authHandleApi) RefreshToken(c echo.Context) error {
 	})
 	if err != nil {
 		h.logger.Error("Token refresh failed", zap.Error(err))
-		return c.JSON(http.StatusInternalServerError, response.ErrorResponse{
-			Status:  "token_refresh_failed",
-			Message: "We couldn't refresh your access. Please login again.",
-			Code:    http.StatusInternalServerError,
-		})
+		return auth_errors.ErrApiRefreshToken(c)
 	}
 
 	return c.JSON(http.StatusOK, h.mapping.ToResponseRefreshToken(res))
@@ -243,11 +195,7 @@ func (h *authHandleApi) RefreshToken(c echo.Context) error {
 func (h *authHandleApi) GetMe(c echo.Context) error {
 	authHeader := c.Request().Header.Get("Authorization")
 	if authHeader == "" || !strings.HasPrefix(authHeader, "Bearer ") {
-		return c.JSON(http.StatusUnauthorized, response.ErrorResponse{
-			Status:  "unauthorized",
-			Message: "Please provide a valid authorization token.",
-			Code:    http.StatusUnauthorized,
-		})
+		return auth_errors.ErrInvalidAccessToken(c)
 	}
 
 	accessToken := strings.TrimPrefix(authHeader, "Bearer ")
@@ -258,10 +206,7 @@ func (h *authHandleApi) GetMe(c echo.Context) error {
 
 	if err != nil {
 		h.logger.Error("Failed to get user information", zap.Error(err))
-		return c.JSON(http.StatusInternalServerError, response.ErrorResponse{
-			Status:  "fetch_user_failed",
-			Message: "We couldn't retrieve your account information.",
-		})
+		return auth_errors.ErrApiGetMe(c)
 	}
 
 	so := h.mapping.ToResponseGetMe(res)

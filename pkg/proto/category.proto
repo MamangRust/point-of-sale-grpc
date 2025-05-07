@@ -211,10 +211,6 @@ service CategoryService {
     rpc FindMonthlyTotalPricesByMerchant(FindYearMonthTotalPriceByMerchant) returns (ApiResponseCategoryMonthlyTotalPrice){}
     rpc FindYearlyTotalPricesByMerchant(FindYearTotalPriceByMerchant) returns (ApiResponseCategoryYearlyTotalPrice){}
 
-
-    rpc FindAll(FindAllCategoryRequest) returns (ApiResponsePaginationCategory);
-    rpc FindById(FindByIdCategoryRequest) returns (ApiResponseCategory);
-
     rpc FindMonthPrice(FindYearCategory) returns(ApiResponseCategoryMonthPrice);
     rpc FindYearPrice(FindYearCategory) returns(ApiResponseCategoryYearPrice);
     rpc FindMonthPriceByMerchant(FindYearCategoryByMerchant) returns(ApiResponseCategoryMonthPrice);
@@ -225,6 +221,10 @@ service CategoryService {
 
     rpc FindByActive(FindAllCategoryRequest) returns (ApiResponsePaginationCategoryDeleteAt) {}
     rpc FindByTrashed(FindAllCategoryRequest) returns (ApiResponsePaginationCategoryDeleteAt) {}
+
+    rpc FindAll(FindAllCategoryRequest) returns (ApiResponsePaginationCategory);
+    rpc FindById(FindByIdCategoryRequest) returns (ApiResponseCategory);
+
 
 
     rpc Create(CreateCategoryRequest) returns (ApiResponseCategory);

@@ -4,13 +4,12 @@ import (
 	"context"
 	"math"
 	"pointofsale/internal/domain/requests"
+	"pointofsale/internal/domain/response"
 	protomapper "pointofsale/internal/mapper/proto"
 	"pointofsale/internal/pb"
 	"pointofsale/internal/service"
-	"pointofsale/pkg/errors_custom"
+	"pointofsale/pkg/errors/cashier_errors"
 
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/emptypb"
 )
 
@@ -42,17 +41,16 @@ func (s *cashierHandleGrpc) FindAll(ctx context.Context, request *pb.FindAllCash
 		pageSize = 10
 	}
 
-	cashier, totalRecords, err := s.cashierService.FindAll(page, pageSize, search)
+	reqService := requests.FindAllCashiers{
+		Search:   search,
+		Page:     page,
+		PageSize: pageSize,
+	}
+
+	cashier, totalRecords, err := s.cashierService.FindAll(&reqService)
 
 	if err != nil {
-		return nil, status.Errorf(
-			codes.Code(err.Code),
-			errors_custom.GrpcErrorToJson(&pb.ErrorResponse{
-				Status:  err.Status,
-				Message: err.Message,
-				Code:    int32(err.Code),
-			}),
-		)
+		return nil, response.ToGrpcErrorFromErrorResponse(err)
 	}
 
 	totalPages := int(math.Ceil(float64(*totalRecords) / float64(pageSize)))
@@ -72,27 +70,13 @@ func (s *cashierHandleGrpc) FindById(ctx context.Context, request *pb.FindByIdCa
 	id := int(request.GetId())
 
 	if id == 0 {
-		return nil, status.Error(
-			codes.InvalidArgument,
-			errors_custom.GrpcErrorToJson(&pb.ErrorResponse{
-				Status:  "invalid_request",
-				Message: "Valid cashier ID is required",
-				Code:    int32(codes.InvalidArgument),
-			}),
-		)
+		return nil, cashier_errors.ErrGrpcFailedInvalidId
 	}
 
 	cashier, err := s.cashierService.FindById(id)
 
 	if err != nil {
-		return nil, status.Errorf(
-			codes.Code(err.Code),
-			errors_custom.GrpcErrorToJson(&pb.ErrorResponse{
-				Status:  err.Status,
-				Message: err.Message,
-				Code:    int32(err.Code),
-			}),
-		)
+		return nil, response.ToGrpcErrorFromErrorResponse(err)
 	}
 
 	so := s.mapping.ToProtoResponseCashier("success", "Successfully fetched categories", cashier)
@@ -112,17 +96,16 @@ func (s *cashierHandleGrpc) FindByActive(ctx context.Context, request *pb.FindAl
 		pageSize = 10
 	}
 
-	cashier, totalRecords, err := s.cashierService.FindByActive(search, page, pageSize)
+	reqService := requests.FindAllCashiers{
+		Search:   search,
+		Page:     page,
+		PageSize: pageSize,
+	}
+
+	cashier, totalRecords, err := s.cashierService.FindByActive(&reqService)
 
 	if err != nil {
-		return nil, status.Errorf(
-			codes.Code(err.Code),
-			errors_custom.GrpcErrorToJson(&pb.ErrorResponse{
-				Status:  err.Status,
-				Message: err.Message,
-				Code:    int32(err.Code),
-			}),
-		)
+		return nil, response.ToGrpcErrorFromErrorResponse(err)
 	}
 
 	totalPages := int(math.Ceil(float64(*totalRecords) / float64(pageSize)))
@@ -131,7 +114,7 @@ func (s *cashierHandleGrpc) FindByActive(ctx context.Context, request *pb.FindAl
 		CurrentPage:  int32(page),
 		PageSize:     int32(pageSize),
 		TotalPages:   int32(totalPages),
-		TotalRecords: int32(0),
+		TotalRecords: int32(*totalRecords),
 	}
 
 	so := s.mapping.ToProtoResponsePaginationCashierDeleteAt(paginationMeta, "success", "Successfully fetched active cashier", cashier)
@@ -151,17 +134,16 @@ func (s *cashierHandleGrpc) FindByTrashed(ctx context.Context, request *pb.FindA
 		pageSize = 10
 	}
 
-	users, totalRecords, err := s.cashierService.FindByTrashed(search, page, pageSize)
+	reqService := requests.FindAllCashiers{
+		Search:   search,
+		Page:     page,
+		PageSize: pageSize,
+	}
+
+	users, totalRecords, err := s.cashierService.FindByTrashed(&reqService)
 
 	if err != nil {
-		return nil, status.Errorf(
-			codes.Code(err.Code),
-			errors_custom.GrpcErrorToJson(&pb.ErrorResponse{
-				Status:  err.Status,
-				Message: err.Message,
-				Code:    int32(err.Code),
-			}),
-		)
+		return nil, response.ToGrpcErrorFromErrorResponse(err)
 	}
 
 	totalPages := int(math.Ceil(float64(*totalRecords) / float64(pageSize)))
@@ -170,7 +152,7 @@ func (s *cashierHandleGrpc) FindByTrashed(ctx context.Context, request *pb.FindA
 		CurrentPage:  int32(page),
 		PageSize:     int32(pageSize),
 		TotalPages:   int32(totalPages),
-		TotalRecords: int32(0),
+		TotalRecords: int32(*totalRecords),
 	}
 
 	so := s.mapping.ToProtoResponsePaginationCashierDeleteAt(paginationMeta, "success", "Successfully fetched trashed cashier", users)
@@ -185,14 +167,7 @@ func (s *cashierHandleGrpc) FindByMerchant(ctx context.Context, request *pb.Find
 	merchant_id := int(request.GetMerchantId())
 
 	if merchant_id <= 0 {
-		return nil, status.Errorf(
-			codes.Code(codes.InvalidArgument),
-			errors_custom.GrpcErrorToJson(&pb.ErrorResponse{
-				Status:  "invalid_input",
-				Message: "Invalid merchant id parameter",
-				Code:    int32(codes.InvalidArgument),
-			}),
-		)
+		return nil, cashier_errors.ErrGrpcFailedInvalidMerchantId
 	}
 
 	if page <= 0 {
@@ -202,17 +177,17 @@ func (s *cashierHandleGrpc) FindByMerchant(ctx context.Context, request *pb.Find
 		pageSize = 10
 	}
 
-	cashier, totalRecords, err := s.cashierService.FindByMerchant(merchant_id, search, page, pageSize)
+	reqService := requests.FindAllCashierMerchant{
+		Search:     search,
+		Page:       page,
+		PageSize:   pageSize,
+		MerchantID: merchant_id,
+	}
+
+	cashier, totalRecords, err := s.cashierService.FindByMerchant(&reqService)
 
 	if err != nil {
-		return nil, status.Errorf(
-			codes.Code(err.Code),
-			errors_custom.GrpcErrorToJson(&pb.ErrorResponse{
-				Status:  err.Status,
-				Message: err.Message,
-				Code:    int32(err.Code),
-			}),
-		)
+		return nil, response.ToGrpcErrorFromErrorResponse(err)
 	}
 
 	totalPages := int(math.Ceil(float64(*totalRecords) / float64(pageSize)))
@@ -233,38 +208,22 @@ func (s *cashierHandleGrpc) FindMonthlyTotalSales(ctx context.Context, req *pb.F
 	month := int(req.GetMonth())
 
 	if year <= 0 {
-		return nil, status.Errorf(
-			codes.Code(codes.InvalidArgument),
-			errors_custom.GrpcErrorToJson(&pb.ErrorResponse{
-				Status:  "invalid_input",
-				Message: "Invalid year parameter",
-				Code:    int32(codes.InvalidArgument),
-			}),
-		)
+		return nil, cashier_errors.ErrGrpcFailedInvalidYear
 	}
 
 	if month <= 0 || month >= 12 {
-		return nil, status.Errorf(
-			codes.Code(codes.InvalidArgument),
-			errors_custom.GrpcErrorToJson(&pb.ErrorResponse{
-				Status:  "invalid_month",
-				Message: "Month must be between 1 and 12",
-				Code:    int32(codes.InvalidArgument),
-			}),
-		)
+		return nil, cashier_errors.ErrGrpcFailedInvalidMonth
 	}
 
-	methods, err := s.cashierService.FindMonthlyTotalSales(year, month)
+	reqService := requests.MonthTotalSales{
+		Year:  year,
+		Month: month,
+	}
+
+	methods, err := s.cashierService.FindMonthlyTotalSales(&reqService)
 
 	if err != nil {
-		return nil, status.Errorf(
-			codes.Code(err.Code),
-			errors_custom.GrpcErrorToJson(&pb.ErrorResponse{
-				Status:  err.Status,
-				Message: err.Message,
-				Code:    int32(err.Code),
-			}),
-		)
+		return nil, response.ToGrpcErrorFromErrorResponse(err)
 	}
 
 	return s.mapping.ToProtoMonthlyTotalSales("success", "Monthly sales retrieved successfully", methods), nil
@@ -274,27 +233,13 @@ func (s *cashierHandleGrpc) FindYearlyTotalSales(ctx context.Context, req *pb.Fi
 	year := int(req.GetYear())
 
 	if year <= 0 {
-		return nil, status.Errorf(
-			codes.Code(codes.InvalidArgument),
-			errors_custom.GrpcErrorToJson(&pb.ErrorResponse{
-				Status:  "invalid_input",
-				Message: "Invalid year parameter",
-				Code:    int32(codes.InvalidArgument),
-			}),
-		)
+		return nil, cashier_errors.ErrGrpcFailedInvalidYear
 	}
 
 	methods, err := s.cashierService.FindYearlyTotalSales(year)
 
 	if err != nil {
-		return nil, status.Errorf(
-			codes.Code(err.Code),
-			errors_custom.GrpcErrorToJson(&pb.ErrorResponse{
-				Status:  err.Status,
-				Message: err.Message,
-				Code:    int32(err.Code),
-			}),
-		)
+		return nil, response.ToGrpcErrorFromErrorResponse(err)
 	}
 
 	return s.mapping.ToProtoYearlyTotalSales("success", "Yearly payment methods retrieved successfully", methods), nil
@@ -306,49 +251,27 @@ func (s *cashierHandleGrpc) FindMonthlyTotalSalesById(ctx context.Context, req *
 	id := int(req.GetCashierId())
 
 	if year <= 0 {
-		return nil, status.Errorf(
-			codes.Code(codes.InvalidArgument),
-			errors_custom.GrpcErrorToJson(&pb.ErrorResponse{
-				Status:  "invalid_input",
-				Message: "Invalid year parameter",
-				Code:    int32(codes.InvalidArgument),
-			}),
-		)
+		return nil, cashier_errors.ErrGrpcFailedInvalidYear
 	}
 
 	if month <= 0 || month >= 12 {
-		return nil, status.Errorf(
-			codes.Code(codes.InvalidArgument),
-			errors_custom.GrpcErrorToJson(&pb.ErrorResponse{
-				Status:  "invalid_month",
-				Message: "Month must be between 1 and 12",
-				Code:    int32(codes.InvalidArgument),
-			}),
-		)
+		return nil, cashier_errors.ErrGrpcFailedInvalidMonth
 	}
 
 	if id <= 0 {
-		return nil, status.Errorf(
-			codes.Code(codes.InvalidArgument),
-			errors_custom.GrpcErrorToJson(&pb.ErrorResponse{
-				Status:  "invalid_input",
-				Message: "Invalid id parameter",
-				Code:    int32(codes.InvalidArgument),
-			}),
-		)
+		return nil, cashier_errors.ErrGrpcFailedInvalidId
 	}
 
-	methods, err := s.cashierService.FindMonthlyTotalSalesById(year, month, id)
+	reqService := requests.MonthTotalSalesCashier{
+		Year:      year,
+		Month:     month,
+		CashierID: id,
+	}
+
+	methods, err := s.cashierService.FindMonthlyTotalSalesById(&reqService)
 
 	if err != nil {
-		return nil, status.Errorf(
-			codes.Code(err.Code),
-			errors_custom.GrpcErrorToJson(&pb.ErrorResponse{
-				Status:  err.Status,
-				Message: err.Message,
-				Code:    int32(err.Code),
-			}),
-		)
+		return nil, response.ToGrpcErrorFromErrorResponse(err)
 	}
 
 	return s.mapping.ToProtoMonthlyTotalSales("success", "Monthly sales retrieved successfully", methods), nil
@@ -359,38 +282,22 @@ func (s *cashierHandleGrpc) FindYearlyTotalSalesById(ctx context.Context, req *p
 	id := int(req.GetCashierId())
 
 	if year <= 0 {
-		return nil, status.Errorf(
-			codes.Code(codes.InvalidArgument),
-			errors_custom.GrpcErrorToJson(&pb.ErrorResponse{
-				Status:  "invalid_input",
-				Message: "Invalid year parameter",
-				Code:    int32(codes.InvalidArgument),
-			}),
-		)
+		return nil, cashier_errors.ErrGrpcFailedInvalidYear
 	}
 
 	if id <= 0 {
-		return nil, status.Errorf(
-			codes.Code(codes.InvalidArgument),
-			errors_custom.GrpcErrorToJson(&pb.ErrorResponse{
-				Status:  "invalid_input",
-				Message: "Invalid id parameter",
-				Code:    int32(codes.InvalidArgument),
-			}),
-		)
+		return nil, cashier_errors.ErrGrpcFailedInvalidId
 	}
 
-	methods, err := s.cashierService.FindYearlyTotalSalesById(year, id)
+	reqService := requests.YearTotalSalesCashier{
+		Year:      year,
+		CashierID: id,
+	}
+
+	methods, err := s.cashierService.FindYearlyTotalSalesById(&reqService)
 
 	if err != nil {
-		return nil, status.Errorf(
-			codes.Code(err.Code),
-			errors_custom.GrpcErrorToJson(&pb.ErrorResponse{
-				Status:  err.Status,
-				Message: err.Message,
-				Code:    int32(err.Code),
-			}),
-		)
+		return nil, response.ToGrpcErrorFromErrorResponse(err)
 	}
 
 	return s.mapping.ToProtoYearlyTotalSales("success", "Yearly payment methods retrieved successfully", methods), nil
@@ -402,49 +309,27 @@ func (s *cashierHandleGrpc) FindMonthlyTotalSalesByMerchant(ctx context.Context,
 	merchantId := int(req.GetMerchantId())
 
 	if year <= 0 {
-		return nil, status.Errorf(
-			codes.Code(codes.InvalidArgument),
-			errors_custom.GrpcErrorToJson(&pb.ErrorResponse{
-				Status:  "invalid_input",
-				Message: "Invalid year parameter",
-				Code:    int32(codes.InvalidArgument),
-			}),
-		)
+		return nil, cashier_errors.ErrGrpcFailedInvalidYear
 	}
 
 	if month <= 0 || month >= 12 {
-		return nil, status.Errorf(
-			codes.Code(codes.InvalidArgument),
-			errors_custom.GrpcErrorToJson(&pb.ErrorResponse{
-				Status:  "invalid_month",
-				Message: "Month must be between 1 and 12",
-				Code:    int32(codes.InvalidArgument),
-			}),
-		)
+		return nil, cashier_errors.ErrGrpcFailedInvalidMonth
 	}
 
 	if merchantId <= 0 {
-		return nil, status.Errorf(
-			codes.Code(codes.InvalidArgument),
-			errors_custom.GrpcErrorToJson(&pb.ErrorResponse{
-				Status:  "invalid_input",
-				Message: "Invalid id parameter",
-				Code:    int32(codes.InvalidArgument),
-			}),
-		)
+		return nil, cashier_errors.ErrGrpcFailedInvalidMerchantId
 	}
 
-	methods, err := s.cashierService.FindMonthlyTotalSalesById(year, month, merchantId)
+	reqService := requests.MonthTotalSalesMerchant{
+		Year:       year,
+		Month:      month,
+		MerchantID: merchantId,
+	}
+
+	methods, err := s.cashierService.FindMonthlyTotalSalesByMerchant(&reqService)
 
 	if err != nil {
-		return nil, status.Errorf(
-			codes.Code(err.Code),
-			errors_custom.GrpcErrorToJson(&pb.ErrorResponse{
-				Status:  err.Status,
-				Message: err.Message,
-				Code:    int32(err.Code),
-			}),
-		)
+		return nil, response.ToGrpcErrorFromErrorResponse(err)
 	}
 
 	return s.mapping.ToProtoMonthlyTotalSales("success", "Monthly sales retrieved successfully", methods), nil
@@ -455,38 +340,22 @@ func (s *cashierHandleGrpc) FindYearlyTotalSalesByMerchant(ctx context.Context, 
 	merchantId := int(req.GetMerchantId())
 
 	if year <= 0 {
-		return nil, status.Errorf(
-			codes.Code(codes.InvalidArgument),
-			errors_custom.GrpcErrorToJson(&pb.ErrorResponse{
-				Status:  "invalid_input",
-				Message: "Invalid year parameter",
-				Code:    int32(codes.InvalidArgument),
-			}),
-		)
+		return nil, cashier_errors.ErrGrpcFailedInvalidYear
 	}
 
 	if merchantId <= 0 {
-		return nil, status.Errorf(
-			codes.Code(codes.InvalidArgument),
-			errors_custom.GrpcErrorToJson(&pb.ErrorResponse{
-				Status:  "invalid_input",
-				Message: "Invalid id parameter",
-				Code:    int32(codes.InvalidArgument),
-			}),
-		)
+		return nil, cashier_errors.ErrGrpcFailedInvalidMerchantId
 	}
 
-	methods, err := s.cashierService.FindYearlyTotalSalesByMerchant(year, merchantId)
+	reqService := requests.YearTotalSalesMerchant{
+		Year:       year,
+		MerchantID: merchantId,
+	}
+
+	methods, err := s.cashierService.FindYearlyTotalSalesByMerchant(&reqService)
 
 	if err != nil {
-		return nil, status.Errorf(
-			codes.Code(err.Code),
-			errors_custom.GrpcErrorToJson(&pb.ErrorResponse{
-				Status:  err.Status,
-				Message: err.Message,
-				Code:    int32(err.Code),
-			}),
-		)
+		return nil, response.ToGrpcErrorFromErrorResponse(err)
 	}
 
 	return s.mapping.ToProtoYearlyTotalSales("success", "Yearly payment methods retrieved successfully", methods), nil
@@ -496,27 +365,13 @@ func (s *cashierHandleGrpc) FindMonthSales(ctx context.Context, req *pb.FindYear
 	year := int(req.GetYear())
 
 	if year <= 0 {
-		return nil, status.Errorf(
-			codes.Code(codes.InvalidArgument),
-			errors_custom.GrpcErrorToJson(&pb.ErrorResponse{
-				Status:  "invalid_input",
-				Message: "Invalid year parameter",
-				Code:    int32(codes.InvalidArgument),
-			}),
-		)
+		return nil, cashier_errors.ErrGrpcFailedInvalidYear
 	}
 
 	methods, err := s.cashierService.FindMonthlySales(year)
 
 	if err != nil {
-		return nil, status.Errorf(
-			codes.Code(err.Code),
-			errors_custom.GrpcErrorToJson(&pb.ErrorResponse{
-				Status:  err.Status,
-				Message: err.Message,
-				Code:    int32(err.Code),
-			}),
-		)
+		return nil, response.ToGrpcErrorFromErrorResponse(err)
 	}
 
 	return s.mapping.ToProtoResponseMonthlyTotalSales("success", "Monthly sales retrieved successfully", methods), nil
@@ -526,27 +381,13 @@ func (s *cashierHandleGrpc) FindYearSales(ctx context.Context, req *pb.FindYearC
 	year := int(req.GetYear())
 
 	if year <= 0 {
-		return nil, status.Errorf(
-			codes.Code(codes.InvalidArgument),
-			errors_custom.GrpcErrorToJson(&pb.ErrorResponse{
-				Status:  "invalid_input",
-				Message: "Invalid year parameter",
-				Code:    int32(codes.InvalidArgument),
-			}),
-		)
+		return nil, cashier_errors.ErrGrpcFailedInvalidYear
 	}
 
 	methods, err := s.cashierService.FindYearlySales(year)
 
 	if err != nil {
-		return nil, status.Errorf(
-			codes.Code(err.Code),
-			errors_custom.GrpcErrorToJson(&pb.ErrorResponse{
-				Status:  err.Status,
-				Message: err.Message,
-				Code:    int32(err.Code),
-			}),
-		)
+		return nil, response.ToGrpcErrorFromErrorResponse(err)
 	}
 
 	return s.mapping.ToProtoResponseYearlyTotalSales("success", "Yearly payment methods retrieved successfully", methods), nil
@@ -557,40 +398,24 @@ func (s *cashierHandleGrpc) FindMonthSalesByMerchant(ctx context.Context, req *p
 	merchantId := int(req.GetMerchantId())
 
 	if year <= 0 {
-		return nil, status.Errorf(
-			codes.Code(codes.InvalidArgument),
-			errors_custom.GrpcErrorToJson(&pb.ErrorResponse{
-				Status:  "invalid_input",
-				Message: "Invalid year parameter",
-				Code:    int32(codes.InvalidArgument),
-			}),
-		)
+		return nil, cashier_errors.ErrGrpcFailedInvalidYear
 	}
 
 	if merchantId <= 0 {
-		return nil, status.Errorf(
-			codes.Code(codes.InvalidArgument),
-			errors_custom.GrpcErrorToJson(&pb.ErrorResponse{
-				Status:  "invalid_input",
-				Message: "Invalid id parameter",
-				Code:    int32(codes.InvalidArgument),
-			}),
-		)
+		return nil, cashier_errors.ErrGrpcFailedInvalidMerchantId
+	}
+
+	reqService := requests.MonthCashierMerchant{
+		Year:       year,
+		MerchantID: merchantId,
 	}
 
 	methods, err := s.cashierService.FindMonthlyCashierByMerchant(
-		year, merchantId,
+		&reqService,
 	)
 
 	if err != nil {
-		return nil, status.Errorf(
-			codes.Code(err.Code),
-			errors_custom.GrpcErrorToJson(&pb.ErrorResponse{
-				Status:  err.Status,
-				Message: err.Message,
-				Code:    int32(err.Code),
-			}),
-		)
+		return nil, response.ToGrpcErrorFromErrorResponse(err)
 	}
 
 	return s.mapping.ToProtoResponseMonthlyTotalSales("success", "Merchant monthly revenue retrieved successfully", methods), nil
@@ -601,39 +426,24 @@ func (s *cashierHandleGrpc) FindYearSalesByMerchant(ctx context.Context, req *pb
 	merchantId := int(req.GetMerchantId())
 
 	if year <= 0 {
-		return nil, status.Errorf(
-			codes.Code(codes.InvalidArgument),
-			errors_custom.GrpcErrorToJson(&pb.ErrorResponse{
-				Status:  "invalid_input",
-				Message: "Invalid year parameter",
-				Code:    int32(codes.InvalidArgument),
-			}),
-		)
+		return nil, cashier_errors.ErrGrpcFailedInvalidYear
 	}
 
 	if merchantId <= 0 {
-		return nil, status.Errorf(
-			codes.Code(codes.InvalidArgument),
-			errors_custom.GrpcErrorToJson(&pb.ErrorResponse{
-				Status:  "invalid_input",
-				Message: "Invalid id parameter",
-				Code:    int32(codes.InvalidArgument),
-			}),
-		)
+		return nil, cashier_errors.ErrGrpcFailedInvalidMerchantId
+	}
+
+	reqService := requests.YearCashierMerchant{
+		Year:       year,
+		MerchantID: merchantId,
 	}
 
 	methods, err := s.cashierService.FindYearlyCashierByMerchant(
-		year, merchantId,
+		&reqService,
 	)
+
 	if err != nil {
-		return nil, status.Errorf(
-			codes.Code(err.Code),
-			errors_custom.GrpcErrorToJson(&pb.ErrorResponse{
-				Status:  err.Status,
-				Message: err.Message,
-				Code:    int32(err.Code),
-			}),
-		)
+		return nil, response.ToGrpcErrorFromErrorResponse(err)
 	}
 
 	return s.mapping.ToProtoResponseYearlyTotalSales("success", "Merchant yearly payment methods retrieved successfully", methods), nil
@@ -644,40 +454,24 @@ func (s *cashierHandleGrpc) FindMonthSalesById(ctx context.Context, req *pb.Find
 	cashierId := int(req.GetCashierId())
 
 	if year <= 0 {
-		return nil, status.Errorf(
-			codes.Code(codes.InvalidArgument),
-			errors_custom.GrpcErrorToJson(&pb.ErrorResponse{
-				Status:  "invalid_input",
-				Message: "Invalid year parameter",
-				Code:    int32(codes.InvalidArgument),
-			}),
-		)
+		return nil, cashier_errors.ErrGrpcFailedInvalidYear
 	}
 
 	if cashierId <= 0 {
-		return nil, status.Errorf(
-			codes.Code(codes.InvalidArgument),
-			errors_custom.GrpcErrorToJson(&pb.ErrorResponse{
-				Status:  "invalid_input",
-				Message: "Invalid id parameter",
-				Code:    int32(codes.InvalidArgument),
-			}),
-		)
+		return nil, cashier_errors.ErrGrpcFailedInvalidId
+	}
+
+	reqService := requests.MonthCashierId{
+		Year:      year,
+		CashierID: cashierId,
 	}
 
 	methods, err := s.cashierService.FindMonthlyCashierById(
-		year, cashierId,
+		&reqService,
 	)
 
 	if err != nil {
-		return nil, status.Errorf(
-			codes.Code(err.Code),
-			errors_custom.GrpcErrorToJson(&pb.ErrorResponse{
-				Status:  err.Status,
-				Message: err.Message,
-				Code:    int32(err.Code),
-			}),
-		)
+		return nil, response.ToGrpcErrorFromErrorResponse(err)
 	}
 
 	return s.mapping.ToProtoResponseMonthlyTotalSales("success", "Cashier monthly sales retrieved successfully", methods), nil
@@ -688,41 +482,24 @@ func (s *cashierHandleGrpc) FindYearSalesById(ctx context.Context, req *pb.FindY
 	cashierId := int(req.GetCashierId())
 
 	if year <= 0 {
-		return nil, status.Errorf(
-			codes.Code(codes.InvalidArgument),
-			errors_custom.GrpcErrorToJson(&pb.ErrorResponse{
-				Status:  "invalid_input",
-				Message: "Invalid year parameter",
-				Code:    int32(codes.InvalidArgument),
-			}),
-		)
+		return nil, cashier_errors.ErrGrpcFailedInvalidYear
 	}
 
 	if cashierId <= 0 {
-		return nil, status.Errorf(
-			codes.Code(codes.InvalidArgument),
-			errors_custom.GrpcErrorToJson(&pb.ErrorResponse{
-				Status:  "invalid_input",
-				Message: "Invalid id parameter",
-				Code:    int32(codes.InvalidArgument),
-			}),
-		)
+		return nil, cashier_errors.ErrGrpcFailedInvalidId
+	}
+
+	reqService := requests.YearCashierId{
+		Year:      year,
+		CashierID: cashierId,
 	}
 
 	methods, err := s.cashierService.FindYearlyCashierById(
-		year,
-		cashierId,
+		&reqService,
 	)
 
 	if err != nil {
-		return nil, status.Errorf(
-			codes.Code(err.Code),
-			errors_custom.GrpcErrorToJson(&pb.ErrorResponse{
-				Status:  err.Status,
-				Message: err.Message,
-				Code:    int32(err.Code),
-			}),
-		)
+		return nil, response.ToGrpcErrorFromErrorResponse(err)
 	}
 
 	return s.mapping.ToProtoResponseYearlyTotalSales("success", "Cashier yearly sales retrieved successfully", methods), nil
@@ -736,27 +513,13 @@ func (s *cashierHandleGrpc) CreateCashier(ctx context.Context, request *pb.Creat
 	}
 
 	if err := req.Validate(); err != nil {
-		return nil, status.Errorf(
-			codes.InvalidArgument,
-			errors_custom.GrpcErrorToJson(&pb.ErrorResponse{
-				Status:  "validation_error",
-				Message: "Unable to create new cashier. Please check your input.",
-				Code:    int32(codes.InvalidArgument),
-			}),
-		)
+		return nil, cashier_errors.ErrGrpcValidateCreateCashier
 	}
 
 	cashier, err := s.cashierService.CreateCashier(req)
 
 	if err != nil {
-		return nil, status.Errorf(
-			codes.Code(err.Code),
-			errors_custom.GrpcErrorToJson(&pb.ErrorResponse{
-				Status:  err.Status,
-				Message: err.Message,
-				Code:    int32(err.Code),
-			}),
-		)
+		return nil, response.ToGrpcErrorFromErrorResponse(err)
 	}
 
 	so := s.mapping.ToProtoResponseCashier("success", "Successfully created cashier", cashier)
@@ -767,14 +530,7 @@ func (s *cashierHandleGrpc) UpdateCashier(ctx context.Context, request *pb.Updat
 	id := int(request.GetCashierId())
 
 	if id == 0 {
-		return nil, status.Errorf(
-			codes.InvalidArgument,
-			errors_custom.GrpcErrorToJson(&pb.ErrorResponse{
-				Status:  "validation_error",
-				Message: "Cashier ID parameter cannot be empty and must be a positive number",
-				Code:    int32(codes.InvalidArgument),
-			}),
-		)
+		return nil, cashier_errors.ErrGrpcFailedInvalidId
 	}
 
 	req := &requests.UpdateCashierRequest{
@@ -783,26 +539,12 @@ func (s *cashierHandleGrpc) UpdateCashier(ctx context.Context, request *pb.Updat
 	}
 
 	if err := req.Validate(); err != nil {
-		return nil, status.Errorf(
-			codes.InvalidArgument,
-			errors_custom.GrpcErrorToJson(&pb.ErrorResponse{
-				Status:  "validation_error",
-				Message: "Unable to process cashier update. Please review your data.",
-				Code:    int32(codes.InvalidArgument),
-			}),
-		)
+		return nil, cashier_errors.ErrGrpcValidateUpdateCashier
 	}
 
 	cashier, err := s.cashierService.UpdateCashier(req)
 	if err != nil {
-		return nil, status.Errorf(
-			codes.Code(err.Code),
-			errors_custom.GrpcErrorToJson(&pb.ErrorResponse{
-				Status:  err.Status,
-				Message: err.Message,
-				Code:    int32(err.Code),
-			}),
-		)
+		return nil, response.ToGrpcErrorFromErrorResponse(err)
 	}
 
 	so := s.mapping.ToProtoResponseCashier("success", "Successfully updated cashier", cashier)
@@ -813,27 +555,13 @@ func (s *cashierHandleGrpc) TrashedCashier(ctx context.Context, request *pb.Find
 	id := int(request.GetId())
 
 	if id == 0 {
-		return nil, status.Errorf(
-			codes.InvalidArgument,
-			errors_custom.GrpcErrorToJson(&pb.ErrorResponse{
-				Status:  "validation_error",
-				Message: "Cashier ID parameter cannot be empty and must be a positive number",
-				Code:    int32(codes.InvalidArgument),
-			}),
-		)
+		return nil, cashier_errors.ErrGrpcFailedInvalidId
 	}
 
 	cashier, err := s.cashierService.TrashedCashier(id)
 
 	if err != nil {
-		return nil, status.Errorf(
-			codes.Code(err.Code),
-			errors_custom.GrpcErrorToJson(&pb.ErrorResponse{
-				Status:  err.Status,
-				Message: err.Message,
-				Code:    int32(err.Code),
-			}),
-		)
+		return nil, response.ToGrpcErrorFromErrorResponse(err)
 	}
 
 	so := s.mapping.ToProtoResponseCashierDeleteAt("success", "Successfully trashed cashier", cashier)
@@ -845,27 +573,13 @@ func (s *cashierHandleGrpc) RestoreCashier(ctx context.Context, request *pb.Find
 	id := int(request.GetId())
 
 	if id == 0 {
-		return nil, status.Errorf(
-			codes.InvalidArgument,
-			errors_custom.GrpcErrorToJson(&pb.ErrorResponse{
-				Status:  "validation_error",
-				Message: "Cashier ID parameter cannot be empty and must be a positive number",
-				Code:    int32(codes.InvalidArgument),
-			}),
-		)
+		return nil, cashier_errors.ErrGrpcFailedInvalidId
 	}
 
 	cashier, err := s.cashierService.RestoreCashier(id)
 
 	if err != nil {
-		return nil, status.Errorf(
-			codes.Code(err.Code),
-			errors_custom.GrpcErrorToJson(&pb.ErrorResponse{
-				Status:  err.Status,
-				Message: err.Message,
-				Code:    int32(err.Code),
-			}),
-		)
+		return nil, response.ToGrpcErrorFromErrorResponse(err)
 	}
 
 	so := s.mapping.ToProtoResponseCashierDeleteAt("success", "Successfully restored cashier", cashier)
@@ -877,27 +591,13 @@ func (s *cashierHandleGrpc) DeleteCashierPermanent(ctx context.Context, request 
 	id := int(request.GetId())
 
 	if id == 0 {
-		return nil, status.Errorf(
-			codes.InvalidArgument,
-			errors_custom.GrpcErrorToJson(&pb.ErrorResponse{
-				Status:  "validation_error",
-				Message: "Cashier ID parameter cannot be empty and must be a positive number",
-				Code:    int32(codes.InvalidArgument),
-			}),
-		)
+		return nil, cashier_errors.ErrGrpcFailedInvalidId
 	}
 
 	_, err := s.cashierService.DeleteCashierPermanent(id)
 
 	if err != nil {
-		return nil, status.Errorf(
-			codes.Code(err.Code),
-			errors_custom.GrpcErrorToJson(&pb.ErrorResponse{
-				Status:  err.Status,
-				Message: err.Message,
-				Code:    int32(err.Code),
-			}),
-		)
+		return nil, response.ToGrpcErrorFromErrorResponse(err)
 	}
 
 	so := s.mapping.ToProtoResponseCashierDelete("success", "Successfully deleted cashier permanently")
@@ -909,14 +609,7 @@ func (s *cashierHandleGrpc) RestoreAllCashier(ctx context.Context, _ *emptypb.Em
 	_, err := s.cashierService.RestoreAllCashier()
 
 	if err != nil {
-		return nil, status.Errorf(
-			codes.Code(err.Code),
-			errors_custom.GrpcErrorToJson(&pb.ErrorResponse{
-				Status:  err.Status,
-				Message: err.Message,
-				Code:    int32(err.Code),
-			}),
-		)
+		return nil, response.ToGrpcErrorFromErrorResponse(err)
 	}
 
 	so := s.mapping.ToProtoResponseCashierAll("success", "Successfully restore all cashier")
@@ -928,14 +621,7 @@ func (s *cashierHandleGrpc) DeleteAllCashierPermanent(ctx context.Context, _ *em
 	_, err := s.cashierService.DeleteAllCashierPermanent()
 
 	if err != nil {
-		return nil, status.Errorf(
-			codes.Code(err.Code),
-			errors_custom.GrpcErrorToJson(&pb.ErrorResponse{
-				Status:  err.Status,
-				Message: err.Message,
-				Code:    int32(err.Code),
-			}),
-		)
+		return nil, response.ToGrpcErrorFromErrorResponse(err)
 	}
 
 	so := s.mapping.ToProtoResponseCashierAll("success", "Successfully delete cashier permanen")

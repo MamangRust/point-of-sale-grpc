@@ -4,13 +4,12 @@ import (
 	"context"
 	"math"
 	"pointofsale/internal/domain/requests"
+	"pointofsale/internal/domain/response"
 	protomapper "pointofsale/internal/mapper/proto"
 	"pointofsale/internal/pb"
 	"pointofsale/internal/service"
-	"pointofsale/pkg/errors_custom"
+	"pointofsale/pkg/errors/role_errors"
 
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/emptypb"
 )
 
@@ -39,17 +38,16 @@ func (s *roleHandleGrpc) FindAllRole(ctx context.Context, req *pb.FindAllRoleReq
 		pageSize = 10
 	}
 
-	role, totalRecords, err := s.roleService.FindAll(page, pageSize, search)
+	reqService := requests.FindAllRoles{
+		Page:     page,
+		PageSize: pageSize,
+		Search:   search,
+	}
+
+	role, totalRecords, err := s.roleService.FindAll(&reqService)
 
 	if err != nil {
-		return nil, status.Errorf(
-			codes.Code(err.Code),
-			errors_custom.GrpcErrorToJson(&pb.ErrorResponse{
-				Status:  err.Status,
-				Message: err.Message,
-				Code:    int32(err.Code),
-			}),
-		)
+		return nil, response.ToGrpcErrorFromErrorResponse(err)
 	}
 
 	totalPages := int(math.Ceil(float64(*totalRecords) / float64(pageSize)))
@@ -67,30 +65,16 @@ func (s *roleHandleGrpc) FindAllRole(ctx context.Context, req *pb.FindAllRoleReq
 }
 
 func (s *roleHandleGrpc) FindByIdRole(ctx context.Context, req *pb.FindByIdRoleRequest) (*pb.ApiResponseRole, error) {
-	roleID := int(req.GetRoleId())
+	id := int(req.GetRoleId())
 
-	if roleID == 0 {
-		return nil, status.Errorf(
-			codes.InvalidArgument,
-			errors_custom.GrpcErrorToJson(&pb.ErrorResponse{
-				Status:  "validation_error",
-				Message: "Role ID parameter cannot be empty and must be a positive number",
-				Code:    int32(codes.InvalidArgument),
-			}),
-		)
+	if id == 0 {
+		return nil, role_errors.ErrGrpcRoleInvalidId
 	}
 
-	role, err := s.roleService.FindById(roleID)
+	role, err := s.roleService.FindById(id)
 
 	if err != nil {
-		return nil, status.Errorf(
-			codes.Code(err.Code),
-			errors_custom.GrpcErrorToJson(&pb.ErrorResponse{
-				Status:  err.Status,
-				Message: err.Message,
-				Code:    int32(err.Code),
-			}),
-		)
+		return nil, response.ToGrpcErrorFromErrorResponse(err)
 	}
 
 	roleResponse := s.mapping.ToProtoResponseRole("success", "Successfully fetched role", role)
@@ -99,30 +83,16 @@ func (s *roleHandleGrpc) FindByIdRole(ctx context.Context, req *pb.FindByIdRoleR
 }
 
 func (s *roleHandleGrpc) FindByUserId(ctx context.Context, req *pb.FindByIdUserRoleRequest) (*pb.ApiResponsesRole, error) {
-	userID := int(req.GetUserId())
+	id := int(req.GetUserId())
 
-	if userID == 0 {
-		return nil, status.Errorf(
-			codes.InvalidArgument,
-			errors_custom.GrpcErrorToJson(&pb.ErrorResponse{
-				Status:  "validation_error",
-				Message: "User ID parameter cannot be empty and must be a positive number",
-				Code:    int32(codes.InvalidArgument),
-			}),
-		)
+	if id == 0 {
+		return nil, role_errors.ErrGrpcRoleInvalidId
 	}
 
-	role, err := s.roleService.FindByUserId(userID)
+	role, err := s.roleService.FindByUserId(id)
 
 	if err != nil {
-		return nil, status.Errorf(
-			codes.Code(err.Code),
-			errors_custom.GrpcErrorToJson(&pb.ErrorResponse{
-				Status:  err.Status,
-				Message: err.Message,
-				Code:    int32(err.Code),
-			}),
-		)
+		return nil, response.ToGrpcErrorFromErrorResponse(err)
 	}
 
 	roleResponse := s.mapping.ToProtoResponsesRole("success", "Successfully fetched role by user ID", role)
@@ -142,17 +112,16 @@ func (s *roleHandleGrpc) FindByActive(ctx context.Context, req *pb.FindAllRoleRe
 		pageSize = 10
 	}
 
-	roles, totalRecords, err := s.roleService.FindByActiveRole(page, pageSize, search)
+	reqService := requests.FindAllRoles{
+		Page:     page,
+		PageSize: pageSize,
+		Search:   search,
+	}
+
+	roles, totalRecords, err := s.roleService.FindByActive(&reqService)
 
 	if err != nil {
-		return nil, status.Errorf(
-			codes.Code(err.Code),
-			errors_custom.GrpcErrorToJson(&pb.ErrorResponse{
-				Status:  err.Status,
-				Message: err.Message,
-				Code:    int32(err.Code),
-			}),
-		)
+		return nil, response.ToGrpcErrorFromErrorResponse(err)
 	}
 
 	totalPages := int(math.Ceil(float64(*totalRecords) / float64(pageSize)))
@@ -180,17 +149,16 @@ func (s *roleHandleGrpc) FindByTrashed(ctx context.Context, req *pb.FindAllRoleR
 		pageSize = 10
 	}
 
-	roles, totalRecords, err := s.roleService.FindByTrashedRole(page, pageSize, search)
+	reqService := requests.FindAllRoles{
+		Page:     page,
+		PageSize: pageSize,
+		Search:   search,
+	}
+
+	roles, totalRecords, err := s.roleService.FindByTrashed(&reqService)
 
 	if err != nil {
-		return nil, status.Errorf(
-			codes.Code(err.Code),
-			errors_custom.GrpcErrorToJson(&pb.ErrorResponse{
-				Status:  err.Status,
-				Message: err.Message,
-				Code:    int32(err.Code),
-			}),
-		)
+		return nil, response.ToGrpcErrorFromErrorResponse(err)
 	}
 
 	totalPages := int(math.Ceil(float64(*totalRecords) / float64(pageSize)))
@@ -206,84 +174,56 @@ func (s *roleHandleGrpc) FindByTrashed(ctx context.Context, req *pb.FindAllRoleR
 	return so, nil
 }
 
-func (s *roleHandleGrpc) CreateRole(ctx context.Context, reqPb *pb.CreateRoleRequest) (*pb.ApiResponseRole, error) {
-	req := &requests.CreateRoleRequest{
-		Name: reqPb.Name,
-	}
+func (s *roleHandleGrpc) CreateRole(ctx context.Context, req *pb.CreateRoleRequest) (*pb.ApiResponseRole, error) {
+	name := req.GetName()
 
-	if err := req.Validate(); err != nil {
-		return nil, status.Errorf(
-			codes.InvalidArgument,
-			errors_custom.GrpcErrorToJson(&pb.ErrorResponse{
-				Status:  "validation_error",
-				Message: "Unable to create new role. Please check your input.",
-				Code:    int32(codes.InvalidArgument),
-			}),
-		)
-	}
-
-	role, err := s.roleService.CreateRole(req)
-
-	if err != nil {
-		return nil, status.Errorf(
-			codes.Code(err.Code),
-			errors_custom.GrpcErrorToJson(&pb.ErrorResponse{
-				Status:  err.Status,
-				Message: err.Message,
-				Code:    int32(err.Code),
-			}),
-		)
-	}
-
-	so := s.mapping.ToProtoResponseRole("success", "Role created successfully", role)
-	return so, nil
-}
-
-func (s *roleHandleGrpc) UpdateRole(ctx context.Context, reqPb *pb.UpdateRoleRequest) (*pb.ApiResponseRole, error) {
-	roleID := int(reqPb.GetId())
-	name := reqPb.GetName()
-
-	if roleID == 0 {
-		return nil, status.Errorf(
-			codes.InvalidArgument,
-			errors_custom.GrpcErrorToJson(&pb.ErrorResponse{
-				Status:  "validation_error",
-				Message: "Role ID parameter cannot be empty and must be a positive number",
-				Code:    int32(codes.InvalidArgument),
-			}),
-		)
-	}
-
-	req := &requests.UpdateRoleRequest{
-		ID:   &roleID,
+	request := &requests.CreateRoleRequest{
 		Name: name,
 	}
 
-	if err := req.Validate(); err != nil {
-		return nil, status.Errorf(
-			codes.InvalidArgument,
-			errors_custom.GrpcErrorToJson(&pb.ErrorResponse{
-				Status:  "validation_error",
-				Message: "Unable to process role update. Please review your data.",
-				Code:    int32(codes.InvalidArgument),
-			}),
-		)
+	if err := request.Validate(); err != nil {
+		return nil, role_errors.ErrGrpcFailedCreateRole
 	}
 
-	role, err := s.roleService.UpdateRole(req)
+	role, err := s.roleService.Create(&requests.CreateRoleRequest{
+		Name: name,
+	})
 
 	if err != nil {
-		return nil, status.Errorf(
-			codes.Code(err.Code),
-			errors_custom.GrpcErrorToJson(&pb.ErrorResponse{
-				Status:  err.Status,
-				Message: err.Message,
-				Code:    int32(err.Code),
-			}),
-		)
+		return nil, response.ToGrpcErrorFromErrorResponse(err)
 	}
 
-	so := s.mapping.ToProtoResponseRole("success", "Role updated successfully", role)
+	so := s.mapping.ToProtoResponseRole("success", "Successfully created role", role)
+
+	return so, nil
+}
+
+func (s *roleHandleGrpc) UpdateRole(ctx context.Context, req *pb.UpdateRoleRequest) (*pb.ApiResponseRole, error) {
+	id := int(req.GetId())
+
+	if id == 0 {
+		return nil, role_errors.ErrGrpcRoleInvalidId
+	}
+
+	name := req.GetName()
+
+	request := &requests.UpdateRoleRequest{
+		ID:   &id,
+		Name: name,
+	}
+
+	if err := request.Validate(); err != nil {
+		return nil, role_errors.ErrGrpcValidateUpdateRole
+	}
+
+	role, err := s.roleService.Update(request)
+
+	if err != nil {
+		return nil, response.ToGrpcErrorFromErrorResponse(err)
+	}
+
+	so := s.mapping.ToProtoResponseRole("success", "Successfully updated role", role)
+
 	return so, nil
 }
 
@@ -291,27 +231,13 @@ func (s *roleHandleGrpc) TrashedRole(ctx context.Context, req *pb.FindByIdRoleRe
 	id := int(req.GetRoleId())
 
 	if id == 0 {
-		return nil, status.Errorf(
-			codes.InvalidArgument,
-			errors_custom.GrpcErrorToJson(&pb.ErrorResponse{
-				Status:  "validation_error",
-				Message: "Category ID parameter cannot be empty and must be a positive number",
-				Code:    int32(codes.InvalidArgument),
-			}),
-		)
+		return nil, role_errors.ErrGrpcRoleInvalidId
 	}
 
-	role, err := s.roleService.TrashedRole(id)
+	role, err := s.roleService.Trashed(id)
 
 	if err != nil {
-		return nil, status.Errorf(
-			codes.Code(err.Code),
-			errors_custom.GrpcErrorToJson(&pb.ErrorResponse{
-				Status:  err.Status,
-				Message: err.Message,
-				Code:    int32(err.Code),
-			}),
-		)
+		return nil, response.ToGrpcErrorFromErrorResponse(err)
 	}
 
 	so := s.mapping.ToProtoResponseRole("success", "Successfully trashed role", role)
@@ -322,28 +248,14 @@ func (s *roleHandleGrpc) TrashedRole(ctx context.Context, req *pb.FindByIdRoleRe
 func (s *roleHandleGrpc) RestoreRole(ctx context.Context, req *pb.FindByIdRoleRequest) (*pb.ApiResponseRole, error) {
 	id := int(req.GetRoleId())
 
-	if req.GetRoleId() == 0 {
-		return nil, status.Errorf(
-			codes.InvalidArgument,
-			errors_custom.GrpcErrorToJson(&pb.ErrorResponse{
-				Status:  "validation_error",
-				Message: "Role ID parameter cannot be empty and must be a positive number",
-				Code:    int32(codes.InvalidArgument),
-			}),
-		)
+	if id == 0 {
+		return nil, role_errors.ErrGrpcRoleInvalidId
 	}
 
-	role, err := s.roleService.RestoreRole(id)
+	role, err := s.roleService.Restore(id)
 
 	if err != nil {
-		return nil, status.Errorf(
-			codes.Code(err.Code),
-			errors_custom.GrpcErrorToJson(&pb.ErrorResponse{
-				Status:  err.Status,
-				Message: err.Message,
-				Code:    int32(err.Code),
-			}),
-		)
+		return nil, response.ToGrpcErrorFromErrorResponse(err)
 	}
 
 	so := s.mapping.ToProtoResponseRole("success", "Successfully restored role", role)
@@ -354,28 +266,14 @@ func (s *roleHandleGrpc) RestoreRole(ctx context.Context, req *pb.FindByIdRoleRe
 func (s *roleHandleGrpc) DeleteRolePermanent(ctx context.Context, req *pb.FindByIdRoleRequest) (*pb.ApiResponseRoleDelete, error) {
 	id := int(req.GetRoleId())
 
-	if req.GetRoleId() == 0 {
-		return nil, status.Errorf(
-			codes.InvalidArgument,
-			errors_custom.GrpcErrorToJson(&pb.ErrorResponse{
-				Status:  "validation_error",
-				Message: "Role ID parameter cannot be empty and must be a positive number",
-				Code:    int32(codes.InvalidArgument),
-			}),
-		)
+	if id == 0 {
+		return nil, role_errors.ErrGrpcRoleInvalidId
 	}
 
-	_, err := s.roleService.DeleteRolePermanent(id)
+	_, err := s.roleService.DeletePermanent(id)
 
 	if err != nil {
-		return nil, status.Errorf(
-			codes.Code(err.Code),
-			errors_custom.GrpcErrorToJson(&pb.ErrorResponse{
-				Status:  err.Status,
-				Message: err.Message,
-				Code:    int32(err.Code),
-			}),
-		)
+		return nil, response.ToGrpcErrorFromErrorResponse(err)
 	}
 
 	so := s.mapping.ToProtoResponseRoleDelete("success", "Successfully deleted role permanently")
@@ -384,17 +282,10 @@ func (s *roleHandleGrpc) DeleteRolePermanent(ctx context.Context, req *pb.FindBy
 }
 
 func (s *roleHandleGrpc) RestoreAllRole(ctx context.Context, req *emptypb.Empty) (*pb.ApiResponseRoleAll, error) {
-	_, err := s.roleService.RestoreAllRole()
+	_, err := s.roleService.RestoreAll()
 
 	if err != nil {
-		return nil, status.Errorf(
-			codes.Code(err.Code),
-			errors_custom.GrpcErrorToJson(&pb.ErrorResponse{
-				Status:  err.Status,
-				Message: err.Message,
-				Code:    int32(err.Code),
-			}),
-		)
+		return nil, response.ToGrpcErrorFromErrorResponse(err)
 	}
 
 	so := s.mapping.ToProtoResponseRoleAll("success", "Successfully restored all roles")
@@ -403,17 +294,10 @@ func (s *roleHandleGrpc) RestoreAllRole(ctx context.Context, req *emptypb.Empty)
 }
 
 func (s *roleHandleGrpc) DeleteAllRolePermanent(ctx context.Context, req *emptypb.Empty) (*pb.ApiResponseRoleAll, error) {
-	_, err := s.roleService.DeleteAllRolePermanent()
+	_, err := s.roleService.DeleteAllPermanent()
 
 	if err != nil {
-		return nil, status.Errorf(
-			codes.Code(err.Code),
-			errors_custom.GrpcErrorToJson(&pb.ErrorResponse{
-				Status:  err.Status,
-				Message: err.Message,
-				Code:    int32(err.Code),
-			}),
-		)
+		return nil, response.ToGrpcErrorFromErrorResponse(err)
 	}
 
 	so := s.mapping.ToProtoResponseRoleAll("success", "Successfully deleted all roles")

@@ -2,6 +2,8 @@ package repository
 
 import (
 	"context"
+	"database/sql"
+	"errors"
 	"fmt"
 	"pointofsale/internal/domain/record"
 	"pointofsale/internal/domain/requests"
@@ -30,6 +32,9 @@ func (r *userRoleRepository) AssignRoleToUser(req *requests.CreateUserRoleReques
 	})
 
 	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, fmt.Errorf("user ID %d or role ID %d not found", req.UserId, req.RoleId)
+		}
 		return nil, fmt.Errorf("failed to assign role to user: %w", err)
 	}
 
@@ -43,6 +48,9 @@ func (r *userRoleRepository) RemoveRoleFromUser(req *requests.RemoveUserRoleRequ
 	})
 
 	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return fmt.Errorf("no role assignment found for user ID %d and role ID %d", req.UserId, req.RoleId)
+		}
 		return fmt.Errorf("failed to remove role from user: %w", err)
 	}
 
