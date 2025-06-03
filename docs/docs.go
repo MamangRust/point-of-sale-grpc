@@ -2501,7 +2501,7 @@ const docTemplate = `{
                 }
             }
         },
-        "/api/category/update": {
+        "/api/category/update/{id}": {
             "post": {
                 "security": [
                     {
@@ -3189,7 +3189,7 @@ const docTemplate = `{
                 }
             }
         },
-        "/api/merchant/update": {
+        "/api/merchant/update/{id}": {
             "post": {
                 "security": [
                     {
@@ -5498,55 +5498,6 @@ const docTemplate = `{
                         }
                     }
                 }
-            },
-            "post": {
-                "security": [
-                    {
-                        "Bearer": []
-                    }
-                ],
-                "description": "Create a new role with the provided details.",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Role"
-                ],
-                "summary": "Create a new role",
-                "parameters": [
-                    {
-                        "description": "Role data",
-                        "name": "request",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/requests.CreateRoleRequest"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "Created role data",
-                        "schema": {
-                            "$ref": "#/definitions/response.ApiResponseRole"
-                        }
-                    },
-                    "400": {
-                        "description": "Invalid request body",
-                        "schema": {
-                            "$ref": "#/definitions/response.ErrorResponse"
-                        }
-                    },
-                    "500": {
-                        "description": "Failed to create role",
-                        "schema": {
-                            "$ref": "#/definitions/response.ErrorResponse"
-                        }
-                    }
-                }
             }
         },
         "/api/role/active": {
@@ -5609,7 +5560,58 @@ const docTemplate = `{
                 }
             }
         },
-        "/api/role/permanent-all": {
+        "/api/role/create": {
+            "post": {
+                "security": [
+                    {
+                        "Bearer": []
+                    }
+                ],
+                "description": "Create a new role with the provided details.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Role"
+                ],
+                "summary": "Create a new role",
+                "parameters": [
+                    {
+                        "description": "Role data",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/requests.CreateRoleRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Created role data",
+                        "schema": {
+                            "$ref": "#/definitions/response.ApiResponseRole"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request body",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Failed to create role",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/role/permanent/all": {
             "delete": {
                 "security": [
                     {
@@ -5692,8 +5694,8 @@ const docTemplate = `{
                 }
             }
         },
-        "/api/role/restore-all": {
-            "put": {
+        "/api/role/restore/all": {
+            "post": {
                 "security": [
                     {
                         "Bearer": []
@@ -5835,6 +5837,113 @@ const docTemplate = `{
                 }
             }
         },
+        "/api/role/trashed/{id}": {
+            "post": {
+                "security": [
+                    {
+                        "Bearer": []
+                    }
+                ],
+                "description": "Soft-delete a role by its ID.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Role"
+                ],
+                "summary": "Soft-delete a role",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Role ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Soft-deleted role data",
+                        "schema": {
+                            "$ref": "#/definitions/response.ApiResponseRole"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid role ID",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Failed to soft-delete role",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/role/update/{id}": {
+            "post": {
+                "security": [
+                    {
+                        "Bearer": []
+                    }
+                ],
+                "description": "Update an existing role with the provided details.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Role"
+                ],
+                "summary": "Update a role",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Role ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Role data",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/requests.UpdateRoleRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Updated role data",
+                        "schema": {
+                            "$ref": "#/definitions/response.ApiResponseRole"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid role ID or request body",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Failed to update role",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/api/role/user/{user_id}": {
             "get": {
                 "security": [
@@ -5926,53 +6035,6 @@ const docTemplate = `{
                     },
                     "500": {
                         "description": "Failed to fetch role",
-                        "schema": {
-                            "$ref": "#/definitions/response.ErrorResponse"
-                        }
-                    }
-                }
-            },
-            "post": {
-                "security": [
-                    {
-                        "Bearer": []
-                    }
-                ],
-                "description": "Soft-delete a role by its ID.",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Role"
-                ],
-                "summary": "Soft-delete a role",
-                "parameters": [
-                    {
-                        "type": "integer",
-                        "description": "Role ID",
-                        "name": "id",
-                        "in": "path",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "Soft-deleted role data",
-                        "schema": {
-                            "$ref": "#/definitions/response.ApiResponseRole"
-                        }
-                    },
-                    "400": {
-                        "description": "Invalid role ID",
-                        "schema": {
-                            "$ref": "#/definitions/response.ErrorResponse"
-                        }
-                    },
-                    "500": {
-                        "description": "Failed to soft-delete role",
                         "schema": {
                             "$ref": "#/definitions/response.ErrorResponse"
                         }
@@ -6314,7 +6376,75 @@ const docTemplate = `{
                 }
             }
         },
-        "/api/transaction/merchant/monthly-methods": {
+        "/api/transaction/merchant/monthly-method-failed/{merchant_id}": {
+            "get": {
+                "security": [
+                    {
+                        "Bearer": []
+                    }
+                ],
+                "description": "Retrieve statistics of payment methods used by month for specific merchant",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Transaction"
+                ],
+                "summary": "Get monthly payment method distribution by merchant",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Merchant ID",
+                        "name": "merchant_id",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Year in YYYY format (e.g., 2023)",
+                        "name": "year",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/response.ApiResponsesTransactionMonthMethod"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid merchant ID or year parameter",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Merchant not found",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/transaction/merchant/monthly-method-success/{merchant_id}": {
             "get": {
                 "security": [
                     {
@@ -6525,7 +6655,75 @@ const docTemplate = `{
                 }
             }
         },
-        "/api/transaction/merchant/yearly-methods": {
+        "/api/transaction/merchant/yearly-method-failed/{merchant_id}": {
+            "get": {
+                "security": [
+                    {
+                        "Bearer": []
+                    }
+                ],
+                "description": "Retrieve statistics of payment methods used by year for specific merchant",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Transaction"
+                ],
+                "summary": "Get yearly payment method distribution by merchant",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Merchant ID",
+                        "name": "merchant_id",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Year in YYYY format (e.g., 2023)",
+                        "name": "year",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/response.ApiResponsesTransactionYearMethod"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid merchant ID or year parameter",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Merchant not found",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/transaction/merchant/yearly-method-success/{merchant_id}": {
             "get": {
                 "security": [
                     {
@@ -6723,7 +6921,62 @@ const docTemplate = `{
                 }
             }
         },
-        "/api/transaction/monthly-methods": {
+        "/api/transaction/monthly-method-failed": {
+            "get": {
+                "security": [
+                    {
+                        "Bearer": []
+                    }
+                ],
+                "description": "Retrieve statistics of payment methods used by month",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Transaction"
+                ],
+                "summary": "Get monthly payment method distribution",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Year in YYYY format (e.g., 2023)",
+                        "name": "year",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/response.ApiResponsesTransactionMonthMethod"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid year parameter",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/transaction/monthly-method-success": {
             "get": {
                 "security": [
                     {
@@ -7028,7 +7281,7 @@ const docTemplate = `{
                 }
             }
         },
-        "/api/transaction/update": {
+        "/api/transaction/update/{id}": {
             "post": {
                 "security": [
                     {
@@ -7047,6 +7300,13 @@ const docTemplate = `{
                 ],
                 "summary": "Update an existing transaction",
                 "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Transaction ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
                     {
                         "description": "Updated transaction details",
                         "name": "request",
@@ -7134,7 +7394,62 @@ const docTemplate = `{
                 }
             }
         },
-        "/api/transaction/yearly-methods": {
+        "/api/transaction/yearly-method-failed": {
+            "get": {
+                "security": [
+                    {
+                        "Bearer": []
+                    }
+                ],
+                "description": "Retrieve statistics of payment methods used by year",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Transaction"
+                ],
+                "summary": "Get yearly payment method distribution",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Year in YYYY format (e.g., 2023)",
+                        "name": "year",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/response.ApiResponsesTransactionYearMethod"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid year parameter",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/transaction/yearly-method-success": {
             "get": {
                 "security": [
                     {
@@ -7487,7 +7802,7 @@ const docTemplate = `{
                     "200": {
                         "description": "Successfully deleted user record permanently",
                         "schema": {
-                            "$ref": "#/definitions/response.ApiResponseUserAll"
+                            "$ref": "#/definitions/response.ApiResponseUserDelete"
                         }
                     },
                     "400": {
@@ -7776,13 +8091,6 @@ const docTemplate = `{
                 ],
                 "summary": "Update an existing user",
                 "parameters": [
-                    {
-                        "type": "integer",
-                        "description": "User ID",
-                        "name": "id",
-                        "in": "path",
-                        "required": true
-                    },
                     {
                         "description": "Update user request",
                         "name": "UpdateUserRequest",

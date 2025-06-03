@@ -70,7 +70,7 @@ func (s *merchantHandleGrpc) FindById(ctx context.Context, request *pb.FindByIdM
 	id := int(request.GetId())
 
 	if id == 0 {
-		return nil, merchant_errors.ErrGrpcFailedFindMerchantById
+		return nil, merchant_errors.ErrGrpcInvalidID
 	}
 
 	merchant, err := s.merchantService.FindById(id)

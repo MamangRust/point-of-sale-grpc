@@ -44,12 +44,25 @@ message FindYearlyTransactionStatusByMerchant{
     int32 merchant_id = 2;
 }
 
-message FindYearTransaction{
+
+message YearTransactionMethod{
+     int32 year = 1;
+}
+
+message MonthTransactionMethod {
     int32 year = 1;
+    int32 month = 2;
 }
 
 
-message FindYearTransactionByMerchant{
+
+message MonthTransactionMethodByMerchant {
+    int32 merchant_id = 1;
+    int32 year = 2;
+    int32 month = 3;
+}
+
+message YearTransactionMethodByMerchant {
     int32 merchant_id = 1;
     int32 year = 2;
 }
@@ -248,11 +261,17 @@ service TransactionService {
     rpc FindYearStatusFailedByMerchant(FindYearlyTransactionStatusByMerchant) returns(ApiResponseTransactionYearAmountFailed);
 
 
-    rpc FindMonthMethod(FindYearTransaction) returns(ApiResponseTransactionMonthPaymentMethod);
-    rpc FindYearMethod(FindYearTransaction) returns(ApiResponseTransactionYearPaymentmethod);
+    rpc FindMonthMethodSuccess(MonthTransactionMethod) returns(ApiResponseTransactionMonthPaymentMethod);
+    rpc FindYearMethodSuccess(YearTransactionMethod) returns(ApiResponseTransactionYearPaymentmethod);
 
-    rpc FindMonthMethodByMerchant(FindYearTransactionByMerchant) returns(ApiResponseTransactionMonthPaymentMethod);
-    rpc FindYearMethodByMerchant(FindYearTransactionByMerchant) returns(ApiResponseTransactionYearPaymentmethod);
+    rpc FindMonthMethodByMerchantSuccess(MonthTransactionMethodByMerchant) returns(ApiResponseTransactionMonthPaymentMethod);
+    rpc FindYearMethodByMerchantSuccess(YearTransactionMethodByMerchant) returns(ApiResponseTransactionYearPaymentmethod);
+
+    rpc FindMonthMethodFailed(MonthTransactionMethod) returns(ApiResponseTransactionMonthPaymentMethod);
+    rpc FindYearMethodFailed(YearTransactionMethod) returns(ApiResponseTransactionYearPaymentmethod);
+
+    rpc FindMonthMethodByMerchantFailed(MonthTransactionMethodByMerchant) returns(ApiResponseTransactionMonthPaymentMethod);
+    rpc FindYearMethodByMerchantFailed(YearTransactionMethodByMerchant) returns(ApiResponseTransactionYearPaymentmethod);
     
 
     rpc FindByActive(FindAllTransactionRequest) returns (ApiResponsePaginationTransactionDeleteAt) {}

@@ -1,7 +1,6 @@
 package middlewares
 
 import (
-	"fmt"
 	"strings"
 
 	"github.com/golang-jwt/jwt/v5"
@@ -9,7 +8,6 @@ import (
 	"github.com/labstack/echo/v4"
 	"github.com/spf13/viper"
 )
-
 
 var whiteListPaths = []string{
 	"/api/auth/login",
@@ -32,10 +30,7 @@ func WebSecurityConfig(e *echo.Echo) {
 				c.Set("userID", subject)
 			}
 		},
-		ErrorHandler: func(c echo.Context, err error) error{
-			fmt.Println("JWT Error:", err)
-
-
+		ErrorHandler: func(c echo.Context, err error) error {
 			return echo.ErrUnauthorized
 		},
 	}

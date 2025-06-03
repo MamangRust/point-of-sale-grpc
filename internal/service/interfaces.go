@@ -176,10 +176,15 @@ type TransactionService interface {
 	FindMonthlyAmountFailedByMerchant(req *requests.MonthAmountTransactionMerchant) ([]*response.TransactionMonthlyAmountFailedResponse, *response.ErrorResponse)
 	FindYearlyAmountFailedByMerchant(req *requests.YearAmountTransactionMerchant) ([]*response.TransactionYearlyAmountFailedResponse, *response.ErrorResponse)
 
-	FindMonthlyMethod(year int) ([]*response.TransactionMonthlyMethodResponse, *response.ErrorResponse)
-	FindYearlyMethod(year int) ([]*response.TransactionYearlyMethodResponse, *response.ErrorResponse)
-	FindMonthlyMethodByMerchant(req *requests.MonthlyYearTransactionMethodMerchant) ([]*response.TransactionMonthlyMethodResponse, *response.ErrorResponse)
-	FindYearlyMethodByMerchant(req *requests.MonthlyYearTransactionMethodMerchant) ([]*response.TransactionYearlyMethodResponse, *response.ErrorResponse)
+	FindMonthlyMethodSuccess(req *requests.MonthMethodTransaction) ([]*response.TransactionMonthlyMethodResponse, *response.ErrorResponse)
+	FindYearlyMethodSuccess(year int) ([]*response.TransactionYearlyMethodResponse, *response.ErrorResponse)
+	FindMonthlyMethodByMerchantSuccess(req *requests.MonthMethodTransactionMerchant) ([]*response.TransactionMonthlyMethodResponse, *response.ErrorResponse)
+	FindYearlyMethodByMerchantSuccess(req *requests.YearMethodTransactionMerchant) ([]*response.TransactionYearlyMethodResponse, *response.ErrorResponse)
+
+	FindMonthlyMethodFailed(req *requests.MonthMethodTransaction) ([]*response.TransactionMonthlyMethodResponse, *response.ErrorResponse)
+	FindYearlyMethodFailed(year int) ([]*response.TransactionYearlyMethodResponse, *response.ErrorResponse)
+	FindMonthlyMethodByMerchantFailed(req *requests.MonthMethodTransactionMerchant) ([]*response.TransactionMonthlyMethodResponse, *response.ErrorResponse)
+	FindYearlyMethodByMerchantFailed(req *requests.YearMethodTransactionMerchant) ([]*response.TransactionYearlyMethodResponse, *response.ErrorResponse)
 
 	FindAllTransactions(req *requests.FindAllTransaction) ([]*response.TransactionResponse, *int, *response.ErrorResponse)
 	FindByMerchant(req *requests.FindAllTransactionByMerchant) ([]*response.TransactionResponse, *int, *response.ErrorResponse)

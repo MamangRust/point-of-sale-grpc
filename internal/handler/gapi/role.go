@@ -182,7 +182,7 @@ func (s *roleHandleGrpc) CreateRole(ctx context.Context, req *pb.CreateRoleReque
 	}
 
 	if err := request.Validate(); err != nil {
-		return nil, role_errors.ErrGrpcFailedCreateRole
+		return nil, role_errors.ErrGrpcValidateCreateRole
 	}
 
 	role, err := s.roleService.Create(&requests.CreateRoleRequest{

@@ -50,11 +50,17 @@ func NewHandlerTransaction(
 	routerTransaction.GET("/merchant/monthly-failed", transactionHandle.FindMonthStatusFailedByMerchant)
 	routerTransaction.GET("/merchant/yearly-failed", transactionHandle.FindYearStatusFailedByMerchant)
 
-	routerTransaction.GET("/monthly-methods", transactionHandle.FindMonthMethod)
-	routerTransaction.GET("/yearly-methods", transactionHandle.FindYearMethod)
+	routerTransaction.GET("/monthly-method-success", transactionHandle.FindMonthMethodSuccess)
+	routerTransaction.GET("/yearly-method-success", transactionHandle.FindYearMethodSuccess)
 
-	routerTransaction.GET("/merchant/monthly-methods", transactionHandle.FindMonthMethodByMerchant)
-	routerTransaction.GET("/merchant/yearly-methods", transactionHandle.FindYearMethodByMerchant)
+	routerTransaction.GET("/merchant/monthly-method-success/:merchant_id", transactionHandle.FindMonthMethodByMerchantSuccess)
+	routerTransaction.GET("/merchant/yearly-method-success/:merchant_id", transactionHandle.FindYearMethodByMerchantSuccess)
+
+	routerTransaction.GET("/monthly-method-failed", transactionHandle.FindMonthMethodFailed)
+	routerTransaction.GET("/yearly-method-failed", transactionHandle.FindYearMethodFailed)
+
+	routerTransaction.GET("/merchant/monthly-method-failed/:merchant_id", transactionHandle.FindMonthMethodByMerchantFailed)
+	routerTransaction.GET("/merchant/yearly-method-failed/:merchant_id", transactionHandle.FindYearMethodByMerchantFailed)
 
 	routerTransaction.POST("/create", transactionHandle.Create)
 	routerTransaction.POST("/update/:id", transactionHandle.Update)
@@ -689,8 +695,8 @@ func (h *transactionHandleApi) FindYearStatusFailedByMerchant(c echo.Context) er
 // @Failure 400 {object} response.ErrorResponse "Invalid year parameter"
 // @Failure 401 {object} response.ErrorResponse "Unauthorized"
 // @Failure 500 {object} response.ErrorResponse "Internal server error"
-// @Router /api/transaction/monthly-methods [get]
-func (h *transactionHandleApi) FindMonthMethod(c echo.Context) error {
+// @Router /api/transaction/monthly-method-success [get]
+func (h *transactionHandleApi) FindMonthMethodSuccess(c echo.Context) error {
 	yearStr := c.QueryParam("year")
 	year, err := strconv.Atoi(yearStr)
 	if err != nil {
@@ -698,10 +704,18 @@ func (h *transactionHandleApi) FindMonthMethod(c echo.Context) error {
 		return transaction_errors.ErrApiTransactionInvalidYear(c)
 	}
 
+	month, err := strconv.Atoi(c.QueryParam("month"))
+
+	if err != nil {
+		h.logger.Debug("Invalid month parameter", zap.Error(err))
+		return transaction_errors.ErrApiTransactionInvalidMonth(c)
+	}
+
 	ctx := c.Request().Context()
 
-	res, err := h.client.FindMonthMethod(ctx, &pb.FindYearTransaction{
-		Year: int32(year),
+	res, err := h.client.FindMonthMethodSuccess(ctx, &pb.MonthTransactionMethod{
+		Year:  int32(year),
+		Month: int32(month),
 	})
 	if err != nil {
 		h.logger.Debug("Failed to retrieve monthly transaction methods", zap.Error(err))
@@ -725,8 +739,8 @@ func (h *transactionHandleApi) FindMonthMethod(c echo.Context) error {
 // @Failure 400 {object} response.ErrorResponse "Invalid year parameter"
 // @Failure 401 {object} response.ErrorResponse "Unauthorized"
 // @Failure 500 {object} response.ErrorResponse "Internal server error"
-// @Router /api/transaction/yearly-methods [get]
-func (h *transactionHandleApi) FindYearMethod(c echo.Context) error {
+// @Router /api/transaction/yearly-method-success [get]
+func (h *transactionHandleApi) FindYearMethodSuccess(c echo.Context) error {
 	yearStr := c.QueryParam("year")
 	year, err := strconv.Atoi(yearStr)
 	if err != nil {
@@ -736,7 +750,7 @@ func (h *transactionHandleApi) FindYearMethod(c echo.Context) error {
 
 	ctx := c.Request().Context()
 
-	res, err := h.client.FindYearMethod(ctx, &pb.FindYearTransaction{
+	res, err := h.client.FindYearMethodSuccess(ctx, &pb.YearTransactionMethod{
 		Year: int32(year),
 	})
 	if err != nil {
@@ -763,15 +777,22 @@ func (h *transactionHandleApi) FindYearMethod(c echo.Context) error {
 // @Failure 401 {object} response.ErrorResponse "Unauthorized"
 // @Failure 404 {object} response.ErrorResponse "Merchant not found"
 // @Failure 500 {object} response.ErrorResponse "Internal server error"
-// @Router /api/transaction/merchant/monthly-methods [get]
-func (h *transactionHandleApi) FindMonthMethodByMerchant(c echo.Context) error {
+// @Router /api/transaction/merchant/monthly-method-success/{merchant_id} [get]
+func (h *transactionHandleApi) FindMonthMethodByMerchantSuccess(c echo.Context) error {
+	merchantIdStr := c.Param("merchant_id")
 	yearStr := c.QueryParam("year")
-	merchantIdStr := c.QueryParam("merchant_id")
 
 	year, err := strconv.Atoi(yearStr)
 	if err != nil {
 		h.logger.Debug("Invalid year parameter", zap.Error(err))
 		return transaction_errors.ErrApiTransactionInvalidYear(c)
+	}
+
+	month, err := strconv.Atoi(c.QueryParam("month"))
+
+	if err != nil {
+		h.logger.Debug("Invalid month parameter", zap.Error(err))
+		return transaction_errors.ErrApiTransactionInvalidMonth(c)
 	}
 
 	merchant_id, err := strconv.Atoi(merchantIdStr)
@@ -783,8 +804,9 @@ func (h *transactionHandleApi) FindMonthMethodByMerchant(c echo.Context) error {
 
 	ctx := c.Request().Context()
 
-	res, err := h.client.FindMonthMethodByMerchant(ctx, &pb.FindYearTransactionByMerchant{
+	res, err := h.client.FindMonthMethodByMerchantSuccess(ctx, &pb.MonthTransactionMethodByMerchant{
 		Year:       int32(year),
+		Month:      int32(month),
 		MerchantId: int32(merchant_id),
 	})
 
@@ -812,10 +834,10 @@ func (h *transactionHandleApi) FindMonthMethodByMerchant(c echo.Context) error {
 // @Failure 401 {object} response.ErrorResponse "Unauthorized"
 // @Failure 404 {object} response.ErrorResponse "Merchant not found"
 // @Failure 500 {object} response.ErrorResponse "Internal server error"
-// @Router /api/transaction/merchant/yearly-methods [get]
-func (h *transactionHandleApi) FindYearMethodByMerchant(c echo.Context) error {
+// @Router /api/transaction/merchant/yearly-method-success/{merchant_id} [get]
+func (h *transactionHandleApi) FindYearMethodByMerchantSuccess(c echo.Context) error {
 	yearStr := c.QueryParam("year")
-	merchantIdStr := c.QueryParam("merchant_id")
+	merchantIdStr := c.Param("merchant_id")
 
 	year, err := strconv.Atoi(yearStr)
 	if err != nil {
@@ -832,12 +854,197 @@ func (h *transactionHandleApi) FindYearMethodByMerchant(c echo.Context) error {
 
 	ctx := c.Request().Context()
 
-	res, err := h.client.FindYearMethodByMerchant(ctx, &pb.FindYearTransactionByMerchant{
+	res, err := h.client.FindYearMethodByMerchantSuccess(ctx, &pb.YearTransactionMethodByMerchant{
 		Year:       int32(year),
 		MerchantId: int32(merchant_id),
 	})
 	if err != nil {
 		h.logger.Debug("Failed to retrieve yearly transaction methods", zap.Error(err))
+		return transaction_errors.ErrApiTransactionFailedFindYearMethodByMerchant(c)
+	}
+
+	so := h.mapping.ToApiResponseTransactionYearMethod(res)
+
+	return c.JSON(http.StatusOK, so)
+}
+
+// FindMonthMethod retrieves monthly payment method statistics
+// @Summary Get monthly payment method distribution
+// @Tags Transaction
+// @Security Bearer
+// @Description Retrieve statistics of payment methods used by month
+// @Accept json
+// @Produce json
+// @Param year query int true "Year in YYYY format (e.g., 2023)"
+// @Success 200 {object} response.ApiResponsesTransactionMonthMethod
+// @Failure 400 {object} response.ErrorResponse "Invalid year parameter"
+// @Failure 401 {object} response.ErrorResponse "Unauthorized"
+// @Failure 500 {object} response.ErrorResponse "Internal server error"
+// @Router /api/transaction/monthly-method-failed [get]
+func (h *transactionHandleApi) FindMonthMethodFailed(c echo.Context) error {
+	yearStr := c.QueryParam("year")
+	year, err := strconv.Atoi(yearStr)
+	if err != nil {
+		h.logger.Debug("Invalid year parameter", zap.Error(err))
+		return transaction_errors.ErrApiTransactionInvalidYear(c)
+	}
+
+	month, err := strconv.Atoi(c.QueryParam("month"))
+
+	if err != nil {
+		h.logger.Debug("Invalid month parameter", zap.Error(err))
+		return transaction_errors.ErrApiTransactionInvalidMonth(c)
+	}
+
+	ctx := c.Request().Context()
+
+	res, err := h.client.FindMonthMethodFailed(ctx, &pb.MonthTransactionMethod{
+		Year:  int32(year),
+		Month: int32(month),
+	})
+	if err != nil {
+		h.logger.Debug("Success to retrieve monthly transaction methods", zap.Error(err))
+		return transaction_errors.ErrApiTransactionFailedFindMonthMethod(c)
+	}
+
+	so := h.mapping.ToApiResponseTransactionMonthMethod(res)
+
+	return c.JSON(http.StatusOK, so)
+}
+
+// FindYearMethod retrieves yearly payment method statistics
+// @Summary Get yearly payment method distribution
+// @Tags Transaction
+// @Security Bearer
+// @Description Retrieve statistics of payment methods used by year
+// @Accept json
+// @Produce json
+// @Param year query int true "Year in YYYY format (e.g., 2023)"
+// @Success 200 {object} response.ApiResponsesTransactionYearMethod
+// @Failure 400 {object} response.ErrorResponse "Invalid year parameter"
+// @Failure 401 {object} response.ErrorResponse "Unauthorized"
+// @Failure 500 {object} response.ErrorResponse "Internal server error"
+// @Router /api/transaction/yearly-method-failed [get]
+func (h *transactionHandleApi) FindYearMethodFailed(c echo.Context) error {
+	yearStr := c.QueryParam("year")
+	year, err := strconv.Atoi(yearStr)
+	if err != nil {
+		h.logger.Debug("Invalid year parameter", zap.Error(err))
+		return transaction_errors.ErrApiTransactionInvalidYear(c)
+	}
+
+	ctx := c.Request().Context()
+
+	res, err := h.client.FindYearMethodFailed(ctx, &pb.YearTransactionMethod{
+		Year: int32(year),
+	})
+	if err != nil {
+		h.logger.Debug("Success to retrieve yearly transaction methods", zap.Error(err))
+		return transaction_errors.ErrApiTransactionFailedFindYearMethod(c)
+	}
+
+	so := h.mapping.ToApiResponseTransactionYearMethod(res)
+
+	return c.JSON(http.StatusOK, so)
+}
+
+// FindMonthMethodByMerchant retrieves monthly payment method statistics by merchant
+// @Summary Get monthly payment method distribution by merchant
+// @Tags Transaction
+// @Security Bearer
+// @Description Retrieve statistics of payment methods used by month for specific merchant
+// @Accept json
+// @Produce json
+// @Param merchant_id query int true "Merchant ID"
+// @Param year query int true "Year in YYYY format (e.g., 2023)"
+// @Success 200 {object} response.ApiResponsesTransactionMonthMethod
+// @Failure 400 {object} response.ErrorResponse "Invalid merchant ID or year parameter"
+// @Failure 401 {object} response.ErrorResponse "Unauthorized"
+// @Failure 404 {object} response.ErrorResponse "Merchant not found"
+// @Failure 500 {object} response.ErrorResponse "Internal server error"
+// @Router /api/transaction/merchant/monthly-method-failed/{merchant_id} [get]
+func (h *transactionHandleApi) FindMonthMethodByMerchantFailed(c echo.Context) error {
+	yearStr := c.QueryParam("year")
+	merchantIdStr := c.Param("merchant_id")
+
+	year, err := strconv.Atoi(yearStr)
+	if err != nil {
+		h.logger.Debug("Invalid year parameter", zap.Error(err))
+		return transaction_errors.ErrApiTransactionInvalidYear(c)
+	}
+
+	month, err := strconv.Atoi(c.QueryParam("month"))
+
+	if err != nil {
+		h.logger.Debug("Invalid month parameter", zap.Error(err))
+		return transaction_errors.ErrApiTransactionInvalidMonth(c)
+	}
+
+	merchant_id, err := strconv.Atoi(merchantIdStr)
+
+	if err != nil {
+		h.logger.Debug("Invalid merchant id parameter", zap.Error(err))
+		return transaction_errors.ErrApiTransactionInvalidMerchantId(c)
+	}
+
+	ctx := c.Request().Context()
+
+	res, err := h.client.FindMonthMethodByMerchantSuccess(ctx, &pb.MonthTransactionMethodByMerchant{
+		Year:       int32(year),
+		Month:      int32(month),
+		MerchantId: int32(merchant_id),
+	})
+
+	if err != nil {
+		h.logger.Debug("Success to retrieve monthly transaction methods", zap.Error(err))
+		return transaction_errors.ErrApiTransactionFailedFindMonthMethodByMerchant(c)
+	}
+
+	so := h.mapping.ToApiResponseTransactionMonthMethod(res)
+
+	return c.JSON(http.StatusOK, so)
+}
+
+// FindYearMethodByMerchant retrieves yearly payment method statistics by merchant
+// @Summary Get yearly payment method distribution by merchant
+// @Tags Transaction
+// @Security Bearer
+// @Description Retrieve statistics of payment methods used by year for specific merchant
+// @Accept json
+// @Produce json
+// @Param merchant_id query int true "Merchant ID"
+// @Param year query int true "Year in YYYY format (e.g., 2023)"
+// @Success 200 {object} response.ApiResponsesTransactionYearMethod
+// @Failure 400 {object} response.ErrorResponse "Invalid merchant ID or year parameter"
+// @Failure 401 {object} response.ErrorResponse "Unauthorized"
+// @Failure 404 {object} response.ErrorResponse "Merchant not found"
+// @Failure 500 {object} response.ErrorResponse "Internal server error"
+// @Router /api/transaction/merchant/yearly-method-failed/{merchant_id} [get]
+func (h *transactionHandleApi) FindYearMethodByMerchantFailed(c echo.Context) error {
+	yearStr := c.QueryParam("year")
+	merchantIdStr := c.Param("merchant_id")
+
+	year, err := strconv.Atoi(yearStr)
+	if err != nil {
+		h.logger.Debug("Invalid year parameter", zap.Error(err))
+		return transaction_errors.ErrApiTransactionInvalidYear(c)
+	}
+
+	merchant_id, err := strconv.Atoi(merchantIdStr)
+
+	if err != nil {
+		h.logger.Debug("Invalid merchant id parameter", zap.Error(err))
+		return transaction_errors.ErrApiTransactionInvalidMerchantId(c)
+	}
+
+	ctx := c.Request().Context()
+
+	res, err := h.client.FindYearMethodByMerchantSuccess(ctx, &pb.YearTransactionMethodByMerchant{
+		Year:       int32(year),
+		MerchantId: int32(merchant_id),
+	})
+	if err != nil {
+		h.logger.Debug("Success to retrieve yearly transaction methods", zap.Error(err))
 		return transaction_errors.ErrApiTransactionFailedFindYearMethodByMerchant(c)
 	}
 

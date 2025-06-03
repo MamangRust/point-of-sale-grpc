@@ -326,11 +326,12 @@ func (s *transactionService) FindYearlyAmountFailedByMerchant(req *requests.Year
 	return s.mapping.ToTransactionYearlyAmountFailed(res), nil
 }
 
-func (s *transactionService) FindMonthlyMethod(year int) ([]*response.TransactionMonthlyMethodResponse, *response.ErrorResponse) {
-	res, err := s.transactionRepository.GetMonthlyTransactionMethod(year)
+func (s *transactionService) FindMonthlyMethodSuccess(req *requests.MonthMethodTransaction) ([]*response.TransactionMonthlyMethodResponse, *response.ErrorResponse) {
+	res, err := s.transactionRepository.GetMonthlyTransactionMethodSuccess(req)
 	if err != nil {
 		s.logger.Error("failed to get monthly transaction methods",
-			zap.Int("year", year),
+			zap.Int("year", req.Year),
+			zap.Int("month", req.Month),
 			zap.Error(err))
 		return nil, transaction_errors.ErrFailedFindMonthlyMethod
 	}
@@ -338,8 +339,8 @@ func (s *transactionService) FindMonthlyMethod(year int) ([]*response.Transactio
 	return s.mapping.ToTransactionMonthlyMethod(res), nil
 }
 
-func (s *transactionService) FindYearlyMethod(year int) ([]*response.TransactionYearlyMethodResponse, *response.ErrorResponse) {
-	res, err := s.transactionRepository.GetYearlyTransactionMethod(year)
+func (s *transactionService) FindYearlyMethodSuccess(year int) ([]*response.TransactionYearlyMethodResponse, *response.ErrorResponse) {
+	res, err := s.transactionRepository.GetYearlyTransactionMethodSuccess(year)
 
 	if err != nil {
 		s.logger.Error("failed to get yearly transaction methods",
@@ -351,11 +352,11 @@ func (s *transactionService) FindYearlyMethod(year int) ([]*response.Transaction
 	return s.mapping.ToTransactionYearlyMethod(res), nil
 }
 
-func (s *transactionService) FindMonthlyMethodByMerchant(req *requests.MonthlyYearTransactionMethodMerchant) ([]*response.TransactionMonthlyMethodResponse, *response.ErrorResponse) {
+func (s *transactionService) FindMonthlyMethodByMerchantSuccess(req *requests.MonthMethodTransactionMerchant) ([]*response.TransactionMonthlyMethodResponse, *response.ErrorResponse) {
 	year := req.Year
 	merchantId := req.MerchantID
 
-	res, err := s.transactionRepository.GetMonthlyTransactionMethodByMerchant(req)
+	res, err := s.transactionRepository.GetMonthlyTransactionMethodByMerchantSuccess(req)
 	if err != nil {
 		s.logger.Error("failed to get monthly transaction methods by merchant",
 			zap.Int("year", year),
@@ -367,11 +368,70 @@ func (s *transactionService) FindMonthlyMethodByMerchant(req *requests.MonthlyYe
 	return s.mapping.ToTransactionMonthlyMethod(res), nil
 }
 
-func (s *transactionService) FindYearlyMethodByMerchant(req *requests.MonthlyYearTransactionMethodMerchant) ([]*response.TransactionYearlyMethodResponse, *response.ErrorResponse) {
+func (s *transactionService) FindYearlyMethodByMerchantSuccess(req *requests.YearMethodTransactionMerchant) ([]*response.TransactionYearlyMethodResponse, *response.ErrorResponse) {
 	year := req.Year
 	merchantId := req.MerchantID
 
-	res, err := s.transactionRepository.GetYearlyTransactionMethodByMerchant(req)
+	res, err := s.transactionRepository.GetYearlyTransactionMethodByMerchantSuccess(req)
+
+	if err != nil {
+		s.logger.Error("failed to get yearly transaction methods by merchant",
+			zap.Int("year", year),
+			zap.Int("merchant_id", merchantId),
+			zap.Error(err))
+		return nil, transaction_errors.ErrFailedFindYearlyMethodByMerchant
+	}
+
+	return s.mapping.ToTransactionYearlyMethod(res), nil
+}
+
+func (s *transactionService) FindMonthlyMethodFailed(req *requests.MonthMethodTransaction) ([]*response.TransactionMonthlyMethodResponse, *response.ErrorResponse) {
+	res, err := s.transactionRepository.GetMonthlyTransactionMethodFailed(req)
+	if err != nil {
+		s.logger.Error("failed to get monthly transaction methods",
+			zap.Int("year", req.Year),
+			zap.Int("month", req.Month),
+			zap.Error(err))
+		return nil, transaction_errors.ErrFailedFindMonthlyMethod
+	}
+
+	return s.mapping.ToTransactionMonthlyMethod(res), nil
+}
+
+func (s *transactionService) FindYearlyMethodFailed(year int) ([]*response.TransactionYearlyMethodResponse, *response.ErrorResponse) {
+	res, err := s.transactionRepository.GetYearlyTransactionMethodFailed(year)
+
+	if err != nil {
+		s.logger.Error("failed to get yearly transaction methods",
+			zap.Int("year", year),
+			zap.Error(err))
+		return nil, transaction_errors.ErrFailedFindYearlyMethod
+	}
+
+	return s.mapping.ToTransactionYearlyMethod(res), nil
+}
+
+func (s *transactionService) FindMonthlyMethodByMerchantFailed(req *requests.MonthMethodTransactionMerchant) ([]*response.TransactionMonthlyMethodResponse, *response.ErrorResponse) {
+	year := req.Year
+	merchantId := req.MerchantID
+
+	res, err := s.transactionRepository.GetMonthlyTransactionMethodByMerchantFailed(req)
+	if err != nil {
+		s.logger.Error("failed to get monthly transaction methods by merchant",
+			zap.Int("year", year),
+			zap.Int("merchant_id", merchantId),
+			zap.Error(err))
+		return nil, transaction_errors.ErrFailedFindMonthlyMethodByMerchant
+	}
+
+	return s.mapping.ToTransactionMonthlyMethod(res), nil
+}
+
+func (s *transactionService) FindYearlyMethodByMerchantFailed(req *requests.YearMethodTransactionMerchant) ([]*response.TransactionYearlyMethodResponse, *response.ErrorResponse) {
+	year := req.Year
+	merchantId := req.MerchantID
+
+	res, err := s.transactionRepository.GetYearlyTransactionMethodByMerchantFailed(req)
 
 	if err != nil {
 		s.logger.Error("failed to get yearly transaction methods by merchant",
@@ -453,24 +513,23 @@ func (s *transactionService) CreateTransaction(req *requests.CreateTransactionRe
 	var totalAmount int
 	for _, item := range orderItems {
 		if item.Quantity <= 0 {
-			return nil, orderitem_errors.ErrFailedOrderItemNotFound
+			return nil, orderitem_errors.ErrFailedFindOrderItemByOrder
 		}
 		totalAmount += item.Price * item.Quantity
 	}
 
-	changeAmount := req.Amount - totalAmount
+	ppn := totalAmount * 11 / 100
+	totalAmountWithTax := totalAmount + ppn
 
-	paymentStatus := "pending"
-	if req.Amount > 0 {
-		if req.Amount >= totalAmount {
-			paymentStatus = "paid"
-			req.ChangeAmount = &changeAmount
-		} else {
-			paymentStatus = "failed"
-			return nil, transaction_errors.ErrFailedPaymentInsufficientBalance
-		}
+	var paymentStatus string
+	if req.Amount >= totalAmountWithTax {
+		paymentStatus = "success"
+	} else {
+		paymentStatus = "failed"
+		return nil, transaction_errors.ErrFailedPaymentInsufficientBalance
 	}
 
+	req.Amount = totalAmountWithTax
 	req.PaymentStatus = &paymentStatus
 
 	transaction, err := s.transactionRepository.CreateTransaction(req)
@@ -539,21 +598,18 @@ func (s *transactionService) UpdateTransaction(req *requests.UpdateTransactionRe
 		totalAmount += item.Price * item.Quantity
 	}
 
-	paymentStatus := "pending"
+	ppn := totalAmount * 11 / 100
+	totalAmountWithTax := totalAmount + ppn
 
-	changeAmount := req.Amount - totalAmount
-
-	if req.Amount > 0 {
-		if req.Amount >= totalAmount {
-			paymentStatus = "paid"
-			req.ChangeAmount = &changeAmount
-		} else {
-			paymentStatus = "failed"
-
-			return nil, transaction_errors.ErrFailedPaymentInsufficientBalance
-		}
+	var paymentStatus string
+	if req.Amount >= totalAmountWithTax {
+		paymentStatus = "success"
+	} else {
+		paymentStatus = "failed"
+		return nil, transaction_errors.ErrFailedPaymentInsufficientBalance
 	}
 
+	req.Amount = totalAmountWithTax
 	req.PaymentStatus = &paymentStatus
 
 	transaction, err := s.transactionRepository.UpdateTransaction(req)

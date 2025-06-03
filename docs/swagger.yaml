@@ -3069,7 +3069,7 @@ paths:
       summary: Retrieve a trashed category
       tags:
       - Category
-  /api/category/update:
+  /api/category/update/{id}:
     post:
       consumes:
       - application/json
@@ -3507,7 +3507,7 @@ paths:
       summary: Retrieve a trashed merchant
       tags:
       - Merchant
-  /api/merchant/update:
+  /api/merchant/update/{id}:
     post:
       consumes:
       - application/json
@@ -4965,37 +4965,6 @@ paths:
       summary: Get all roles
       tags:
       - Role
-    post:
-      consumes:
-      - application/json
-      description: Create a new role with the provided details.
-      parameters:
-      - description: Role data
-        in: body
-        name: request
-        required: true
-        schema:
-          $ref: '#/definitions/requests.CreateRoleRequest'
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: Created role data
-          schema:
-            $ref: '#/definitions/response.ApiResponseRole'
-        "400":
-          description: Invalid request body
-          schema:
-            $ref: '#/definitions/response.ErrorResponse'
-        "500":
-          description: Failed to create role
-          schema:
-            $ref: '#/definitions/response.ErrorResponse'
-      security:
-      - Bearer: []
-      summary: Create a new role
-      tags:
-      - Role
   /api/role/{id}:
     get:
       consumes:
@@ -5025,36 +4994,6 @@ paths:
       security:
       - Bearer: []
       summary: Get a role by ID
-      tags:
-      - Role
-    post:
-      consumes:
-      - application/json
-      description: Soft-delete a role by its ID.
-      parameters:
-      - description: Role ID
-        in: path
-        name: id
-        required: true
-        type: integer
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: Soft-deleted role data
-          schema:
-            $ref: '#/definitions/response.ApiResponseRole'
-        "400":
-          description: Invalid role ID
-          schema:
-            $ref: '#/definitions/response.ErrorResponse'
-        "500":
-          description: Failed to soft-delete role
-          schema:
-            $ref: '#/definitions/response.ErrorResponse'
-      security:
-      - Bearer: []
-      summary: Soft-delete a role
       tags:
       - Role
   /api/role/active:
@@ -5096,25 +5035,36 @@ paths:
       summary: Get active roles
       tags:
       - Role
-  /api/role/permanent-all:
-    delete:
+  /api/role/create:
+    post:
       consumes:
       - application/json
-      description: Permanently delete all roles.
+      description: Create a new role with the provided details.
+      parameters:
+      - description: Role data
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/requests.CreateRoleRequest'
       produces:
       - application/json
       responses:
         "200":
-          description: Permanently deleted roles data
+          description: Created role data
           schema:
-            $ref: '#/definitions/response.ApiResponseRoleAll'
+            $ref: '#/definitions/response.ApiResponseRole'
+        "400":
+          description: Invalid request body
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
         "500":
-          description: Failed to delete all roles permanently
+          description: Failed to create role
           schema:
             $ref: '#/definitions/response.ErrorResponse'
       security:
       - Bearer: []
-      summary: Permanently delete all roles
+      summary: Create a new role
       tags:
       - Role
   /api/role/permanent/{id}:
@@ -5148,25 +5098,25 @@ paths:
       summary: Permanently delete a role
       tags:
       - Role
-  /api/role/restore-all:
-    put:
+  /api/role/permanent/all:
+    delete:
       consumes:
       - application/json
-      description: Restore all soft-deleted roles.
+      description: Permanently delete all roles.
       produces:
       - application/json
       responses:
         "200":
-          description: Restored roles data
+          description: Permanently deleted roles data
           schema:
             $ref: '#/definitions/response.ApiResponseRoleAll'
         "500":
-          description: Failed to restore all roles
+          description: Failed to delete all roles permanently
           schema:
             $ref: '#/definitions/response.ErrorResponse'
       security:
       - Bearer: []
-      summary: Restore all soft-deleted roles
+      summary: Permanently delete all roles
       tags:
       - Role
   /api/role/restore/{id}:
@@ -5198,6 +5148,27 @@ paths:
       security:
       - Bearer: []
       summary: Restore a soft-deleted role
+      tags:
+      - Role
+  /api/role/restore/all:
+    post:
+      consumes:
+      - application/json
+      description: Restore all soft-deleted roles.
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Restored roles data
+          schema:
+            $ref: '#/definitions/response.ApiResponseRoleAll'
+        "500":
+          description: Failed to restore all roles
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      security:
+      - Bearer: []
+      summary: Restore all soft-deleted roles
       tags:
       - Role
   /api/role/trashed:
@@ -5237,6 +5208,74 @@ paths:
       security:
       - Bearer: []
       summary: Get trashed roles
+      tags:
+      - Role
+  /api/role/trashed/{id}:
+    post:
+      consumes:
+      - application/json
+      description: Soft-delete a role by its ID.
+      parameters:
+      - description: Role ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Soft-deleted role data
+          schema:
+            $ref: '#/definitions/response.ApiResponseRole'
+        "400":
+          description: Invalid role ID
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "500":
+          description: Failed to soft-delete role
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      security:
+      - Bearer: []
+      summary: Soft-delete a role
+      tags:
+      - Role
+  /api/role/update/{id}:
+    post:
+      consumes:
+      - application/json
+      description: Update an existing role with the provided details.
+      parameters:
+      - description: Role ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Role data
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/requests.UpdateRoleRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Updated role data
+          schema:
+            $ref: '#/definitions/response.ApiResponseRole'
+        "400":
+          description: Invalid role ID or request body
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "500":
+          description: Failed to update role
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      security:
+      - Bearer: []
+      summary: Update a role
       tags:
       - Role
   /api/role/user/{user_id}:
@@ -5516,7 +5555,52 @@ paths:
       summary: Get monthly failed transactions by merchant
       tags:
       - Transaction
-  /api/transaction/merchant/monthly-methods:
+  /api/transaction/merchant/monthly-method-failed/{merchant_id}:
+    get:
+      consumes:
+      - application/json
+      description: Retrieve statistics of payment methods used by month for specific
+        merchant
+      parameters:
+      - description: Merchant ID
+        in: query
+        name: merchant_id
+        required: true
+        type: integer
+      - description: Year in YYYY format (e.g., 2023)
+        in: query
+        name: year
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.ApiResponsesTransactionMonthMethod'
+        "400":
+          description: Invalid merchant ID or year parameter
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "404":
+          description: Merchant not found
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      security:
+      - Bearer: []
+      summary: Get monthly payment method distribution by merchant
+      tags:
+      - Transaction
+  /api/transaction/merchant/monthly-method-success/{merchant_id}:
     get:
       consumes:
       - application/json
@@ -5656,7 +5740,52 @@ paths:
       summary: Get yearly failed transactions by merchant
       tags:
       - Transaction
-  /api/transaction/merchant/yearly-methods:
+  /api/transaction/merchant/yearly-method-failed/{merchant_id}:
+    get:
+      consumes:
+      - application/json
+      description: Retrieve statistics of payment methods used by year for specific
+        merchant
+      parameters:
+      - description: Merchant ID
+        in: query
+        name: merchant_id
+        required: true
+        type: integer
+      - description: Year in YYYY format (e.g., 2023)
+        in: query
+        name: year
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.ApiResponsesTransactionYearMethod'
+        "400":
+          description: Invalid merchant ID or year parameter
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "404":
+          description: Merchant not found
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      security:
+      - Bearer: []
+      summary: Get yearly payment method distribution by merchant
+      tags:
+      - Transaction
+  /api/transaction/merchant/yearly-method-success/{merchant_id}:
     get:
       consumes:
       - application/json
@@ -5786,7 +5915,42 @@ paths:
       summary: Get monthly failed transactions
       tags:
       - Transaction
-  /api/transaction/monthly-methods:
+  /api/transaction/monthly-method-failed:
+    get:
+      consumes:
+      - application/json
+      description: Retrieve statistics of payment methods used by month
+      parameters:
+      - description: Year in YYYY format (e.g., 2023)
+        in: query
+        name: year
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.ApiResponsesTransactionMonthMethod'
+        "400":
+          description: Invalid year parameter
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      security:
+      - Bearer: []
+      summary: Get monthly payment method distribution
+      tags:
+      - Transaction
+  /api/transaction/monthly-method-success:
     get:
       consumes:
       - application/json
@@ -5980,12 +6144,17 @@ paths:
       summary: Retrieve a trashed transaction
       tags:
       - Transaction
-  /api/transaction/update:
+  /api/transaction/update/{id}:
     post:
       consumes:
       - application/json
       description: Update an existing transaction record
       parameters:
+      - description: Transaction ID
+        in: path
+        name: id
+        required: true
+        type: integer
       - description: Updated transaction details
         in: body
         name: request
@@ -6047,7 +6216,42 @@ paths:
       summary: Get yearly failed transactions
       tags:
       - Transaction
-  /api/transaction/yearly-methods:
+  /api/transaction/yearly-method-failed:
+    get:
+      consumes:
+      - application/json
+      description: Retrieve statistics of payment methods used by year
+      parameters:
+      - description: Year in YYYY format (e.g., 2023)
+        in: query
+        name: year
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.ApiResponsesTransactionYearMethod'
+        "400":
+          description: Invalid year parameter
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      security:
+      - Bearer: []
+      summary: Get yearly payment method distribution
+      tags:
+      - Transaction
+  /api/transaction/yearly-method-success:
     get:
       consumes:
       - application/json
@@ -6300,7 +6504,7 @@ paths:
         "200":
           description: Successfully deleted user record permanently
           schema:
-            $ref: '#/definitions/response.ApiResponseUserAll'
+            $ref: '#/definitions/response.ApiResponseUserDelete'
         "400":
           description: 'Bad Request: Invalid ID'
           schema:
@@ -6449,11 +6653,6 @@ paths:
       - application/json
       description: Update an existing user record with the provided details
       parameters:
-      - description: User ID
-        in: path
-        name: id
-        required: true
-        type: integer
       - description: Update user request
         in: body
         name: UpdateUserRequest

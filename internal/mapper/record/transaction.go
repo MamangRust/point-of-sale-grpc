@@ -314,7 +314,7 @@ func (s *transactionRecordMapper) ToTransactionYearlyAmountFailedByMerchant(rows
 	return transaction
 }
 
-func (s *transactionRecordMapper) ToTransactionMonthMethod(row *db.GetMonthlyTransactionMethodsRow) *record.TransactionMonthlyMethodRecord {
+func (s *transactionRecordMapper) ToTransactionMonthMethodSuccess(row *db.GetMonthlyTransactionMethodsSuccessRow) *record.TransactionMonthlyMethodRecord {
 	return &record.TransactionMonthlyMethodRecord{
 		Month:             row.Month,
 		PaymentMethod:     row.PaymentMethod,
@@ -323,17 +323,17 @@ func (s *transactionRecordMapper) ToTransactionMonthMethod(row *db.GetMonthlyTra
 	}
 }
 
-func (s *transactionRecordMapper) ToTransactionMonthlyMethod(rows []*db.GetMonthlyTransactionMethodsRow) []*record.TransactionMonthlyMethodRecord {
+func (s *transactionRecordMapper) ToTransactionMonthlyMethodSuccess(rows []*db.GetMonthlyTransactionMethodsSuccessRow) []*record.TransactionMonthlyMethodRecord {
 	var transaction []*record.TransactionMonthlyMethodRecord
 
 	for _, row := range rows {
-		transaction = append(transaction, s.ToTransactionMonthMethod(row))
+		transaction = append(transaction, s.ToTransactionMonthMethodSuccess(row))
 	}
 
 	return transaction
 }
 
-func (s *transactionRecordMapper) ToTransactionYearMethod(row *db.GetYearlyTransactionMethodsRow) *record.TransactionYearlyMethodRecord {
+func (s *transactionRecordMapper) ToTransactionYearMethodSuccess(row *db.GetYearlyTransactionMethodsSuccessRow) *record.TransactionYearlyMethodRecord {
 	return &record.TransactionYearlyMethodRecord{
 		Year:              row.Year,
 		PaymentMethod:     row.PaymentMethod,
@@ -342,17 +342,17 @@ func (s *transactionRecordMapper) ToTransactionYearMethod(row *db.GetYearlyTrans
 	}
 }
 
-func (s *transactionRecordMapper) ToTransactionYearlyMethod(rows []*db.GetYearlyTransactionMethodsRow) []*record.TransactionYearlyMethodRecord {
+func (s *transactionRecordMapper) ToTransactionYearlyMethodSuccess(rows []*db.GetYearlyTransactionMethodsSuccessRow) []*record.TransactionYearlyMethodRecord {
 	var transaction []*record.TransactionYearlyMethodRecord
 
 	for _, row := range rows {
-		transaction = append(transaction, s.ToTransactionYearMethod(row))
+		transaction = append(transaction, s.ToTransactionYearMethodSuccess(row))
 	}
 
 	return transaction
 }
 
-func (s *transactionRecordMapper) ToTransactionMonthMethodByMerchant(row *db.GetMonthlyTransactionMethodsByMerchantRow) *record.TransactionMonthlyMethodRecord {
+func (s *transactionRecordMapper) ToTransactionMonthMethodFailed(row *db.GetMonthlyTransactionMethodsFailedRow) *record.TransactionMonthlyMethodRecord {
 	return &record.TransactionMonthlyMethodRecord{
 		Month:             row.Month,
 		PaymentMethod:     row.PaymentMethod,
@@ -361,17 +361,17 @@ func (s *transactionRecordMapper) ToTransactionMonthMethodByMerchant(row *db.Get
 	}
 }
 
-func (s *transactionRecordMapper) ToTransactionMonthlyByMerchantMethod(rows []*db.GetMonthlyTransactionMethodsByMerchantRow) []*record.TransactionMonthlyMethodRecord {
+func (s *transactionRecordMapper) ToTransactionMonthlyMethodFailed(rows []*db.GetMonthlyTransactionMethodsFailedRow) []*record.TransactionMonthlyMethodRecord {
 	var transaction []*record.TransactionMonthlyMethodRecord
 
 	for _, row := range rows {
-		transaction = append(transaction, s.ToTransactionMonthMethodByMerchant(row))
+		transaction = append(transaction, s.ToTransactionMonthMethodFailed(row))
 	}
 
 	return transaction
 }
 
-func (s *transactionRecordMapper) ToTransactionYearMethodByMerchant(row *db.GetYearlyTransactionMethodsByMerchantRow) *record.TransactionYearlyMethodRecord {
+func (s *transactionRecordMapper) ToTransactionYearMethodFailed(row *db.GetYearlyTransactionMethodsFailedRow) *record.TransactionYearlyMethodRecord {
 	return &record.TransactionYearlyMethodRecord{
 		Year:              row.Year,
 		PaymentMethod:     row.PaymentMethod,
@@ -380,11 +380,87 @@ func (s *transactionRecordMapper) ToTransactionYearMethodByMerchant(row *db.GetY
 	}
 }
 
-func (s *transactionRecordMapper) ToTransactionYearlyMethodByMerchant(rows []*db.GetYearlyTransactionMethodsByMerchantRow) []*record.TransactionYearlyMethodRecord {
+func (s *transactionRecordMapper) ToTransactionYearlyMethodFailed(rows []*db.GetYearlyTransactionMethodsFailedRow) []*record.TransactionYearlyMethodRecord {
 	var transaction []*record.TransactionYearlyMethodRecord
 
 	for _, row := range rows {
-		transaction = append(transaction, s.ToTransactionYearMethodByMerchant(row))
+		transaction = append(transaction, s.ToTransactionYearMethodFailed(row))
+	}
+
+	return transaction
+}
+
+func (s *transactionRecordMapper) ToTransactionMonthMethodByMerchantSuccess(row *db.GetMonthlyTransactionMethodsByMerchantSuccessRow) *record.TransactionMonthlyMethodRecord {
+	return &record.TransactionMonthlyMethodRecord{
+		Month:             row.Month,
+		PaymentMethod:     row.PaymentMethod,
+		TotalTransactions: int(row.TotalTransactions),
+		TotalAmount:       int(row.TotalAmount),
+	}
+}
+
+func (s *transactionRecordMapper) ToTransactionMonthlyByMerchantMethodSuccess(rows []*db.GetMonthlyTransactionMethodsByMerchantSuccessRow) []*record.TransactionMonthlyMethodRecord {
+	var transaction []*record.TransactionMonthlyMethodRecord
+
+	for _, row := range rows {
+		transaction = append(transaction, s.ToTransactionMonthMethodByMerchantSuccess(row))
+	}
+
+	return transaction
+}
+
+func (s *transactionRecordMapper) ToTransactionYearMethodByMerchantSuccess(row *db.GetYearlyTransactionMethodsByMerchantSuccessRow) *record.TransactionYearlyMethodRecord {
+	return &record.TransactionYearlyMethodRecord{
+		Year:              row.Year,
+		PaymentMethod:     row.PaymentMethod,
+		TotalTransactions: int(row.TotalTransactions),
+		TotalAmount:       int(row.TotalAmount),
+	}
+}
+
+func (s *transactionRecordMapper) ToTransactionYearlyMethodByMerchantSuccess(rows []*db.GetYearlyTransactionMethodsByMerchantSuccessRow) []*record.TransactionYearlyMethodRecord {
+	var transaction []*record.TransactionYearlyMethodRecord
+
+	for _, row := range rows {
+		transaction = append(transaction, s.ToTransactionYearMethodByMerchantSuccess(row))
+	}
+
+	return transaction
+}
+
+func (s *transactionRecordMapper) ToTransactionMonthMethodByMerchantFailed(row *db.GetMonthlyTransactionMethodsByMerchantFailedRow) *record.TransactionMonthlyMethodRecord {
+	return &record.TransactionMonthlyMethodRecord{
+		Month:             row.Month,
+		PaymentMethod:     row.PaymentMethod,
+		TotalTransactions: int(row.TotalTransactions),
+		TotalAmount:       int(row.TotalAmount),
+	}
+}
+
+func (s *transactionRecordMapper) ToTransactionMonthlyByMerchantMethodFailed(rows []*db.GetMonthlyTransactionMethodsByMerchantFailedRow) []*record.TransactionMonthlyMethodRecord {
+	var transaction []*record.TransactionMonthlyMethodRecord
+
+	for _, row := range rows {
+		transaction = append(transaction, s.ToTransactionMonthMethodByMerchantFailed(row))
+	}
+
+	return transaction
+}
+
+func (s *transactionRecordMapper) ToTransactionYearMethodByMerchantFailed(row *db.GetYearlyTransactionMethodsByMerchantFailedRow) *record.TransactionYearlyMethodRecord {
+	return &record.TransactionYearlyMethodRecord{
+		Year:              row.Year,
+		PaymentMethod:     row.PaymentMethod,
+		TotalTransactions: int(row.TotalTransactions),
+		TotalAmount:       int(row.TotalAmount),
+	}
+}
+
+func (s *transactionRecordMapper) ToTransactionYearlyMethodByMerchantFailed(rows []*db.GetYearlyTransactionMethodsByMerchantFailedRow) []*record.TransactionYearlyMethodRecord {
+	var transaction []*record.TransactionYearlyMethodRecord
+
+	for _, row := range rows {
+		transaction = append(transaction, s.ToTransactionYearMethodByMerchantFailed(row))
 	}
 
 	return transaction

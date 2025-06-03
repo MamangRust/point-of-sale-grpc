@@ -315,14 +315,22 @@ func (s *transactionHandleGrpc) FindYearStatusFailedByMerchant(ctx context.Conte
 	return s.mapping.ToProtoResponseYearAmountFailed("success", "Merchant yearly failed data retrieved successfully", res), nil
 }
 
-func (s *transactionHandleGrpc) FindMonthMethod(ctx context.Context, req *pb.FindYearTransaction) (*pb.ApiResponseTransactionMonthPaymentMethod, error) {
+func (s *transactionHandleGrpc) FindMonthMethodSuccess(ctx context.Context, req *pb.MonthTransactionMethod) (*pb.ApiResponseTransactionMonthPaymentMethod, error) {
 	year := int(req.GetYear())
+	month := int(req.GetMonth())
 
 	if year <= 0 {
 		return nil, transaction_errors.ErrGrpcInvalidYear
 	}
 
-	methods, err := s.transactionService.FindMonthlyMethod(year)
+	if month <= 0 || month >= 12 {
+		return nil, transaction_errors.ErrGrpcInvalidMonth
+	}
+
+	methods, err := s.transactionService.FindMonthlyMethodSuccess(&requests.MonthMethodTransaction{
+		Year:  year,
+		Month: month,
+	})
 
 	if err != nil {
 		return nil, response.ToGrpcErrorFromErrorResponse(err)
@@ -331,14 +339,14 @@ func (s *transactionHandleGrpc) FindMonthMethod(ctx context.Context, req *pb.Fin
 	return s.mapping.ToProtoResponseMonthMethod("success", "Monthly payment methods retrieved successfully", methods), nil
 }
 
-func (s *transactionHandleGrpc) FindYearMethod(ctx context.Context, req *pb.FindYearTransaction) (*pb.ApiResponseTransactionYearPaymentmethod, error) {
+func (s *transactionHandleGrpc) FindYearMethodSuccess(ctx context.Context, req *pb.YearTransactionMethod) (*pb.ApiResponseTransactionYearPaymentmethod, error) {
 	year := int(req.GetYear())
 
 	if year <= 0 {
 		return nil, transaction_errors.ErrGrpcInvalidYear
 	}
 
-	methods, err := s.transactionService.FindYearlyMethod(year)
+	methods, err := s.transactionService.FindYearlyMethodSuccess(year)
 
 	if err != nil {
 		return nil, response.ToGrpcErrorFromErrorResponse(err)
@@ -347,9 +355,10 @@ func (s *transactionHandleGrpc) FindYearMethod(ctx context.Context, req *pb.Find
 	return s.mapping.ToProtoResponseYearMethod("success", "Yearly payment methods retrieved successfully", methods), nil
 }
 
-func (s *transactionHandleGrpc) FindMonthMethodByMerchant(ctx context.Context, req *pb.FindYearTransactionByMerchant) (*pb.ApiResponseTransactionMonthPaymentMethod, error) {
+func (s *transactionHandleGrpc) FindMonthMethodByMerchantSuccess(ctx context.Context, req *pb.MonthTransactionMethodByMerchant) (*pb.ApiResponseTransactionMonthPaymentMethod, error) {
 	year := int(req.GetYear())
 	id := int(req.GetMerchantId())
+	month := int(req.GetMonth())
 
 	if year <= 0 {
 		return nil, transaction_errors.ErrGrpcInvalidYear
@@ -359,12 +368,17 @@ func (s *transactionHandleGrpc) FindMonthMethodByMerchant(ctx context.Context, r
 		return nil, transaction_errors.ErrGrpcInvalidMerchantId
 	}
 
-	reqService := requests.MonthlyYearTransactionMethodMerchant{
-		Year:       year,
-		MerchantID: id,
+	if month <= 0 || month >= 12 {
+		return nil, transaction_errors.ErrGrpcInvalidMonth
 	}
 
-	methods, err := s.transactionService.FindMonthlyMethodByMerchant(
+	reqService := requests.MonthMethodTransactionMerchant{
+		Year:       year,
+		MerchantID: id,
+		Month:      month,
+	}
+
+	methods, err := s.transactionService.FindMonthlyMethodByMerchantSuccess(
 		&reqService,
 	)
 
@@ -375,7 +389,7 @@ func (s *transactionHandleGrpc) FindMonthMethodByMerchant(ctx context.Context, r
 	return s.mapping.ToProtoResponseMonthMethod("success", "Merchant monthly payment methods retrieved successfully", methods), nil
 }
 
-func (s *transactionHandleGrpc) FindYearMethodByMerchant(ctx context.Context, req *pb.FindYearTransactionByMerchant) (*pb.ApiResponseTransactionYearPaymentmethod, error) {
+func (s *transactionHandleGrpc) FindYearMethodByMerchantSuccess(ctx context.Context, req *pb.YearTransactionMethodByMerchant) (*pb.ApiResponseTransactionYearPaymentmethod, error) {
 	year := int(req.GetYear())
 	id := int(req.GetMerchantId())
 
@@ -387,12 +401,12 @@ func (s *transactionHandleGrpc) FindYearMethodByMerchant(ctx context.Context, re
 		return nil, transaction_errors.ErrGrpcInvalidMerchantId
 	}
 
-	reqService := requests.MonthlyYearTransactionMethodMerchant{
+	reqService := requests.YearMethodTransactionMerchant{
 		Year:       year,
 		MerchantID: id,
 	}
 
-	methods, err := s.transactionService.FindYearlyMethodByMerchant(
+	methods, err := s.transactionService.FindYearlyMethodByMerchantSuccess(
 		&reqService,
 	)
 
@@ -401,6 +415,108 @@ func (s *transactionHandleGrpc) FindYearMethodByMerchant(ctx context.Context, re
 	}
 
 	return s.mapping.ToProtoResponseYearMethod("success", "Merchant yearly payment methods retrieved successfully", methods), nil
+}
+
+func (s *transactionHandleGrpc) FindMonthMethodFailed(ctx context.Context, req *pb.MonthTransactionMethod) (*pb.ApiResponseTransactionMonthPaymentMethod, error) {
+	year := int(req.GetYear())
+	month := int(req.GetMonth())
+
+	if year <= 0 {
+		return nil, transaction_errors.ErrGrpcInvalidYear
+	}
+
+	if month <= 0 || month >= 12 {
+		return nil, transaction_errors.ErrGrpcInvalidMonth
+	}
+
+	methods, err := s.transactionService.FindMonthlyMethodFailed(&requests.MonthMethodTransaction{
+		Year:  year,
+		Month: month,
+	})
+
+	if err != nil {
+		return nil, response.ToGrpcErrorFromErrorResponse(err)
+	}
+
+	return s.mapping.ToProtoResponseMonthMethod("Failed", "Monthly payment methods retrieved Failedfully", methods), nil
+}
+
+func (s *transactionHandleGrpc) FindYearMethodFailed(ctx context.Context, req *pb.YearTransactionMethod) (*pb.ApiResponseTransactionYearPaymentmethod, error) {
+	year := int(req.GetYear())
+
+	if year <= 0 {
+		return nil, transaction_errors.ErrGrpcInvalidYear
+	}
+
+	methods, err := s.transactionService.FindYearlyMethodFailed(year)
+
+	if err != nil {
+		return nil, response.ToGrpcErrorFromErrorResponse(err)
+	}
+
+	return s.mapping.ToProtoResponseYearMethod("Failed", "Yearly payment methods retrieved Failedfully", methods), nil
+}
+
+func (s *transactionHandleGrpc) FindMonthMethodByMerchantFailed(ctx context.Context, req *pb.MonthTransactionMethodByMerchant) (*pb.ApiResponseTransactionMonthPaymentMethod, error) {
+	year := int(req.GetYear())
+	id := int(req.GetMerchantId())
+	month := int(req.GetMonth())
+
+	if year <= 0 {
+		return nil, transaction_errors.ErrGrpcInvalidYear
+	}
+
+	if id <= 0 {
+		return nil, transaction_errors.ErrGrpcInvalidMerchantId
+	}
+
+	if month <= 0 || month >= 12 {
+		return nil, transaction_errors.ErrGrpcInvalidMonth
+	}
+
+	reqService := requests.MonthMethodTransactionMerchant{
+		Year:       year,
+		MerchantID: id,
+		Month:      month,
+	}
+
+	methods, err := s.transactionService.FindMonthlyMethodByMerchantFailed(
+		&reqService,
+	)
+
+	if err != nil {
+		return nil, response.ToGrpcErrorFromErrorResponse(err)
+	}
+
+	return s.mapping.ToProtoResponseMonthMethod("Failed", "Merchant monthly payment methods retrieved Failedfully", methods), nil
+}
+
+func (s *transactionHandleGrpc) FindYearMethodByMerchantFailed(ctx context.Context, req *pb.YearTransactionMethodByMerchant) (*pb.ApiResponseTransactionYearPaymentmethod, error) {
+	year := int(req.GetYear())
+	id := int(req.GetMerchantId())
+
+	if year <= 0 {
+		return nil, transaction_errors.ErrGrpcInvalidYear
+	}
+
+	if id <= 0 {
+		return nil, transaction_errors.ErrGrpcInvalidMerchantId
+	}
+
+	reqService := requests.YearMethodTransactionMerchant{
+		Year:       year,
+		MerchantID: id,
+	}
+
+	methods, err := s.transactionService.FindYearlyMethodByMerchantFailed(
+		&reqService,
+	)
+
+	if err != nil {
+		return nil, response.ToGrpcErrorFromErrorResponse(err)
+	}
+
+	return s.mapping.ToProtoResponseYearMethod("Failed", "Merchant yearly payment methods retrieved Failedfully", methods), nil
 }
 
 func (s *transactionHandleGrpc) FindById(ctx context.Context, request *pb.FindByIdTransactionRequest) (*pb.ApiResponseTransaction, error) {

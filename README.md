@@ -1,51 +1,24 @@
-## Point of sale
+# 💳 Point of Sale Backend — Go Edition
 
-### Overview
+A **Point of Sale (POS)** backend system built using **Go**, designed for managing transactions, products, orders, and merchant operations in a single, cohesive application. This approach simplifies development, deployment, and testing by avoiding microservices architecture.
 
-A modern Point of Sale (POS) system built with:
+---
 
-- Backend: Go (Golang) with Echo framework
+## 🧰 Tech Stack
 
-- Database: PostgreSQL with SQLC for type-safe SQL queries
+- 🐹 **Go (Golang)** — Implementation language.
+- 🌐 **Echo** — Fast, minimalist web framework for building REST APIs in Go.
+- 🪵 **Zap Logger** — Structured and leveled logging, ideal for performance-focused apps.
+- 📦 **SQLC** — Generates type-safe Go code from SQL queries.
+- 🚀 **gRPC** — High-performance, schema-first RPC for internal service communication.
+- 🧳 **Goose** — Lightweight migration tool to manage database schema changes.
+- 🐳 **Docker** — Containerization platform for consistent development and deployment environments.
+- 📄 **Swago** — Generates Swagger 2.0 documentation for Echo routes.
+- 🔗 **Docker Compose** — Manages multi-container Docker applications for local development.
+- 🔬 **Postman** — API client for testing and debugging HTTP/gRPC endpoints.
 
-- API Architecture: gRPC for internal services communication
-
-- Authentication: JWT with refresh tokens
-
-
-### Features
-Core Functionality
-
-- 🛒 Product Management - Create, read, update, and delete products
-
-- 🏷️ Category Management - Organize products into categories
-
-- 🏪 Merchant Management - Manage multiple merchant accounts
-
-- 💳 Order Processing - Create and manage customer orders
-
-- 💰 Transaction Handling - Process payments and track transactions
-
-- 👥 User Roles - Role-based access control (RBAC)
+---
 
 
-### Database Schema
-
-The system uses PostgreSQL with the following main tables:
-
-- Users & Authentication: users, roles, user_roles, refresh_tokens
-
-- Merchant Management: merchants, cashiers
-
-- Product Catalog: categories, products
-
-- Order Processing: orders, order_items, transactions
-
-### ERD
-
-<img src="./images/erd_point_of_sale.png" alt="erd" />
-
-
-### Swagger
-
-<img src="./images/swagger.png" alt="swagger" />
+> [!WARNING]
+> Important Notice: This Point of Sale Backend is currently under active development and is not production-ready. Some core features may be incomplete or subject to change. This project is intended for personal use and learning purposes only.

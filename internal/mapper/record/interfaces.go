@@ -213,14 +213,26 @@ type TransactionRecordMapping interface {
 	ToTransactionMonthlyAmountFailedByMerchant(rows []*db.GetMonthlyAmountTransactionFailedByMerchantRow) []*record.TransactionMonthlyAmountFailedRecord
 	ToTransactionYearAmountFailedByMerchant(row *db.GetYearlyAmountTransactionFailedByMerchantRow) *record.TransactionYearlyAmountFailedRecord
 	ToTransactionYearlyAmountFailedByMerchant(rows []*db.GetYearlyAmountTransactionFailedByMerchantRow) []*record.TransactionYearlyAmountFailedRecord
-	ToTransactionMonthMethod(row *db.GetMonthlyTransactionMethodsRow) *record.TransactionMonthlyMethodRecord
-	ToTransactionMonthlyMethod(rows []*db.GetMonthlyTransactionMethodsRow) []*record.TransactionMonthlyMethodRecord
-	ToTransactionYearMethod(row *db.GetYearlyTransactionMethodsRow) *record.TransactionYearlyMethodRecord
-	ToTransactionYearlyMethod(rows []*db.GetYearlyTransactionMethodsRow) []*record.TransactionYearlyMethodRecord
-	ToTransactionMonthMethodByMerchant(row *db.GetMonthlyTransactionMethodsByMerchantRow) *record.TransactionMonthlyMethodRecord
-	ToTransactionMonthlyByMerchantMethod(rows []*db.GetMonthlyTransactionMethodsByMerchantRow) []*record.TransactionMonthlyMethodRecord
-	ToTransactionYearMethodByMerchant(row *db.GetYearlyTransactionMethodsByMerchantRow) *record.TransactionYearlyMethodRecord
-	ToTransactionYearlyMethodByMerchant(rows []*db.GetYearlyTransactionMethodsByMerchantRow) []*record.TransactionYearlyMethodRecord
+
+	ToTransactionMonthMethodSuccess(row *db.GetMonthlyTransactionMethodsSuccessRow) *record.TransactionMonthlyMethodRecord
+	ToTransactionMonthlyMethodSuccess(rows []*db.GetMonthlyTransactionMethodsSuccessRow) []*record.TransactionMonthlyMethodRecord
+	ToTransactionYearMethodSuccess(row *db.GetYearlyTransactionMethodsSuccessRow) *record.TransactionYearlyMethodRecord
+	ToTransactionYearlyMethodSuccess(rows []*db.GetYearlyTransactionMethodsSuccessRow) []*record.TransactionYearlyMethodRecord
+
+	ToTransactionMonthMethodFailed(row *db.GetMonthlyTransactionMethodsFailedRow) *record.TransactionMonthlyMethodRecord
+	ToTransactionMonthlyMethodFailed(rows []*db.GetMonthlyTransactionMethodsFailedRow) []*record.TransactionMonthlyMethodRecord
+	ToTransactionYearMethodFailed(row *db.GetYearlyTransactionMethodsFailedRow) *record.TransactionYearlyMethodRecord
+	ToTransactionYearlyMethodFailed(rows []*db.GetYearlyTransactionMethodsFailedRow) []*record.TransactionYearlyMethodRecord
+
+	ToTransactionMonthMethodByMerchantSuccess(row *db.GetMonthlyTransactionMethodsByMerchantSuccessRow) *record.TransactionMonthlyMethodRecord
+	ToTransactionMonthlyByMerchantMethodSuccess(rows []*db.GetMonthlyTransactionMethodsByMerchantSuccessRow) []*record.TransactionMonthlyMethodRecord
+	ToTransactionYearMethodByMerchantSuccess(row *db.GetYearlyTransactionMethodsByMerchantSuccessRow) *record.TransactionYearlyMethodRecord
+	ToTransactionYearlyMethodByMerchantSuccess(rows []*db.GetYearlyTransactionMethodsByMerchantSuccessRow) []*record.TransactionYearlyMethodRecord
+
+	ToTransactionMonthMethodByMerchantFailed(row *db.GetMonthlyTransactionMethodsByMerchantFailedRow) *record.TransactionMonthlyMethodRecord
+	ToTransactionMonthlyByMerchantMethodFailed(rows []*db.GetMonthlyTransactionMethodsByMerchantFailedRow) []*record.TransactionMonthlyMethodRecord
+	ToTransactionYearMethodByMerchantFailed(row *db.GetYearlyTransactionMethodsByMerchantFailedRow) *record.TransactionYearlyMethodRecord
+	ToTransactionYearlyMethodByMerchantFailed(rows []*db.GetYearlyTransactionMethodsByMerchantFailedRow) []*record.TransactionYearlyMethodRecord
 
 	ToTransactionRecord(transaction *db.Transaction) *record.TransactionRecord
 	ToTransactionsRecord(transactions []*db.Transaction) []*record.TransactionRecord

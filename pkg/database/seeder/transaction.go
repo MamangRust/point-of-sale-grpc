@@ -60,7 +60,7 @@ func (r *transactionSeeder) Seed() error {
 		changeAmount = float64(5 + i)
 		paymentStatus = "Completed"
 
-		_, err := r.db.CreateTransactions(r.ctx, db.CreateTransactionsParams{
+		_, err := r.db.CreateTransaction(r.ctx, db.CreateTransactionParams{
 			OrderID:       selectedOrderId.OrderID,
 			PaymentMethod: paymentMethod,
 			Amount:        int32(amount),

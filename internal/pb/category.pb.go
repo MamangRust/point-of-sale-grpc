@@ -2003,9 +2003,7 @@ const file_category_proto_rawDesc = "" +
 	"\x1aFindMonthlyTotalPricesById\x12\x1f.pb.FindYearMonthTotalPriceById\x1a(.pb.ApiResponseCategoryMonthlyTotalPrice\"\x00\x12b\n" +
 	"\x19FindYearlyTotalPricesById\x12\x1a.pb.FindYearTotalPriceById\x1a'.pb.ApiResponseCategoryYearlyTotalPrice\"\x00\x12u\n" +
 	" FindMonthlyTotalPricesByMerchant\x12%.pb.FindYearMonthTotalPriceByMerchant\x1a(.pb.ApiResponseCategoryMonthlyTotalPrice\"\x00\x12n\n" +
-	"\x1fFindYearlyTotalPricesByMerchant\x12 .pb.FindYearTotalPriceByMerchant\x1a'.pb.ApiResponseCategoryYearlyTotalPrice\"\x00\x12H\n" +
-	"\aFindAll\x12\x1a.pb.FindAllCategoryRequest\x1a!.pb.ApiResponsePaginationCategory\x12@\n" +
-	"\bFindById\x12\x1b.pb.FindByIdCategoryRequest\x1a\x17.pb.ApiResponseCategory\x12I\n" +
+	"\x1fFindYearlyTotalPricesByMerchant\x12 .pb.FindYearTotalPriceByMerchant\x1a'.pb.ApiResponseCategoryYearlyTotalPrice\"\x00\x12I\n" +
 	"\x0eFindMonthPrice\x12\x14.pb.FindYearCategory\x1a!.pb.ApiResponseCategoryMonthPrice\x12G\n" +
 	"\rFindYearPrice\x12\x14.pb.FindYearCategory\x1a .pb.ApiResponseCategoryYearPrice\x12]\n" +
 	"\x18FindMonthPriceByMerchant\x12\x1e.pb.FindYearCategoryByMerchant\x1a!.pb.ApiResponseCategoryMonthPrice\x12[\n" +
@@ -2013,7 +2011,9 @@ const file_category_proto_rawDesc = "" +
 	"\x12FindMonthPriceById\x12\x18.pb.FindYearCategoryById\x1a!.pb.ApiResponseCategoryMonthPrice\x12O\n" +
 	"\x11FindYearPriceById\x12\x18.pb.FindYearCategoryById\x1a .pb.ApiResponseCategoryYearPrice\x12W\n" +
 	"\fFindByActive\x12\x1a.pb.FindAllCategoryRequest\x1a).pb.ApiResponsePaginationCategoryDeleteAt\"\x00\x12X\n" +
-	"\rFindByTrashed\x12\x1a.pb.FindAllCategoryRequest\x1a).pb.ApiResponsePaginationCategoryDeleteAt\"\x00\x12<\n" +
+	"\rFindByTrashed\x12\x1a.pb.FindAllCategoryRequest\x1a).pb.ApiResponsePaginationCategoryDeleteAt\"\x00\x12H\n" +
+	"\aFindAll\x12\x1a.pb.FindAllCategoryRequest\x1a!.pb.ApiResponsePaginationCategory\x12@\n" +
+	"\bFindById\x12\x1b.pb.FindByIdCategoryRequest\x1a\x17.pb.ApiResponseCategory\x12<\n" +
 	"\x06Create\x12\x19.pb.CreateCategoryRequest\x1a\x17.pb.ApiResponseCategory\x12<\n" +
 	"\x06Update\x12\x19.pb.UpdateCategoryRequest\x1a\x17.pb.ApiResponseCategory\x12O\n" +
 	"\x0fTrashedCategory\x12\x1b.pb.FindByIdCategoryRequest\x1a\x1f.pb.ApiResponseCategoryDeleteAt\x12O\n" +
@@ -2089,16 +2089,16 @@ var file_category_proto_depIdxs = []int32{
 	8,  // 15: pb.CategoryService.FindYearlyTotalPricesById:input_type -> pb.FindYearTotalPriceById
 	9,  // 16: pb.CategoryService.FindMonthlyTotalPricesByMerchant:input_type -> pb.FindYearMonthTotalPriceByMerchant
 	10, // 17: pb.CategoryService.FindYearlyTotalPricesByMerchant:input_type -> pb.FindYearTotalPriceByMerchant
-	0,  // 18: pb.CategoryService.FindAll:input_type -> pb.FindAllCategoryRequest
-	1,  // 19: pb.CategoryService.FindById:input_type -> pb.FindByIdCategoryRequest
-	2,  // 20: pb.CategoryService.FindMonthPrice:input_type -> pb.FindYearCategory
-	2,  // 21: pb.CategoryService.FindYearPrice:input_type -> pb.FindYearCategory
-	3,  // 22: pb.CategoryService.FindMonthPriceByMerchant:input_type -> pb.FindYearCategoryByMerchant
-	3,  // 23: pb.CategoryService.FindYearPriceByMerchant:input_type -> pb.FindYearCategoryByMerchant
-	4,  // 24: pb.CategoryService.FindMonthPriceById:input_type -> pb.FindYearCategoryById
-	4,  // 25: pb.CategoryService.FindYearPriceById:input_type -> pb.FindYearCategoryById
-	0,  // 26: pb.CategoryService.FindByActive:input_type -> pb.FindAllCategoryRequest
-	0,  // 27: pb.CategoryService.FindByTrashed:input_type -> pb.FindAllCategoryRequest
+	2,  // 18: pb.CategoryService.FindMonthPrice:input_type -> pb.FindYearCategory
+	2,  // 19: pb.CategoryService.FindYearPrice:input_type -> pb.FindYearCategory
+	3,  // 20: pb.CategoryService.FindMonthPriceByMerchant:input_type -> pb.FindYearCategoryByMerchant
+	3,  // 21: pb.CategoryService.FindYearPriceByMerchant:input_type -> pb.FindYearCategoryByMerchant
+	4,  // 22: pb.CategoryService.FindMonthPriceById:input_type -> pb.FindYearCategoryById
+	4,  // 23: pb.CategoryService.FindYearPriceById:input_type -> pb.FindYearCategoryById
+	0,  // 24: pb.CategoryService.FindByActive:input_type -> pb.FindAllCategoryRequest
+	0,  // 25: pb.CategoryService.FindByTrashed:input_type -> pb.FindAllCategoryRequest
+	0,  // 26: pb.CategoryService.FindAll:input_type -> pb.FindAllCategoryRequest
+	1,  // 27: pb.CategoryService.FindById:input_type -> pb.FindByIdCategoryRequest
 	11, // 28: pb.CategoryService.Create:input_type -> pb.CreateCategoryRequest
 	12, // 29: pb.CategoryService.Update:input_type -> pb.UpdateCategoryRequest
 	1,  // 30: pb.CategoryService.TrashedCategory:input_type -> pb.FindByIdCategoryRequest
@@ -2112,16 +2112,16 @@ var file_category_proto_depIdxs = []int32{
 	29, // 38: pb.CategoryService.FindYearlyTotalPricesById:output_type -> pb.ApiResponseCategoryYearlyTotalPrice
 	28, // 39: pb.CategoryService.FindMonthlyTotalPricesByMerchant:output_type -> pb.ApiResponseCategoryMonthlyTotalPrice
 	29, // 40: pb.CategoryService.FindYearlyTotalPricesByMerchant:output_type -> pb.ApiResponseCategoryYearlyTotalPrice
-	27, // 41: pb.CategoryService.FindAll:output_type -> pb.ApiResponsePaginationCategory
-	21, // 42: pb.CategoryService.FindById:output_type -> pb.ApiResponseCategory
-	19, // 43: pb.CategoryService.FindMonthPrice:output_type -> pb.ApiResponseCategoryMonthPrice
-	20, // 44: pb.CategoryService.FindYearPrice:output_type -> pb.ApiResponseCategoryYearPrice
-	19, // 45: pb.CategoryService.FindMonthPriceByMerchant:output_type -> pb.ApiResponseCategoryMonthPrice
-	20, // 46: pb.CategoryService.FindYearPriceByMerchant:output_type -> pb.ApiResponseCategoryYearPrice
-	19, // 47: pb.CategoryService.FindMonthPriceById:output_type -> pb.ApiResponseCategoryMonthPrice
-	20, // 48: pb.CategoryService.FindYearPriceById:output_type -> pb.ApiResponseCategoryYearPrice
-	26, // 49: pb.CategoryService.FindByActive:output_type -> pb.ApiResponsePaginationCategoryDeleteAt
-	26, // 50: pb.CategoryService.FindByTrashed:output_type -> pb.ApiResponsePaginationCategoryDeleteAt
+	19, // 41: pb.CategoryService.FindMonthPrice:output_type -> pb.ApiResponseCategoryMonthPrice
+	20, // 42: pb.CategoryService.FindYearPrice:output_type -> pb.ApiResponseCategoryYearPrice
+	19, // 43: pb.CategoryService.FindMonthPriceByMerchant:output_type -> pb.ApiResponseCategoryMonthPrice
+	20, // 44: pb.CategoryService.FindYearPriceByMerchant:output_type -> pb.ApiResponseCategoryYearPrice
+	19, // 45: pb.CategoryService.FindMonthPriceById:output_type -> pb.ApiResponseCategoryMonthPrice
+	20, // 46: pb.CategoryService.FindYearPriceById:output_type -> pb.ApiResponseCategoryYearPrice
+	26, // 47: pb.CategoryService.FindByActive:output_type -> pb.ApiResponsePaginationCategoryDeleteAt
+	26, // 48: pb.CategoryService.FindByTrashed:output_type -> pb.ApiResponsePaginationCategoryDeleteAt
+	27, // 49: pb.CategoryService.FindAll:output_type -> pb.ApiResponsePaginationCategory
+	21, // 50: pb.CategoryService.FindById:output_type -> pb.ApiResponseCategory
 	21, // 51: pb.CategoryService.Create:output_type -> pb.ApiResponseCategory
 	21, // 52: pb.CategoryService.Update:output_type -> pb.ApiResponseCategory
 	22, // 53: pb.CategoryService.TrashedCategory:output_type -> pb.ApiResponseCategoryDeleteAt

@@ -61,17 +61,36 @@ var (
 		return response.NewApiErrorResponse(c, "error", "failed to find yearly failed transactions by merchant", http.StatusInternalServerError)
 	}
 
+	ErrApiTransactionSuccessFindMonthMethod = func(c echo.Context) error {
+		return response.NewApiErrorResponse(c, "error", "failed to find monthly successful transaction methods", http.StatusInternalServerError)
+	}
+
+	ErrApiTransactionSuccessFindYearMethod = func(c echo.Context) error {
+		return response.NewApiErrorResponse(c, "error", "failed to find yearly successful transaction methods", http.StatusInternalServerError)
+	}
+
+	ErrApiTransactionSuccessFindMonthMethodByMerchant = func(c echo.Context) error {
+		return response.NewApiErrorResponse(c, "error", "failed to find monthly successful transaction methods by merchant", http.StatusInternalServerError)
+	}
+
+	ErrApiTransactionSuccessFindYearMethodByMerchant = func(c echo.Context) error {
+		return response.NewApiErrorResponse(c, "error", "failed to find yearly successful transaction methods by merchant", http.StatusInternalServerError)
+	}
+
 	ErrApiTransactionFailedFindMonthMethod = func(c echo.Context) error {
-		return response.NewApiErrorResponse(c, "error", "failed to find monthly transaction methods", http.StatusInternalServerError)
+		return response.NewApiErrorResponse(c, "error", "failed to find monthly failed transaction methods", http.StatusInternalServerError)
 	}
+
 	ErrApiTransactionFailedFindYearMethod = func(c echo.Context) error {
-		return response.NewApiErrorResponse(c, "error", "failed to find yearly transaction methods", http.StatusInternalServerError)
+		return response.NewApiErrorResponse(c, "error", "failed to find yearly failed transaction methods", http.StatusInternalServerError)
 	}
+
 	ErrApiTransactionFailedFindMonthMethodByMerchant = func(c echo.Context) error {
-		return response.NewApiErrorResponse(c, "error", "failed to find monthly transaction methods by merchant", http.StatusInternalServerError)
+		return response.NewApiErrorResponse(c, "error", "failed to find monthly failed transaction methods by merchant", http.StatusInternalServerError)
 	}
+
 	ErrApiTransactionFailedFindYearMethodByMerchant = func(c echo.Context) error {
-		return response.NewApiErrorResponse(c, "error", "failed to find yearly transaction methods by merchant", http.StatusInternalServerError)
+		return response.NewApiErrorResponse(c, "error", "failed to find yearly failed transaction methods by merchant", http.StatusInternalServerError)
 	}
 
 	ErrApiTransactionFailedCreate = func(c echo.Context) error {

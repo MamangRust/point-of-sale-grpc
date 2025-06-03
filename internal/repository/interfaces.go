@@ -36,7 +36,6 @@ type RoleRepository interface {
 	RestoreAllRole() (bool, error)
 	DeleteAllRolePermanent() (bool, error)
 }
-
 type RefreshTokenRepository interface {
 	FindByToken(token string) (*record.RefreshTokenRecord, error)
 	FindByUserId(user_id int) (*record.RefreshTokenRecord, error)
@@ -195,10 +194,15 @@ type TransactionRepository interface {
 	GetMonthlyAmountFailedByMerchant(req *requests.MonthAmountTransactionMerchant) ([]*record.TransactionMonthlyAmountFailedRecord, error)
 	GetYearlyAmountFailedByMerchant(req *requests.YearAmountTransactionMerchant) ([]*record.TransactionYearlyAmountFailedRecord, error)
 
-	GetMonthlyTransactionMethod(year int) ([]*record.TransactionMonthlyMethodRecord, error)
-	GetYearlyTransactionMethod(year int) ([]*record.TransactionYearlyMethodRecord, error)
-	GetMonthlyTransactionMethodByMerchant(req *requests.MonthlyYearTransactionMethodMerchant) ([]*record.TransactionMonthlyMethodRecord, error)
-	GetYearlyTransactionMethodByMerchant(req *requests.MonthlyYearTransactionMethodMerchant) ([]*record.TransactionYearlyMethodRecord, error)
+	GetMonthlyTransactionMethodSuccess(req *requests.MonthMethodTransaction) ([]*record.TransactionMonthlyMethodRecord, error)
+	GetYearlyTransactionMethodSuccess(year int) ([]*record.TransactionYearlyMethodRecord, error)
+	GetMonthlyTransactionMethodByMerchantSuccess(req *requests.MonthMethodTransactionMerchant) ([]*record.TransactionMonthlyMethodRecord, error)
+	GetYearlyTransactionMethodByMerchantSuccess(req *requests.YearMethodTransactionMerchant) ([]*record.TransactionYearlyMethodRecord, error)
+
+	GetMonthlyTransactionMethodFailed(req *requests.MonthMethodTransaction) ([]*record.TransactionMonthlyMethodRecord, error)
+	GetYearlyTransactionMethodFailed(year int) ([]*record.TransactionYearlyMethodRecord, error)
+	GetMonthlyTransactionMethodByMerchantFailed(req *requests.MonthMethodTransactionMerchant) ([]*record.TransactionMonthlyMethodRecord, error)
+	GetYearlyTransactionMethodByMerchantFailed(req *requests.YearMethodTransactionMerchant) ([]*record.TransactionYearlyMethodRecord, error)
 
 	FindAllTransactions(req *requests.FindAllTransaction) ([]*record.TransactionRecord, *int, error)
 	FindByActive(req *requests.FindAllTransaction) ([]*record.TransactionRecord, *int, error)
