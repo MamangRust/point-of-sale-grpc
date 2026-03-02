@@ -4,10 +4,9 @@ import (
 	"context"
 	"math"
 	"pointofsale/internal/domain/requests"
-	"pointofsale/internal/domain/response"
-	protomapper "pointofsale/internal/mapper/proto"
 	"pointofsale/internal/pb"
 	"pointofsale/internal/service"
+	"pointofsale/pkg/errors"
 	"pointofsale/pkg/errors/role_errors"
 
 	"google.golang.org/protobuf/types/known/emptypb"
@@ -16,13 +15,11 @@ import (
 type roleHandleGrpc struct {
 	pb.UnimplementedRoleServiceServer
 	roleService service.RoleService
-	mapping     protomapper.RoleProtoMapper
 }
 
-func NewRoleHandleGrpc(role service.RoleService, mapping protomapper.RoleProtoMapper) *roleHandleGrpc {
+func NewRoleHandleGrpc(role service.RoleService) *roleHandleGrpc {
 	return &roleHandleGrpc{
 		roleService: role,
-		mapping:     mapping,
 	}
 }
 
@@ -44,10 +41,9 @@ func (s *roleHandleGrpc) FindAllRole(ctx context.Context, req *pb.FindAllRoleReq
 		Search:   search,
 	}
 
-	role, totalRecords, err := s.roleService.FindAll(&reqService)
-
+	roles, totalRecords, err := s.roleService.FindAll(ctx, &reqService)
 	if err != nil {
-		return nil, response.ToGrpcErrorFromErrorResponse(err)
+		return nil, errors.ToGrpcError(err)
 	}
 
 	totalPages := int(math.Ceil(float64(*totalRecords) / float64(pageSize)))
@@ -59,9 +55,22 @@ func (s *roleHandleGrpc) FindAllRole(ctx context.Context, req *pb.FindAllRoleReq
 		TotalRecords: int32(*totalRecords),
 	}
 
-	so := s.mapping.ToProtoResponsePaginationRole(paginationMeta, "success", "Successfully fetched role records", role)
+	var roleResponses []*pb.RoleResponse
+	for _, role := range roles {
+		roleResponses = append(roleResponses, &pb.RoleResponse{
+			Id:        int32(role.RoleID),
+			Name:      role.RoleName,
+			CreatedAt: role.CreatedAt.Time.String(),
+			UpdatedAt: role.UpdatedAt.Time.String(),
+		})
+	}
 
-	return so, nil
+	return &pb.ApiResponsePaginationRole{
+		Status:     "success",
+		Message:    "Successfully fetched roles",
+		Data:       roleResponses,
+		Pagination: paginationMeta,
+	}, nil
 }
 
 func (s *roleHandleGrpc) FindByIdRole(ctx context.Context, req *pb.FindByIdRoleRequest) (*pb.ApiResponseRole, error) {
@@ -71,15 +80,21 @@ func (s *roleHandleGrpc) FindByIdRole(ctx context.Context, req *pb.FindByIdRoleR
 		return nil, role_errors.ErrGrpcRoleInvalidId
 	}
 
-	role, err := s.roleService.FindById(id)
-
+	role, err := s.roleService.FindById(ctx, id)
 	if err != nil {
-		return nil, response.ToGrpcErrorFromErrorResponse(err)
+		return nil, errors.ToGrpcError(err)
 	}
 
-	roleResponse := s.mapping.ToProtoResponseRole("success", "Successfully fetched role", role)
-
-	return roleResponse, nil
+	return &pb.ApiResponseRole{
+		Status:  "success",
+		Message: "Successfully fetched role",
+		Data: &pb.RoleResponse{
+			Id:        int32(role.RoleID),
+			Name:      role.RoleName,
+			CreatedAt: role.CreatedAt.Time.String(),
+			UpdatedAt: role.UpdatedAt.Time.String(),
+		},
+	}, nil
 }
 
 func (s *roleHandleGrpc) FindByUserId(ctx context.Context, req *pb.FindByIdUserRoleRequest) (*pb.ApiResponsesRole, error) {
@@ -89,15 +104,26 @@ func (s *roleHandleGrpc) FindByUserId(ctx context.Context, req *pb.FindByIdUserR
 		return nil, role_errors.ErrGrpcRoleInvalidId
 	}
 
-	role, err := s.roleService.FindByUserId(id)
-
+	roles, err := s.roleService.FindByUserId(ctx, id)
 	if err != nil {
-		return nil, response.ToGrpcErrorFromErrorResponse(err)
+		return nil, errors.ToGrpcError(err)
 	}
 
-	roleResponse := s.mapping.ToProtoResponsesRole("success", "Successfully fetched role by user ID", role)
+	var roleResponses []*pb.RoleResponse
+	for _, role := range roles {
+		roleResponses = append(roleResponses, &pb.RoleResponse{
+			Id:        int32(role.RoleID),
+			Name:      role.RoleName,
+			CreatedAt: role.CreatedAt.Time.String(),
+			UpdatedAt: role.UpdatedAt.Time.String(),
+		})
+	}
 
-	return roleResponse, nil
+	return &pb.ApiResponsesRole{
+		Status:  "success",
+		Message: "Successfully fetched roles by user ID",
+		Data:    roleResponses,
+	}, nil
 }
 
 func (s *roleHandleGrpc) FindByActive(ctx context.Context, req *pb.FindAllRoleRequest) (*pb.ApiResponsePaginationRoleDeleteAt, error) {
@@ -118,10 +144,9 @@ func (s *roleHandleGrpc) FindByActive(ctx context.Context, req *pb.FindAllRoleRe
 		Search:   search,
 	}
 
-	roles, totalRecords, err := s.roleService.FindByActive(&reqService)
-
+	roles, totalRecords, err := s.roleService.FindByActiveRole(ctx, &reqService)
 	if err != nil {
-		return nil, response.ToGrpcErrorFromErrorResponse(err)
+		return nil, errors.ToGrpcError(err)
 	}
 
 	totalPages := int(math.Ceil(float64(*totalRecords) / float64(pageSize)))
@@ -132,9 +157,29 @@ func (s *roleHandleGrpc) FindByActive(ctx context.Context, req *pb.FindAllRoleRe
 		TotalPages:   int32(totalPages),
 		TotalRecords: int32(*totalRecords),
 	}
-	so := s.mapping.ToProtoResponsePaginationRoleDeleteAt(paginationMeta, "success", "Successfully fetched active roles", roles)
 
-	return so, nil
+	var roleResponses []*pb.RoleResponseDeleteAt
+	for _, role := range roles {
+		var deletedAt string
+		if role.DeletedAt.Valid {
+			deletedAt = role.DeletedAt.Time.String()
+		}
+
+		roleResponses = append(roleResponses, &pb.RoleResponseDeleteAt{
+			Id:        int32(role.RoleID),
+			Name:      role.RoleName,
+			CreatedAt: role.CreatedAt.Time.String(),
+			UpdatedAt: role.UpdatedAt.Time.String(),
+			DeletedAt: deletedAt,
+		})
+	}
+
+	return &pb.ApiResponsePaginationRoleDeleteAt{
+		Status:     "success",
+		Message:    "Successfully fetched active roles",
+		Data:       roleResponses,
+		Pagination: paginationMeta,
+	}, nil
 }
 
 func (s *roleHandleGrpc) FindByTrashed(ctx context.Context, req *pb.FindAllRoleRequest) (*pb.ApiResponsePaginationRoleDeleteAt, error) {
@@ -155,10 +200,9 @@ func (s *roleHandleGrpc) FindByTrashed(ctx context.Context, req *pb.FindAllRoleR
 		Search:   search,
 	}
 
-	roles, totalRecords, err := s.roleService.FindByTrashed(&reqService)
-
+	roles, totalRecords, err := s.roleService.FindByTrashedRole(ctx, &reqService)
 	if err != nil {
-		return nil, response.ToGrpcErrorFromErrorResponse(err)
+		return nil, errors.ToGrpcError(err)
 	}
 
 	totalPages := int(math.Ceil(float64(*totalRecords) / float64(pageSize)))
@@ -169,9 +213,29 @@ func (s *roleHandleGrpc) FindByTrashed(ctx context.Context, req *pb.FindAllRoleR
 		TotalPages:   int32(totalPages),
 		TotalRecords: int32(*totalRecords),
 	}
-	so := s.mapping.ToProtoResponsePaginationRoleDeleteAt(paginationMeta, "success", "Successfully fetched trashed roles", roles)
 
-	return so, nil
+	var roleResponses []*pb.RoleResponseDeleteAt
+	for _, role := range roles {
+		var deletedAt string
+		if role.DeletedAt.Valid {
+			deletedAt = role.DeletedAt.Time.String()
+		}
+
+		roleResponses = append(roleResponses, &pb.RoleResponseDeleteAt{
+			Id:        int32(role.RoleID),
+			Name:      role.RoleName,
+			CreatedAt: role.CreatedAt.Time.String(),
+			UpdatedAt: role.UpdatedAt.Time.String(),
+			DeletedAt: deletedAt,
+		})
+	}
+
+	return &pb.ApiResponsePaginationRoleDeleteAt{
+		Status:     "success",
+		Message:    "Successfully fetched trashed roles",
+		Data:       roleResponses,
+		Pagination: paginationMeta,
+	}, nil
 }
 
 func (s *roleHandleGrpc) CreateRole(ctx context.Context, req *pb.CreateRoleRequest) (*pb.ApiResponseRole, error) {
@@ -185,17 +249,23 @@ func (s *roleHandleGrpc) CreateRole(ctx context.Context, req *pb.CreateRoleReque
 		return nil, role_errors.ErrGrpcValidateCreateRole
 	}
 
-	role, err := s.roleService.Create(&requests.CreateRoleRequest{
+	role, err := s.roleService.CreateRole(ctx, &requests.CreateRoleRequest{
 		Name: name,
 	})
-
 	if err != nil {
-		return nil, response.ToGrpcErrorFromErrorResponse(err)
+		return nil, errors.ToGrpcError(err)
 	}
 
-	so := s.mapping.ToProtoResponseRole("success", "Successfully created role", role)
-
-	return so, nil
+	return &pb.ApiResponseRole{
+		Status:  "success",
+		Message: "Successfully created role",
+		Data: &pb.RoleResponse{
+			Id:        int32(role.RoleID),
+			Name:      role.RoleName,
+			CreatedAt: role.CreatedAt.Time.String(),
+			UpdatedAt: role.UpdatedAt.Time.String(),
+		},
+	}, nil
 }
 
 func (s *roleHandleGrpc) UpdateRole(ctx context.Context, req *pb.UpdateRoleRequest) (*pb.ApiResponseRole, error) {
@@ -216,51 +286,71 @@ func (s *roleHandleGrpc) UpdateRole(ctx context.Context, req *pb.UpdateRoleReque
 		return nil, role_errors.ErrGrpcValidateUpdateRole
 	}
 
-	role, err := s.roleService.Update(request)
-
+	role, err := s.roleService.UpdateRole(ctx, request)
 	if err != nil {
-		return nil, response.ToGrpcErrorFromErrorResponse(err)
+		return nil, errors.ToGrpcError(err)
 	}
 
-	so := s.mapping.ToProtoResponseRole("success", "Successfully updated role", role)
-
-	return so, nil
+	return &pb.ApiResponseRole{
+		Status:  "success",
+		Message: "Successfully updated role",
+		Data: &pb.RoleResponse{
+			Id:        int32(role.RoleID),
+			Name:      role.RoleName,
+			CreatedAt: role.CreatedAt.Time.String(),
+			UpdatedAt: role.UpdatedAt.Time.String(),
+		},
+	}, nil
 }
 
-func (s *roleHandleGrpc) TrashedRole(ctx context.Context, req *pb.FindByIdRoleRequest) (*pb.ApiResponseRole, error) {
+func (s *roleHandleGrpc) TrashedRole(ctx context.Context, req *pb.FindByIdRoleRequest) (*pb.ApiResponseRoleDeleteAt, error) {
 	id := int(req.GetRoleId())
 
 	if id == 0 {
 		return nil, role_errors.ErrGrpcRoleInvalidId
 	}
 
-	role, err := s.roleService.Trashed(id)
-
+	role, err := s.roleService.TrashedRole(ctx, id)
 	if err != nil {
-		return nil, response.ToGrpcErrorFromErrorResponse(err)
+		return nil, errors.ToGrpcError(err)
 	}
 
-	so := s.mapping.ToProtoResponseRole("success", "Successfully trashed role", role)
-
-	return so, nil
+	return &pb.ApiResponseRoleDeleteAt{
+		Status:  "success",
+		Message: "Successfully trashed role",
+		Data: &pb.RoleResponseDeleteAt{
+			Id:        int32(role.RoleID),
+			Name:      role.RoleName,
+			CreatedAt: role.CreatedAt.Time.String(),
+			UpdatedAt: role.UpdatedAt.Time.String(),
+			DeletedAt: role.DeletedAt.Time.String(),
+		},
+	}, nil
 }
 
-func (s *roleHandleGrpc) RestoreRole(ctx context.Context, req *pb.FindByIdRoleRequest) (*pb.ApiResponseRole, error) {
+func (s *roleHandleGrpc) RestoreRole(ctx context.Context, req *pb.FindByIdRoleRequest) (*pb.ApiResponseRoleDeleteAt, error) {
 	id := int(req.GetRoleId())
 
 	if id == 0 {
 		return nil, role_errors.ErrGrpcRoleInvalidId
 	}
 
-	role, err := s.roleService.Restore(id)
-
+	role, err := s.roleService.RestoreRole(ctx, id)
 	if err != nil {
-		return nil, response.ToGrpcErrorFromErrorResponse(err)
+		return nil, errors.ToGrpcError(err)
 	}
 
-	so := s.mapping.ToProtoResponseRole("success", "Successfully restored role", role)
-
-	return so, nil
+	return &pb.ApiResponseRoleDeleteAt{
+		Status:  "success",
+		Message: "Successfully trashed role",
+		Data: &pb.RoleResponseDeleteAt{
+			Id:        int32(role.RoleID),
+			Name:      role.RoleName,
+			CreatedAt: role.CreatedAt.Time.String(),
+			UpdatedAt: role.UpdatedAt.Time.String(),
+			DeletedAt: role.DeletedAt.Time.String(),
+		},
+	}, nil
 }
 
 func (s *roleHandleGrpc) DeleteRolePermanent(ctx context.Context, req *pb.FindByIdRoleRequest) (*pb.ApiResponseRoleDelete, error) {
@@ -270,37 +360,37 @@ func (s *roleHandleGrpc) DeleteRolePermanent(ctx context.Context, req *pb.FindBy
 		return nil, role_errors.ErrGrpcRoleInvalidId
 	}
 
-	_, err := s.roleService.DeletePermanent(id)
-
+	_, err := s.roleService.DeleteRolePermanent(ctx, id)
 	if err != nil {
-		return nil, response.ToGrpcErrorFromErrorResponse(err)
+		return nil, errors.ToGrpcError(err)
 	}
 
-	so := s.mapping.ToProtoResponseRoleDelete("success", "Successfully deleted role permanently")
-
-	return so, nil
+	return &pb.ApiResponseRoleDelete{
+		Status:  "success",
+		Message: "Successfully deleted role permanently",
+	}, nil
 }
 
-func (s *roleHandleGrpc) RestoreAllRole(ctx context.Context, req *emptypb.Empty) (*pb.ApiResponseRoleAll, error) {
-	_, err := s.roleService.RestoreAll()
-
+func (s *roleHandleGrpc) RestoreAllRole(ctx context.Context, _ *emptypb.Empty) (*pb.ApiResponseRoleAll, error) {
+	_, err := s.roleService.RestoreAllRole(ctx)
 	if err != nil {
-		return nil, response.ToGrpcErrorFromErrorResponse(err)
+		return nil, errors.ToGrpcError(err)
 	}
 
-	so := s.mapping.ToProtoResponseRoleAll("success", "Successfully restored all roles")
-
-	return so, nil
+	return &pb.ApiResponseRoleAll{
+		Status:  "success",
+		Message: "Successfully restored all roles",
+	}, nil
 }
 
-func (s *roleHandleGrpc) DeleteAllRolePermanent(ctx context.Context, req *emptypb.Empty) (*pb.ApiResponseRoleAll, error) {
-	_, err := s.roleService.DeleteAllPermanent()
-
+func (s *roleHandleGrpc) DeleteAllRolePermanent(ctx context.Context, _ *emptypb.Empty) (*pb.ApiResponseRoleAll, error) {
+	_, err := s.roleService.DeleteAllRolePermanent(ctx)
 	if err != nil {
-		return nil, response.ToGrpcErrorFromErrorResponse(err)
+		return nil, errors.ToGrpcError(err)
 	}
 
-	so := s.mapping.ToProtoResponseRoleAll("success", "Successfully deleted all roles")
-
-	return so, nil
+	return &pb.ApiResponseRoleAll{
+		Status:  "success",
+		Message: "Successfully deleted all roles permanently",
+	}, nil
 }

@@ -1,13 +1,18 @@
 package service
 
 import (
+	"context"
+	category_cache "pointofsale/internal/cache/category"
 	"pointofsale/internal/domain/requests"
-	"pointofsale/internal/domain/response"
-	response_service "pointofsale/internal/mapper/response/service"
+	"pointofsale/internal/errorhandler"
 	"pointofsale/internal/repository"
+	db "pointofsale/pkg/database/schema"
 	"pointofsale/pkg/errors/category_errors"
 	"pointofsale/pkg/logger"
+	"pointofsale/pkg/observability"
 	"pointofsale/pkg/utils"
+
+	"go.opentelemetry.io/otel/attribute"
 
 	"go.uber.org/zap"
 )
@@ -15,30 +20,32 @@ import (
 type categoryService struct {
 	categoryRepository repository.CategoryRepository
 	logger             logger.LoggerInterface
-	mapping            response_service.CategoryResponseMapper
+	observability      observability.TraceLoggerObservability
+	cache              category_cache.CategoryMencache
 }
 
-func NewCategoryService(
-	categoryRepository repository.CategoryRepository,
-	logger logger.LoggerInterface,
-	mapping response_service.CategoryResponseMapper,
-) *categoryService {
+type CategoryServiceDeps struct {
+	CategoryRepo  repository.CategoryRepository
+	Logger        logger.LoggerInterface
+	Observability observability.TraceLoggerObservability
+	cache         category_cache.CategoryMencache
+}
+
+func NewCategoryService(deps CategoryServiceDeps) *categoryService {
 	return &categoryService{
-		categoryRepository: categoryRepository,
-		logger:             logger,
-		mapping:            mapping,
+		categoryRepository: deps.CategoryRepo,
+		logger:             deps.Logger,
+		observability:      deps.Observability,
+		cache:              deps.cache,
 	}
 }
 
-func (s *categoryService) FindAll(req *requests.FindAllCategory) ([]*response.CategoryResponse, *int, *response.ErrorResponse) {
+func (s *categoryService) FindAllCategory(ctx context.Context, req *requests.FindAllCategory) ([]*db.GetCategoriesRow, *int, error) {
+	const method = "FindAllCategory"
+
 	page := req.Page
 	pageSize := req.PageSize
 	search := req.Search
-
-	s.logger.Debug("Fetching all categories",
-		zap.Int("page", page),
-		zap.Int("pageSize", pageSize),
-		zap.String("search", search))
 
 	if page <= 0 {
 		page = 1
@@ -48,445 +55,919 @@ func (s *categoryService) FindAll(req *requests.FindAllCategory) ([]*response.Ca
 		pageSize = 10
 	}
 
-	category, totalRecords, err := s.categoryRepository.FindAllCategory(req)
+	ctx, span, end, status, logSuccess := s.observability.StartTracingAndLogging(ctx, method,
+		attribute.Int("page", page),
+		attribute.Int("pageSize", pageSize),
+		attribute.String("search", search))
 
-	if err != nil {
-		s.logger.Error("Failed to retrieve categories list",
-			zap.Error(err),
+	defer func() {
+		end(status)
+	}()
+
+	if data, total, found := s.cache.GetCachedCategoriesCache(ctx, req); found {
+		logSuccess("Successfully retrieved all category records from cache",
+			zap.Int("totalRecords", *total),
 			zap.Int("page", page),
-			zap.Int("pageSize", pageSize),
-			zap.String("search", search))
-		return nil, nil, category_errors.ErrFailedFindAllCategories
+			zap.Int("pageSize", pageSize))
+		return data, total, nil
 	}
 
-	categoriesResponse := s.mapping.ToCategorysResponse(category)
-
-	s.logger.Debug("Successfully fetched categories",
-		zap.Int("totalRecords", *totalRecords),
-		zap.Int("page", req.Page),
-		zap.Int("pageSize", req.PageSize))
-
-	return categoriesResponse, totalRecords, nil
-}
-
-func (s *categoryService) FindByActive(req *requests.FindAllCategory) ([]*response.CategoryResponseDeleteAt, *int, *response.ErrorResponse) {
-	page := req.Page
-	pageSize := req.PageSize
-	search := req.Search
-
-	s.logger.Debug("Fetching categories active",
-		zap.Int("page", page),
-		zap.Int("pageSize", pageSize),
-		zap.String("search", search))
-
-	if page <= 0 {
-		page = 1
-	}
-
-	if pageSize <= 0 {
-		pageSize = 10
-	}
-
-	categories, totalRecords, err := s.categoryRepository.FindByActive(req)
-
+	categories, err := s.categoryRepository.FindAllCategory(ctx, req)
 	if err != nil {
-		s.logger.Error("Failed to retrieve active categories",
-			zap.Error(err),
+		status = "error"
+		return errorhandler.HandlerErrorPagination[[]*db.GetCategoriesRow](
+			s.logger,
+			category_errors.ErrFailedFindAllCategories,
+			method,
+			span,
+			zap.String("search", search),
 			zap.Int("page", page),
-			zap.Int("pageSize", pageSize),
-			zap.String("search", search))
-		return nil, nil, category_errors.ErrFailedFindCategoryByActive
+			zap.Int("pageSize", pageSize))
 	}
 
-	s.logger.Debug("Successfully fetched active categories",
-		zap.Int("totalRecords", *totalRecords),
-		zap.Int("page", req.Page),
-		zap.Int("pageSize", req.PageSize))
+	var totalCount int
 
-	return s.mapping.ToCategoryResponsesDeleteAt(categories), totalRecords, nil
-}
-
-func (s *categoryService) FindByTrashed(req *requests.FindAllCategory) ([]*response.CategoryResponseDeleteAt, *int, *response.ErrorResponse) {
-	page := req.Page
-	pageSize := req.PageSize
-	search := req.Search
-
-	s.logger.Debug("Fetching categories trashed",
-		zap.Int("page", page),
-		zap.Int("pageSize", pageSize),
-		zap.String("search", search))
-
-	if page <= 0 {
-		page = 1
+	if len(categories) > 0 {
+		totalCount = int(categories[0].TotalCount)
+	} else {
+		totalCount = 0
 	}
 
-	if pageSize <= 0 {
-		pageSize = 10
-	}
+	s.cache.SetCachedCategoriesCache(ctx, req, categories, &totalCount)
 
-	categories, totalRecords, err := s.categoryRepository.FindByTrashed(req)
-
-	if err != nil {
-		s.logger.Error("Failed to retrieve trashed categories",
-			zap.Error(err),
-			zap.Int("page", page),
-			zap.Int("pageSize", pageSize),
-			zap.String("search", search))
-		return nil, nil, category_errors.ErrFailedFindCategoryByTrashed
-	}
-
-	s.logger.Debug("Successfully fetched categories",
-		zap.Int("totalRecords", *totalRecords),
+	logSuccess("Successfully fetched categories",
+		zap.Int("totalRecords", totalCount),
 		zap.Int("page", page),
 		zap.Int("pageSize", pageSize))
 
-	return s.mapping.ToCategoryResponsesDeleteAt(categories), totalRecords, nil
+	return categories, &totalCount, nil
 }
 
-func (s *categoryService) FindById(category_id int) (*response.CategoryResponse, *response.ErrorResponse) {
-	s.logger.Debug("Fetching category by ID", zap.Int("category_id", category_id))
+func (s *categoryService) FindByActive(ctx context.Context, req *requests.FindAllCategory) ([]*db.GetCategoriesActiveRow, *int, error) {
+	const method = "FindByActive"
 
-	category, err := s.categoryRepository.FindById(category_id)
+	page := req.Page
+	pageSize := req.PageSize
+	search := req.Search
 
+	if page <= 0 {
+		page = 1
+	}
+
+	if pageSize <= 0 {
+		pageSize = 10
+	}
+
+	ctx, span, end, status, logSuccess := s.observability.StartTracingAndLogging(ctx, method,
+		attribute.Int("page", page),
+		attribute.Int("pageSize", pageSize),
+		attribute.String("search", search))
+
+	defer func() {
+		end(status)
+	}()
+
+	if data, total, found := s.cache.GetCachedCategoryActiveCache(ctx, req); found {
+		logSuccess("Successfully retrieved active category records from cache",
+			zap.Int("totalRecords", *total),
+			zap.Int("page", page),
+			zap.Int("pageSize", pageSize))
+		return data, total, nil
+	}
+
+	categories, err := s.categoryRepository.FindByActive(ctx, req)
 	if err != nil {
-		s.logger.Error("Failed to retrieve category details",
-			zap.Error(err),
+		status = "error"
+		return errorhandler.HandlerErrorPagination[[]*db.GetCategoriesActiveRow](
+			s.logger,
+			category_errors.ErrFailedFindCategoryByActive,
+			method,
+			span,
+			zap.String("search", search),
+			zap.Int("page", page),
+			zap.Int("pageSize", pageSize))
+	}
+
+	var totalCount int
+
+	if len(categories) > 0 {
+		totalCount = int(categories[0].TotalCount)
+	} else {
+		totalCount = 0
+	}
+
+	s.cache.SetCachedCategoryActiveCache(ctx, req, categories, &totalCount)
+
+	logSuccess("Successfully fetched active categories",
+		zap.Int("totalRecords", totalCount),
+		zap.Int("page", page),
+		zap.Int("pageSize", pageSize))
+
+	return categories, &totalCount, nil
+}
+
+func (s *categoryService) FindByTrashed(ctx context.Context, req *requests.FindAllCategory) ([]*db.GetCategoriesTrashedRow, *int, error) {
+	const method = "FindByTrashed"
+
+	page := req.Page
+	pageSize := req.PageSize
+	search := req.Search
+
+	if page <= 0 {
+		page = 1
+	}
+
+	if pageSize <= 0 {
+		pageSize = 10
+	}
+
+	ctx, span, end, status, logSuccess := s.observability.StartTracingAndLogging(ctx, method,
+		attribute.Int("page", page),
+		attribute.Int("pageSize", pageSize),
+		attribute.String("search", search))
+
+	defer func() {
+		end(status)
+	}()
+
+	if data, total, found := s.cache.GetCachedCategoryTrashedCache(ctx, req); found {
+		logSuccess("Successfully retrieved trashed category records from cache",
+			zap.Int("totalRecords", *total),
+			zap.Int("page", page),
+			zap.Int("pageSize", pageSize))
+		return data, total, nil
+	}
+
+	categories, err := s.categoryRepository.FindByTrashed(ctx, req)
+	if err != nil {
+		status = "error"
+		return errorhandler.HandlerErrorPagination[[]*db.GetCategoriesTrashedRow](
+			s.logger,
+			category_errors.ErrFailedFindCategoryByTrashed,
+			method,
+			span,
+			zap.String("search", search),
+			zap.Int("page", page),
+			zap.Int("pageSize", pageSize))
+	}
+
+	var totalCount int
+
+	if len(categories) > 0 {
+		totalCount = int(categories[0].TotalCount)
+	} else {
+		totalCount = 0
+	}
+
+	s.cache.SetCachedCategoryTrashedCache(ctx, req, categories, &totalCount)
+
+	logSuccess("Successfully fetched trashed categories",
+		zap.Int("totalRecords", totalCount),
+		zap.Int("page", page),
+		zap.Int("pageSize", pageSize))
+
+	return categories, &totalCount, nil
+}
+
+func (s *categoryService) FindById(ctx context.Context, category_id int) (*db.GetCategoryByIDRow, error) {
+	const method = "FindById"
+
+	ctx, span, end, status, logSuccess := s.observability.StartTracingAndLogging(ctx, method,
+		attribute.Int("category_id", category_id))
+
+	defer func() {
+		end(status)
+	}()
+
+	if data, found := s.cache.GetCachedCategoryCache(ctx, category_id); found {
+		logSuccess("Successfully retrieved category record from cache",
 			zap.Int("category_id", category_id))
-		return nil, category_errors.ErrFailedFindCategoryById
+		return data, nil
 	}
 
-	return s.mapping.ToCategoryResponse(category), nil
-}
-
-func (s *categoryService) FindMonthlyTotalPrice(req *requests.MonthTotalPrice) ([]*response.CategoriesMonthlyTotalPriceResponse, *response.ErrorResponse) {
-	year := req.Year
-	month := req.Month
-
-	res, err := s.categoryRepository.GetMonthlyTotalPrice(req)
-
+	category, err := s.categoryRepository.FindById(ctx, category_id)
 	if err != nil {
-		s.logger.Error("failed to get monthly total sales",
-			zap.Int("year", year),
-			zap.Int("month", month),
-			zap.Error(err))
-		return nil, category_errors.ErrFailedFindMonthlyTotalPrice
+		status = "error"
+		return errorhandler.HandleError[*db.GetCategoryByIDRow](
+			s.logger,
+			category_errors.ErrFailedFindCategoryById,
+			method,
+			span,
+			zap.Int("category_id", category_id))
 	}
 
-	return s.mapping.ToCategoryMonthlyTotalPrices(res), nil
+	s.cache.SetCachedCategoryCache(ctx, category)
+
+	logSuccess("Successfully fetched category",
+		zap.Int("category_id", category_id))
+
+	return category, nil
 }
 
-func (s *categoryService) FindYearlyTotalPrice(year int) ([]*response.CategoriesYearlyTotalPriceResponse, *response.ErrorResponse) {
-	res, err := s.categoryRepository.GetYearlyTotalPrices(year)
+func (s *categoryService) FindMonthlyTotalPrice(ctx context.Context, req *requests.MonthTotalPrice) ([]*db.GetMonthlyTotalPriceRow, error) {
+	const method = "FindMonthlyTotalPrice"
 
+	ctx, span, end, status, logSuccess := s.observability.StartTracingAndLogging(ctx, method,
+		attribute.Int("year", req.Year),
+		attribute.Int("month", req.Month))
+
+	defer func() {
+		end(status)
+	}()
+
+	if data, found := s.cache.GetCachedMonthTotalPriceCache(ctx, req); found {
+		logSuccess("Successfully retrieved monthly total price from cache",
+			zap.Int("year", req.Year),
+			zap.Int("month", req.Month))
+		return data, nil
+	}
+
+	res, err := s.categoryRepository.GetMonthlyTotalPrice(ctx, req)
 	if err != nil {
-		s.logger.Error("failed to get yearly total sales",
-			zap.Int("year", year),
-			zap.Error(err))
-		return nil, category_errors.ErrFailedFindYearlyTotalPrice
+		status = "error"
+		return errorhandler.HandleError[[]*db.GetMonthlyTotalPriceRow](
+			s.logger,
+			category_errors.ErrFailedFindMonthlyTotalPrice,
+			method,
+			span,
+			zap.Int("year", req.Year),
+			zap.Int("month", req.Month))
 	}
 
-	return s.mapping.ToCategoryYearlyTotalPrices(res), nil
+	s.cache.SetCachedMonthTotalPriceCache(ctx, req, res)
+
+	logSuccess("Successfully fetched monthly total price",
+		zap.Int("year", req.Year),
+		zap.Int("month", req.Month),
+		zap.Int("count", len(res)))
+
+	return res, nil
 }
 
-func (s *categoryService) FindMonthlyTotalPriceById(req *requests.MonthTotalPriceCategory) ([]*response.CategoriesMonthlyTotalPriceResponse, *response.ErrorResponse) {
-	year := req.Year
-	month := req.Month
+func (s *categoryService) FindYearlyTotalPrice(ctx context.Context, year int) ([]*db.GetYearlyTotalPriceRow, error) {
+	const method = "FindYearlyTotalPrice"
 
-	res, err := s.categoryRepository.GetMonthlyTotalPriceById(req)
+	ctx, span, end, status, logSuccess := s.observability.StartTracingAndLogging(ctx, method,
+		attribute.Int("year", year))
 
+	defer func() {
+		end(status)
+	}()
+
+	if data, found := s.cache.GetCachedYearTotalPriceCache(ctx, year); found {
+		logSuccess("Successfully retrieved yearly total price from cache",
+			zap.Int("year", year))
+		return data, nil
+	}
+
+	res, err := s.categoryRepository.GetYearlyTotalPrices(ctx, year)
 	if err != nil {
-		s.logger.Error("failed to get monthly total price",
-			zap.Int("year", year),
-			zap.Int("month", month),
-			zap.Error(err))
-		return nil, category_errors.ErrFailedFindMonthlyTotalPriceById
+		status = "error"
+		return errorhandler.HandleError[[]*db.GetYearlyTotalPriceRow](
+			s.logger,
+			category_errors.ErrFailedFindYearlyTotalPrice,
+			method,
+			span,
+			zap.Int("year", year))
 	}
 
-	return s.mapping.ToCategoryMonthlyTotalPrices(res), nil
+	s.cache.SetCachedYearTotalPriceCache(ctx, year, res)
+
+	logSuccess("Successfully fetched yearly total price",
+		zap.Int("year", year),
+		zap.Int("count", len(res)))
+
+	return res, nil
 }
 
-func (s *categoryService) FindYearlyTotalPriceById(req *requests.YearTotalPriceCategory) ([]*response.CategoriesYearlyTotalPriceResponse, *response.ErrorResponse) {
-	year := req.Year
+func (s *categoryService) FindMonthlyTotalPriceById(ctx context.Context, req *requests.MonthTotalPriceCategory) ([]*db.GetMonthlyTotalPriceByIdRow, error) {
+	const method = "FindMonthlyTotalPriceById"
 
-	res, err := s.categoryRepository.GetYearlyTotalPricesById(req)
+	ctx, span, end, status, logSuccess := s.observability.StartTracingAndLogging(ctx, method,
+		attribute.Int("year", req.Year),
+		attribute.Int("month", req.Month),
+		attribute.Int("category_id", req.CategoryID))
 
+	defer func() {
+		end(status)
+	}()
+
+	if data, found := s.cache.GetCachedMonthTotalPriceByIdCache(ctx, req); found {
+		logSuccess("Successfully retrieved monthly total price by ID from cache",
+			zap.Int("year", req.Year),
+			zap.Int("month", req.Month),
+			zap.Int("category_id", req.CategoryID))
+		return data, nil
+	}
+
+	res, err := s.categoryRepository.GetMonthlyTotalPriceById(ctx, req)
 	if err != nil {
-		s.logger.Error("failed to get yearly total price",
-			zap.Int("year", year),
-			zap.Error(err))
-
-		return nil, category_errors.ErrFailedFindYearlyTotalPriceById
+		status = "error"
+		return errorhandler.HandleError[[]*db.GetMonthlyTotalPriceByIdRow](
+			s.logger,
+			category_errors.ErrFailedFindMonthlyTotalPriceById,
+			method,
+			span,
+			zap.Int("year", req.Year),
+			zap.Int("month", req.Month),
+			zap.Int("category_id", req.CategoryID))
 	}
 
-	return s.mapping.ToCategoryYearlyTotalPrices(res), nil
+	s.cache.SetCachedMonthTotalPriceByIdCache(ctx, req, res)
+
+	logSuccess("Successfully fetched monthly total price by ID",
+		zap.Int("year", req.Year),
+		zap.Int("month", req.Month),
+		zap.Int("category_id", req.CategoryID),
+		zap.Int("count", len(res)))
+
+	return res, nil
 }
 
-func (s *categoryService) FindMonthlyTotalPriceByMerchant(req *requests.MonthTotalPriceMerchant) ([]*response.CategoriesMonthlyTotalPriceResponse, *response.ErrorResponse) {
-	year := req.Year
-	month := req.Month
+func (s *categoryService) FindYearlyTotalPriceById(ctx context.Context, req *requests.YearTotalPriceCategory) ([]*db.GetYearlyTotalPriceByIdRow, error) {
+	const method = "FindYearlyTotalPriceById"
 
-	res, err := s.categoryRepository.GetMonthlyTotalPriceByMerchant(req)
+	ctx, span, end, status, logSuccess := s.observability.StartTracingAndLogging(ctx, method,
+		attribute.Int("year", req.Year),
+		attribute.Int("category_id", req.CategoryID))
 
+	defer func() {
+		end(status)
+	}()
+
+	if data, found := s.cache.GetCachedYearTotalPriceByIdCache(ctx, req); found {
+		logSuccess("Successfully retrieved yearly total price by ID from cache",
+			zap.Int("year", req.Year),
+			zap.Int("category_id", req.CategoryID))
+		return data, nil
+	}
+
+	res, err := s.categoryRepository.GetYearlyTotalPricesById(ctx, req)
 	if err != nil {
-		s.logger.Error("failed to get monthly total price",
-			zap.Int("year", year),
-			zap.Int("month", month),
-			zap.Error(err))
-
-		return nil, category_errors.ErrFailedFindMonthlyTotalPriceByMerchant
+		status = "error"
+		return errorhandler.HandleError[[]*db.GetYearlyTotalPriceByIdRow](
+			s.logger,
+			category_errors.ErrFailedFindYearlyTotalPriceById,
+			method,
+			span,
+			zap.Int("year", req.Year),
+			zap.Int("category_id", req.CategoryID))
 	}
 
-	return s.mapping.ToCategoryMonthlyTotalPrices(res), nil
+	s.cache.SetCachedYearTotalPriceByIdCache(ctx, req, res)
+
+	logSuccess("Successfully fetched yearly total price by ID",
+		zap.Int("year", req.Year),
+		zap.Int("category_id", req.CategoryID),
+		zap.Int("count", len(res)))
+
+	return res, nil
 }
 
-func (s *categoryService) FindYearlyTotalPriceByMerchant(req *requests.YearTotalPriceMerchant) ([]*response.CategoriesYearlyTotalPriceResponse, *response.ErrorResponse) {
-	year := req.Year
+func (s *categoryService) FindMonthlyTotalPriceByMerchant(ctx context.Context, req *requests.MonthTotalPriceMerchant) ([]*db.GetMonthlyTotalPriceByMerchantRow, error) {
+	const method = "FindMonthlyTotalPriceByMerchant"
 
-	res, err := s.categoryRepository.GetYearlyTotalPricesByMerchant(req)
+	ctx, span, end, status, logSuccess := s.observability.StartTracingAndLogging(ctx, method,
+		attribute.Int("year", req.Year),
+		attribute.Int("month", req.Month),
+		attribute.Int("merchant_id", req.MerchantID))
 
+	defer func() {
+		end(status)
+	}()
+
+	if data, found := s.cache.GetCachedMonthTotalPriceByMerchantCache(ctx, req); found {
+		logSuccess("Successfully retrieved monthly total price by merchant from cache",
+			zap.Int("year", req.Year),
+			zap.Int("month", req.Month),
+			zap.Int("merchant_id", req.MerchantID))
+		return data, nil
+	}
+
+	res, err := s.categoryRepository.GetMonthlyTotalPriceByMerchant(ctx, req)
 	if err != nil {
-		s.logger.Error("failed to get yearly total price",
-			zap.Int("year", year),
-			zap.Error(err))
-
-		return nil, category_errors.ErrFailedFindYearlyTotalPriceByMerchant
+		status = "error"
+		return errorhandler.HandleError[[]*db.GetMonthlyTotalPriceByMerchantRow](
+			s.logger,
+			category_errors.ErrFailedFindMonthlyTotalPriceByMerchant,
+			method,
+			span,
+			zap.Int("year", req.Year),
+			zap.Int("month", req.Month),
+			zap.Int("merchant_id", req.MerchantID))
 	}
 
-	return s.mapping.ToCategoryYearlyTotalPrices(res), nil
+	s.cache.SetCachedMonthTotalPriceByMerchantCache(ctx, req, res)
+
+	logSuccess("Successfully fetched monthly total price by merchant",
+		zap.Int("year", req.Year),
+		zap.Int("month", req.Month),
+		zap.Int("merchant_id", req.MerchantID),
+		zap.Int("count", len(res)))
+
+	return res, nil
 }
 
-func (s *categoryService) FindMonthPrice(year int) ([]*response.CategoryMonthPriceResponse, *response.ErrorResponse) {
-	res, err := s.categoryRepository.GetMonthPrice(year)
+func (s *categoryService) FindYearlyTotalPriceByMerchant(ctx context.Context, req *requests.YearTotalPriceMerchant) ([]*db.GetYearlyTotalPriceByMerchantRow, error) {
+	const method = "FindYearlyTotalPriceByMerchant"
 
+	ctx, span, end, status, logSuccess := s.observability.StartTracingAndLogging(ctx, method,
+		attribute.Int("year", req.Year),
+		attribute.Int("merchant_id", req.MerchantID))
+
+	defer func() {
+		end(status)
+	}()
+
+	if data, found := s.cache.GetCachedYearTotalPriceByMerchantCache(ctx, req); found {
+		logSuccess("Successfully retrieved yearly total price by merchant from cache",
+			zap.Int("year", req.Year),
+			zap.Int("merchant_id", req.MerchantID))
+		return data, nil
+	}
+
+	res, err := s.categoryRepository.GetYearlyTotalPricesByMerchant(ctx, req)
 	if err != nil {
-		s.logger.Error("failed to get monthly category prices",
-			zap.Int("year", year),
-			zap.Error(err))
-
-		return nil, category_errors.ErrFailedFindMonthPrice
+		status = "error"
+		return errorhandler.HandleError[[]*db.GetYearlyTotalPriceByMerchantRow](
+			s.logger,
+			category_errors.ErrFailedFindYearlyTotalPriceByMerchant,
+			method,
+			span,
+			zap.Int("year", req.Year),
+			zap.Int("merchant_id", req.MerchantID))
 	}
 
-	return s.mapping.ToCategoryMonthlyPrices(res), nil
+	s.cache.SetCachedYearTotalPriceByMerchantCache(ctx, req, res)
+
+	logSuccess("Successfully fetched yearly total price by merchant",
+		zap.Int("year", req.Year),
+		zap.Int("merchant_id", req.MerchantID),
+		zap.Int("count", len(res)))
+
+	return res, nil
 }
 
-func (s *categoryService) FindYearPrice(year int) ([]*response.CategoryYearPriceResponse, *response.ErrorResponse) {
-	res, err := s.categoryRepository.GetYearPrice(year)
+func (s *categoryService) FindMonthPrice(ctx context.Context, year int) ([]*db.GetMonthlyCategoryRow, error) {
+	const method = "FindMonthPrice"
 
+	ctx, span, end, status, logSuccess := s.observability.StartTracingAndLogging(ctx, method,
+		attribute.Int("year", year))
+
+	defer func() {
+		end(status)
+	}()
+
+	if data, found := s.cache.GetCachedMonthPriceCache(ctx, year); found {
+		logSuccess("Successfully retrieved month price from cache",
+			zap.Int("year", year))
+		return data, nil
+	}
+
+	res, err := s.categoryRepository.GetMonthPrice(ctx, year)
 	if err != nil {
-		s.logger.Error("failed to get yearly category prices",
-			zap.Int("year", year),
-			zap.Error(err))
-
-		return nil, category_errors.ErrFailedFindYearPrice
+		status = "error"
+		return errorhandler.HandleError[[]*db.GetMonthlyCategoryRow](
+			s.logger,
+			category_errors.ErrFailedFindMonthPrice,
+			method,
+			span,
+			zap.Int("year", year))
 	}
 
-	return s.mapping.ToCategoryYearlyPrices(res), nil
+	s.cache.SetCachedMonthPriceCache(ctx, year, res)
+
+	logSuccess("Successfully fetched month price",
+		zap.Int("year", year),
+		zap.Int("count", len(res)))
+
+	return res, nil
 }
 
-func (s *categoryService) FindMonthPriceByMerchant(req *requests.MonthPriceMerchant) ([]*response.CategoryMonthPriceResponse, *response.ErrorResponse) {
-	year := req.Year
-	merchant_id := req.MerchantID
+func (s *categoryService) FindYearPrice(ctx context.Context, year int) ([]*db.GetYearlyCategoryRow, error) {
+	const method = "FindYearPrice"
 
-	res, err := s.categoryRepository.GetMonthPriceByMerchant(req)
+	ctx, span, end, status, logSuccess := s.observability.StartTracingAndLogging(ctx, method,
+		attribute.Int("year", year))
 
+	defer func() {
+		end(status)
+	}()
+
+	if data, found := s.cache.GetCachedYearPriceCache(ctx, year); found {
+		logSuccess("Successfully retrieved year price from cache",
+			zap.Int("year", year))
+		return data, nil
+	}
+
+	res, err := s.categoryRepository.GetYearPrice(ctx, year)
 	if err != nil {
-		s.logger.Error("failed to get monthly category prices by merchant",
-			zap.Int("year", year),
-			zap.Int("merchant_id", merchant_id),
-			zap.Error(err))
-
-		return nil, category_errors.ErrFailedFindMonthPriceByMerchant
+		status = "error"
+		return errorhandler.HandleError[[]*db.GetYearlyCategoryRow](
+			s.logger,
+			category_errors.ErrFailedFindYearPrice,
+			method,
+			span,
+			zap.Int("year", year))
 	}
 
-	return s.mapping.ToCategoryMonthlyPrices(res), nil
+	s.cache.SetCachedYearPriceCache(ctx, year, res)
+
+	logSuccess("Successfully fetched year price",
+		zap.Int("year", year),
+		zap.Int("count", len(res)))
+
+	return res, nil
 }
 
-func (s *categoryService) FindYearPriceByMerchant(req *requests.YearPriceMerchant) ([]*response.CategoryYearPriceResponse, *response.ErrorResponse) {
-	year := req.Year
-	merchant_id := req.MerchantID
+func (s *categoryService) FindMonthPriceByMerchant(ctx context.Context, req *requests.MonthPriceMerchant) ([]*db.GetMonthlyCategoryByMerchantRow, error) {
+	const method = "FindMonthPriceByMerchant"
 
-	res, err := s.categoryRepository.GetYearPriceByMerchant(req)
+	ctx, span, end, status, logSuccess := s.observability.StartTracingAndLogging(ctx, method,
+		attribute.Int("year", req.Year),
+		attribute.Int("merchant_id", req.MerchantID))
 
+	defer func() {
+		end(status)
+	}()
+
+	if data, found := s.cache.GetCachedMonthPriceByMerchantCache(ctx, req); found {
+		logSuccess("Successfully retrieved month price by merchant from cache",
+			zap.Int("year", req.Year),
+			zap.Int("merchant_id", req.MerchantID))
+		return data, nil
+	}
+
+	res, err := s.categoryRepository.GetMonthPriceByMerchant(ctx, req)
 	if err != nil {
-		s.logger.Error("failed to get yearly category prices by merchant",
-			zap.Int("year", year),
-			zap.Int("merchant_id", merchant_id),
-			zap.Error(err))
-
-		return nil, category_errors.ErrFailedFindYearPriceByMerchant
+		status = "error"
+		return errorhandler.HandleError[[]*db.GetMonthlyCategoryByMerchantRow](
+			s.logger,
+			category_errors.ErrFailedFindMonthPriceByMerchant,
+			method,
+			span,
+			zap.Int("year", req.Year),
+			zap.Int("merchant_id", req.MerchantID))
 	}
 
-	return s.mapping.ToCategoryYearlyPrices(res), nil
+	s.cache.SetCachedMonthPriceByMerchantCache(ctx, req, res)
+
+	logSuccess("Successfully fetched month price by merchant",
+		zap.Int("year", req.Year),
+		zap.Int("merchant_id", req.MerchantID),
+		zap.Int("count", len(res)))
+
+	return res, nil
 }
 
-func (s *categoryService) FindMonthPriceById(req *requests.MonthPriceId) ([]*response.CategoryMonthPriceResponse, *response.ErrorResponse) {
-	year := req.Year
-	category_id := req.CategoryID
+func (s *categoryService) FindYearPriceByMerchant(ctx context.Context, req *requests.YearPriceMerchant) ([]*db.GetYearlyCategoryByMerchantRow, error) {
+	const method = "FindYearPriceByMerchant"
 
-	res, err := s.categoryRepository.GetMonthPriceById(req)
+	ctx, span, end, status, logSuccess := s.observability.StartTracingAndLogging(ctx, method,
+		attribute.Int("year", req.Year),
+		attribute.Int("merchant_id", req.MerchantID))
 
+	defer func() {
+		end(status)
+	}()
+
+	if data, found := s.cache.GetCachedYearPriceByMerchantCache(ctx, req); found {
+		logSuccess("Successfully retrieved year price by merchant from cache",
+			zap.Int("year", req.Year),
+			zap.Int("merchant_id", req.MerchantID))
+		return data, nil
+	}
+
+	res, err := s.categoryRepository.GetYearPriceByMerchant(ctx, req)
 	if err != nil {
-		s.logger.Error("failed to get monthly category prices by ID",
-			zap.Int("year", year),
-			zap.Int("category_id", category_id),
-			zap.Error(err))
-		return nil, category_errors.ErrFailedFindMonthPriceById
+		status = "error"
+		return errorhandler.HandleError[[]*db.GetYearlyCategoryByMerchantRow](
+			s.logger,
+			category_errors.ErrFailedFindYearPriceByMerchant,
+			method,
+			span,
+			zap.Int("year", req.Year),
+			zap.Int("merchant_id", req.MerchantID))
 	}
 
-	return s.mapping.ToCategoryMonthlyPrices(res), nil
+	s.cache.SetCachedYearPriceByMerchantCache(ctx, req, res)
+
+	logSuccess("Successfully fetched year price by merchant",
+		zap.Int("year", req.Year),
+		zap.Int("merchant_id", req.MerchantID),
+		zap.Int("count", len(res)))
+
+	return res, nil
 }
 
-func (s *categoryService) FindYearPriceById(req *requests.YearPriceId) ([]*response.CategoryYearPriceResponse, *response.ErrorResponse) {
-	year := req.Year
-	category_id := req.CategoryID
+func (s *categoryService) FindMonthPriceById(ctx context.Context, req *requests.MonthPriceId) ([]*db.GetMonthlyCategoryByIdRow, error) {
+	const method = "FindMonthPriceById"
 
-	res, err := s.categoryRepository.GetYearPriceById(req)
+	ctx, span, end, status, logSuccess := s.observability.StartTracingAndLogging(ctx, method,
+		attribute.Int("year", req.Year),
+		attribute.Int("category_id", req.CategoryID))
 
+	defer func() {
+		end(status)
+	}()
+
+	if data, found := s.cache.GetCachedMonthPriceByIdCache(ctx, req); found {
+		logSuccess("Successfully retrieved month price by ID from cache",
+			zap.Int("year", req.Year),
+			zap.Int("category_id", req.CategoryID))
+		return data, nil
+	}
+
+	res, err := s.categoryRepository.GetMonthPriceById(ctx, req)
 	if err != nil {
-		s.logger.Error("failed to get yearly category prices by ID",
-			zap.Int("year", year),
-			zap.Int("category_id", category_id),
-			zap.Error(err))
-		return nil, category_errors.ErrFailedFindYearPriceById
+		status = "error"
+		return errorhandler.HandleError[[]*db.GetMonthlyCategoryByIdRow](
+			s.logger,
+			category_errors.ErrFailedFindMonthPriceById,
+			method,
+			span,
+			zap.Int("year", req.Year),
+			zap.Int("category_id", req.CategoryID))
 	}
 
-	return s.mapping.ToCategoryYearlyPrices(res), nil
+	s.cache.SetCachedMonthPriceByIdCache(ctx, req, res)
+
+	logSuccess("Successfully fetched month price by ID",
+		zap.Int("year", req.Year),
+		zap.Int("category_id", req.CategoryID),
+		zap.Int("count", len(res)))
+
+	return res, nil
 }
 
-func (s *categoryService) CreateCategory(req *requests.CreateCategoryRequest) (*response.CategoryResponse, *response.ErrorResponse) {
-	s.logger.Debug("Creating new category")
+func (s *categoryService) FindYearPriceById(ctx context.Context, req *requests.YearPriceId) ([]*db.GetYearlyCategoryByIdRow, error) {
+	const method = "FindYearPriceById"
+
+	ctx, span, end, status, logSuccess := s.observability.StartTracingAndLogging(ctx, method,
+		attribute.Int("year", req.Year),
+		attribute.Int("category_id", req.CategoryID))
+
+	defer func() {
+		end(status)
+	}()
+
+	if data, found := s.cache.GetCachedYearPriceByIdCache(ctx, req); found {
+		logSuccess("Successfully retrieved year price by ID from cache",
+			zap.Int("year", req.Year),
+			zap.Int("category_id", req.CategoryID))
+		return data, nil
+	}
+
+	res, err := s.categoryRepository.GetYearPriceById(ctx, req)
+	if err != nil {
+		status = "error"
+		return errorhandler.HandleError[[]*db.GetYearlyCategoryByIdRow](
+			s.logger,
+			category_errors.ErrFailedFindYearPriceById,
+			method,
+			span,
+			zap.Int("year", req.Year),
+			zap.Int("category_id", req.CategoryID))
+	}
+
+	s.cache.SetCachedYearPriceByIdCache(ctx, req, res)
+
+	logSuccess("Successfully fetched year price by ID",
+		zap.Int("year", req.Year),
+		zap.Int("category_id", req.CategoryID),
+		zap.Int("count", len(res)))
+
+	return res, nil
+}
+
+func (s *categoryService) CreateCategory(ctx context.Context, req *requests.CreateCategoryRequest) (*db.CreateCategoryRow, error) {
+	const method = "CreateCategory"
+
+	ctx, span, end, status, logSuccess := s.observability.StartTracingAndLogging(ctx, method,
+		attribute.String("name", req.Name))
+
+	defer func() {
+		end(status)
+	}()
 
 	slug := utils.GenerateSlug(req.Name)
-
 	req.SlugCategory = &slug
 
-	_, err := s.categoryRepository.FindByName(req.Name)
-
+	_, err := s.categoryRepository.FindByName(ctx, req.Name)
 	if err != nil {
-		s.logger.Error("Failed to retrieve category details",
-			zap.Error(err),
-			zap.String("category_name", req.Name))
-
-		return nil, category_errors.ErrFailedFindCategoryByName
+		status = "error"
+		return errorhandler.HandleError[*db.CreateCategoryRow](
+			s.logger,
+			category_errors.ErrFailedFindCategoryByName,
+			method,
+			span,
+			zap.String("name", req.Name))
 	}
 
-	category, err := s.categoryRepository.CreateCategory(req)
-
+	category, err := s.categoryRepository.CreateCategory(ctx, req)
 	if err != nil {
-		s.logger.Error("Failed to create new category",
-			zap.Error(err),
+		status = "error"
+		return errorhandler.HandleError[*db.CreateCategoryRow](
+			s.logger,
+			category_errors.ErrFailedCreateCategory,
+			method,
+			span,
 			zap.Any("request", req))
-		return nil, category_errors.ErrFailedCreateCategory
 	}
 
-	return s.mapping.ToCategoryResponse(category), nil
+	s.cache.DeleteCachedCategoryCache(ctx, int(category.CategoryID))
+
+	logSuccess("Successfully created category",
+		zap.Int("category_id", int(category.CategoryID)),
+		zap.String("name", req.Name))
+
+	return category, nil
 }
 
-func (s *categoryService) UpdateCategory(req *requests.UpdateCategoryRequest) (*response.CategoryResponse, *response.ErrorResponse) {
-	s.logger.Debug("Updating category", zap.Int("category_id", *req.CategoryID))
+func (s *categoryService) UpdateCategory(ctx context.Context, req *requests.UpdateCategoryRequest) (*db.UpdateCategoryRow, error) {
+	const method = "UpdateCategory"
+
+	ctx, span, end, status, logSuccess := s.observability.StartTracingAndLogging(ctx, method,
+		attribute.Int("category_id", *req.CategoryID),
+		attribute.String("name", req.Name))
+
+	defer func() {
+		end(status)
+	}()
 
 	slug := utils.GenerateSlug(req.Name)
-
 	req.SlugCategory = &slug
 
-	_, err := s.categoryRepository.FindByNameAndId(&requests.CategoryNameAndId{
+	_, err := s.categoryRepository.FindByNameAndId(ctx, &requests.CategoryNameAndId{
 		Name:       req.Name,
 		CategoryID: *req.CategoryID,
 	})
-
 	if err != nil {
-		s.logger.Error("Error retrieving category",
-			zap.Error(err),
+		status = "error"
+		return errorhandler.HandleError[*db.UpdateCategoryRow](
+			s.logger,
+			category_errors.ErrFailedFindCategoryByName,
+			method,
+			span,
 			zap.Int("category_id", *req.CategoryID),
-			zap.String("category_name", req.Name),
-		)
-
-		return nil, category_errors.ErrFailedFindCategoryByName
+			zap.String("name", req.Name))
 	}
 
-	category, err := s.categoryRepository.UpdateCategory(req)
-
+	category, err := s.categoryRepository.UpdateCategory(ctx, req)
 	if err != nil {
-		s.logger.Error("Failed to update category",
-			zap.Error(err),
+		status = "error"
+		return errorhandler.HandleError[*db.UpdateCategoryRow](
+			s.logger,
+			category_errors.ErrFailedUpdateCategory,
+			method,
+			span,
 			zap.Any("request", req))
-
-		return nil, category_errors.ErrFailedUpdateCategory
 	}
 
-	return s.mapping.ToCategoryResponse(category), nil
+	s.cache.DeleteCachedCategoryCache(ctx, int(category.CategoryID))
+
+	logSuccess("Successfully updated category",
+		zap.Int("category_id", int(category.CategoryID)),
+		zap.String("name", req.Name))
+
+	return category, nil
 }
 
-func (s *categoryService) TrashedCategory(category_id int) (*response.CategoryResponseDeleteAt, *response.ErrorResponse) {
-	s.logger.Debug("Trashing category", zap.Int("category", category_id))
+func (s *categoryService) TrashedCategory(ctx context.Context, category_id int) (*db.Category, error) {
+	const method = "TrashedCategory"
 
-	category, err := s.categoryRepository.TrashedCategory(category_id)
+	ctx, span, end, status, logSuccess := s.observability.StartTracingAndLogging(ctx, method,
+		attribute.Int("category_id", category_id))
 
+	defer func() {
+		end(status)
+	}()
+
+	category, err := s.categoryRepository.TrashedCategory(ctx, category_id)
 	if err != nil {
-		s.logger.Error("Failed to move category to trash",
-			zap.Error(err),
+		status = "error"
+		return errorhandler.HandleError[*db.Category](
+			s.logger,
+			category_errors.ErrFailedTrashedCategory,
+			method,
+			span,
 			zap.Int("category_id", category_id))
-		return nil, category_errors.ErrFailedTrashedCategory
 	}
 
-	return s.mapping.ToCategoryResponseDeleteAt(category), nil
+	s.cache.DeleteCachedCategoryCache(ctx, category_id)
+
+	logSuccess("Successfully trashed category",
+		zap.Int("category_id", category_id))
+
+	return category, nil
 }
 
-func (s *categoryService) RestoreCategory(categoryID int) (*response.CategoryResponseDeleteAt, *response.ErrorResponse) {
-	s.logger.Debug("Restoring category", zap.Int("categoryID", categoryID))
+func (s *categoryService) RestoreCategory(ctx context.Context, categoryID int) (*db.Category, error) {
+	const method = "RestoreCategory"
 
-	category, err := s.categoryRepository.RestoreCategory(categoryID)
+	ctx, span, end, status, logSuccess := s.observability.StartTracingAndLogging(ctx, method,
+		attribute.Int("category_id", categoryID))
 
+	defer func() {
+		end(status)
+	}()
+
+	category, err := s.categoryRepository.RestoreCategory(ctx, categoryID)
 	if err != nil {
-		s.logger.Error("Failed to restore category from trash",
-			zap.Error(err),
+		status = "error"
+		return errorhandler.HandleError[*db.Category](
+			s.logger,
+			category_errors.ErrFailedRestoreCategory,
+			method,
+			span,
 			zap.Int("category_id", categoryID))
-
-		return nil, category_errors.ErrFailedRestoreCategory
 	}
 
-	return s.mapping.ToCategoryResponseDeleteAt(category), nil
+	s.cache.DeleteCachedCategoryCache(ctx, categoryID)
+
+	logSuccess("Successfully restored category",
+		zap.Int("category_id", categoryID))
+
+	return category, nil
 }
 
-func (s *categoryService) DeleteCategoryPermanent(categoryID int) (bool, *response.ErrorResponse) {
-	s.logger.Debug("Permanently deleting category", zap.Int("categoryID", categoryID))
+func (s *categoryService) DeleteCategoryPermanently(ctx context.Context, categoryID int) (bool, error) {
+	const method = "DeleteCategoryPermanently"
 
-	success, err := s.categoryRepository.DeleteCategoryPermanently(categoryID)
+	ctx, span, end, status, logSuccess := s.observability.StartTracingAndLogging(ctx, method,
+		attribute.Int("category_id", categoryID))
 
+	defer func() {
+		end(status)
+	}()
+
+	success, err := s.categoryRepository.DeleteCategoryPermanently(ctx, categoryID)
 	if err != nil {
-		s.logger.Error("Failed to permanently delete category",
-			zap.Error(err),
+		status = "error"
+		return errorhandler.HandleError[bool](
+			s.logger,
+			category_errors.ErrFailedDeleteCategoryPermanent,
+			method,
+			span,
 			zap.Int("category_id", categoryID))
-
-		return false, category_errors.ErrFailedDeleteCategoryPermanent
 	}
+
+	s.cache.DeleteCachedCategoryCache(ctx, categoryID)
+
+	logSuccess("Successfully permanently deleted category",
+		zap.Int("category_id", categoryID))
 
 	return success, nil
 }
 
-func (s *categoryService) RestoreAllCategories() (bool, *response.ErrorResponse) {
-	s.logger.Debug("Restoring all trashed categories")
+func (s *categoryService) RestoreAllCategories(ctx context.Context) (bool, error) {
+	const method = "RestoreAllCategories"
 
-	success, err := s.categoryRepository.RestoreAllCategories()
+	ctx, span, end, status, logSuccess := s.observability.StartTracingAndLogging(ctx, method)
+
+	defer func() {
+		end(status)
+	}()
+
+	success, err := s.categoryRepository.RestoreAllCategories(ctx)
 	if err != nil {
-		s.logger.Error("Failed to restore all trashed categories",
-			zap.Error(err))
-		return false, category_errors.ErrFailedRestoreAllCategories
+		status = "error"
+		return errorhandler.HandleError[bool](
+			s.logger,
+			category_errors.ErrFailedRestoreAllCategories,
+			method,
+			span)
 	}
+
+	s.logger.Debug("All category caches should be invalidated after restore all operation")
+
+	logSuccess("Successfully restored all trashed categories")
 
 	return success, nil
 }
 
-func (s *categoryService) DeleteAllCategoriesPermanent() (bool, *response.ErrorResponse) {
-	s.logger.Debug("Permanently deleting all categories")
+func (s *categoryService) DeleteAllPermanentCategories(ctx context.Context) (bool, error) {
+	const method = "DeleteAllPermanentCategories"
 
-	success, err := s.categoryRepository.DeleteAllPermanentCategories()
+	ctx, span, end, status, logSuccess := s.observability.StartTracingAndLogging(ctx, method)
 
+	defer func() {
+		end(status)
+	}()
+
+	success, err := s.categoryRepository.DeleteAllPermanentCategories(ctx)
 	if err != nil {
-		s.logger.Error("Failed to permanently delete all trashed categories",
-			zap.Error(err))
-		return false, category_errors.ErrFailedDeleteAllCategoriesPermanent
+		status = "error"
+		return errorhandler.HandleError[bool](
+			s.logger,
+			category_errors.ErrFailedDeleteAllCategoriesPermanent,
+			method,
+			span)
 	}
+
+	s.logger.Debug("All category caches should be invalidated after delete all operation")
+
+	logSuccess("Successfully permanently deleted all trashed categories")
 
 	return success, nil
 }

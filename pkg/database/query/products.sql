@@ -13,19 +13,36 @@
 --   - Uses COUNT(*) OVER() to include total matching record count for pagination UI
 -- name: GetProducts :many
 SELECT
-    *,
-    COUNT(*) OVER() AS total_count
+    p.product_id,
+    p.merchant_id,
+    p.category_id,
+    p.name,
+    p.description,
+    p.price,
+    p.count_in_stock,
+    p.brand,
+    p.weight,
+    p.slug_product,
+    p.image_product,
+    p.barcode,
+    p.created_at,
+    p.updated_at,
+    COUNT(*) OVER () AS total_count
 FROM products as p
-WHERE deleted_at IS NULL
-AND ($1::TEXT IS NULL 
-       OR p.name ILIKE '%' || $1 || '%'
-       OR p.description ILIKE '%' || $1 || '%'
-       OR p.brand ILIKE '%' || $1 || '%'
-       OR p.slug_product ILIKE '%' || $1 || '%'
-       OR p.barcode ILIKE '%' || $1 || '%')
+WHERE
+    deleted_at IS NULL
+    AND (
+        $1::TEXT IS NULL
+        OR p.name ILIKE '%' || $1 || '%'
+        OR p.description ILIKE '%' || $1 || '%'
+        OR p.brand ILIKE '%' || $1 || '%'
+        OR p.slug_product ILIKE '%' || $1 || '%'
+        OR p.barcode ILIKE '%' || $1 || '%'
+    )
 ORDER BY created_at DESC
-LIMIT $2 OFFSET $3;
-
+LIMIT $2
+OFFSET
+    $3;
 
 -- GetProductsActive: Retrieves paginated list of active products (duplicate of GetProducts)
 -- Purpose: Explicitly return active (non-deleted) products with search capability
@@ -42,18 +59,37 @@ LIMIT $2 OFFSET $3;
 --   - Useful if frontend/backend wants clearer distinction in naming
 -- name: GetProductsActive :many
 SELECT
-    *,
-    COUNT(*) OVER() AS total_count
+    p.product_id,
+    p.merchant_id,
+    p.category_id,
+    p.name,
+    p.description,
+    p.price,
+    p.count_in_stock,
+    p.brand,
+    p.weight,
+    p.slug_product,
+    p.image_product,
+    p.barcode,
+    p.created_at,
+    p.updated_at,
+    p.deleted_at,
+    COUNT(*) OVER () AS total_count
 FROM products as p
-WHERE deleted_at IS NULL
-AND ($1::TEXT IS NULL 
-       OR p.name ILIKE '%' || $1 || '%'
-       OR p.description ILIKE '%' || $1 || '%'
-       OR p.brand ILIKE '%' || $1 || '%'
-       OR p.slug_product ILIKE '%' || $1 || '%'
-       OR p.barcode ILIKE '%' || $1 || '%')
+WHERE
+    deleted_at IS NULL
+    AND (
+        $1::TEXT IS NULL
+        OR p.name ILIKE '%' || $1 || '%'
+        OR p.description ILIKE '%' || $1 || '%'
+        OR p.brand ILIKE '%' || $1 || '%'
+        OR p.slug_product ILIKE '%' || $1 || '%'
+        OR p.barcode ILIKE '%' || $1 || '%'
+    )
 ORDER BY created_at DESC
-LIMIT $2 OFFSET $3;
+LIMIT $2
+OFFSET
+    $3;
 
 -- GetProductsTrashed: Retrieves paginated list of trashed (soft-deleted) products
 -- Purpose: List deleted products for admin to manage recovery or audit
@@ -70,20 +106,37 @@ LIMIT $2 OFFSET $3;
 --   - Used for "Trash Bin" UI or soft-delete management
 -- name: GetProductsTrashed :many
 SELECT
-    *,
-    COUNT(*) OVER() AS total_count
+    p.product_id,
+    p.merchant_id,
+    p.category_id,
+    p.name,
+    p.description,
+    p.price,
+    p.count_in_stock,
+    p.brand,
+    p.weight,
+    p.slug_product,
+    p.image_product,
+    p.barcode,
+    p.created_at,
+    p.updated_at,
+    p.deleted_at,
+    COUNT(*) OVER () AS total_count
 FROM products as p
-WHERE deleted_at IS NOT NULL
-AND ($1::TEXT IS NULL 
-       OR p.name ILIKE '%' || $1 || '%'
-       OR p.description ILIKE '%' || $1 || '%'
-       OR p.brand ILIKE '%' || $1 || '%'
-       OR p.slug_product ILIKE '%' || $1 || '%'
-       OR p.barcode ILIKE '%' || $1 || '%')
+WHERE
+    deleted_at IS NOT NULL
+    AND (
+        $1::TEXT IS NULL
+        OR p.name ILIKE '%' || $1 || '%'
+        OR p.description ILIKE '%' || $1 || '%'
+        OR p.brand ILIKE '%' || $1 || '%'
+        OR p.slug_product ILIKE '%' || $1 || '%'
+        OR p.barcode ILIKE '%' || $1 || '%'
+    )
 ORDER BY created_at DESC
-LIMIT $2 OFFSET $3;
-
-
+LIMIT $2
+OFFSET
+    $3;
 
 -- GetProductsByMerchant: Retrieves paginated and filtered products owned by a specific merchant
 -- Purpose: Allow merchants to view and manage their own products with advanced filtering options
@@ -105,49 +158,51 @@ LIMIT $2 OFFSET $3;
 --   - Filters by price range only if values provided (>= min_price and <= max_price)
 --   - Ordered by newest products first (created_at DESC)
 -- name: GetProductsByMerchant :many
-WITH filtered_products AS (
-    SELECT 
-        p.product_id,
-        p.name,
-        p.description,
-        p.price,
-        p.count_in_stock,
-        p.brand,
-        p.image_product,
-        p.created_at,  
-        c.name AS category_name
-    FROM 
-        products p
-    JOIN 
-        categories c ON p.category_id = c.category_id
-    WHERE 
-        p.deleted_at IS NULL
-        AND p.merchant_id = $1  
-        AND (
-            p.name ILIKE '%' || COALESCE($2, '') || '%' 
-            OR p.description ILIKE '%' || COALESCE($2, '') || '%'
-            OR $2 IS NULL
-        )
-        AND (
-            c.category_id = NULLIF($3, 0) 
-            OR NULLIF($3, 0) IS NULL
-        )
-        AND (
-            p.price >= COALESCE(NULLIF($4, 0), 0)
-            AND p.price <= COALESCE(NULLIF($5, 0), 999999999)
-        )
-)
-SELECT 
-    (SELECT COUNT(*) FROM filtered_products) AS total_count,
-    fp.*
-FROM 
-    filtered_products fp
-ORDER BY 
-    fp.created_at DESC
-LIMIT $6 OFFSET $7;
-
-
-
+WITH
+    filtered_products AS (
+        SELECT
+            p.product_id,
+            p.merchant_id,
+            p.category_id,
+            p.description,
+            p.price,
+            p.count_in_stock,
+            p.brand,
+            p.weight,
+            p.slug_product,
+            p.image_product,
+            p.barcode,
+            p.created_at,
+            p.updated_at,
+            c.name AS category_name
+        FROM products p
+            JOIN categories c ON p.category_id = c.category_id
+        WHERE
+            p.deleted_at IS NULL
+            AND p.merchant_id = $1
+            AND (
+                p.name ILIKE '%' || COALESCE($2, '') || '%'
+                OR p.description ILIKE '%' || COALESCE($2, '') || '%'
+                OR $2 IS NULL
+            )
+            AND (
+                c.category_id = NULLIF($3, 0)
+                OR NULLIF($3, 0) IS NULL
+            )
+            AND (
+                p.price >= COALESCE(NULLIF($4, 0), 0)
+                AND p.price <= COALESCE(NULLIF($5, 0), 999999999)
+            )
+    )
+SELECT (
+        SELECT COUNT(*)
+        FROM filtered_products
+    ) AS total_count, fp.*
+FROM filtered_products fp
+ORDER BY fp.created_at DESC
+LIMIT $6
+OFFSET
+    $7;
 
 -- GetProductsByCategoryName: Retrieves paginated and filtered products under a specific category name
 -- Purpose: Display products by category for customers or category-focused pages
@@ -169,51 +224,55 @@ LIMIT $6 OFFSET $7;
 --   - Filters by price range only if values provided
 --   - Ordered by newest products first (created_at DESC)
 -- name: GetProductsByCategoryName :many
-WITH filtered_products AS (
-    SELECT 
-        p.product_id,
-        p.merchant_id,
-        p.category_id,
-        p.slug_product,
-        p.weight,
-        p.name,
-        p.description,
-        p.price,
-        p.count_in_stock,
-        p.brand,
-        p.image_product,
-        p.barcode,
-        p.created_at,
-        p.updated_at,  
-        p.deleted_at,
-        c.name AS category_name
-    FROM 
-        products p
-    JOIN 
-        categories c ON p.category_id = c.category_id
-    WHERE 
-        p.deleted_at IS NULL
-        AND c.name = $1  
-        AND (
-            $2 IS NULL 
-            OR p.name ILIKE '%' || $2 || '%' 
-            OR p.description ILIKE '%' || $2 || '%'
-        )
-        AND (
-            ($3 IS NULL OR p.price >= $3)
-            AND ($4 IS NULL OR p.price <= $4)
-        )
-)
-SELECT 
-    (SELECT COUNT(*) FROM filtered_products) AS total_count,
-    fp.*
-FROM 
-    filtered_products fp
-ORDER BY 
-    fp.created_at DESC
-LIMIT $5 OFFSET $6;
-
-
+WITH
+    filtered_products AS (
+        SELECT
+            p.product_id,
+            p.merchant_id,
+            p.category_id,
+            p.slug_product,
+            p.weight,
+            p.name,
+            p.description,
+            p.price,
+            p.count_in_stock,
+            p.brand,
+            p.image_product,
+            p.barcode,
+            p.created_at,
+            p.updated_at,
+            p.deleted_at,
+            c.name AS category_name
+        FROM products p
+            JOIN categories c ON p.category_id = c.category_id
+        WHERE
+            p.deleted_at IS NULL
+            AND c.name = $1
+            AND (
+                $2 IS NULL
+                OR p.name ILIKE '%' || $2 || '%'
+                OR p.description ILIKE '%' || $2 || '%'
+            )
+            AND (
+                (
+                    $3 IS NULL
+                    OR p.price >= $3
+                )
+                AND (
+                    $4 IS NULL
+                    OR p.price <= $4
+                )
+            )
+    )
+SELECT (
+        SELECT COUNT(*)
+        FROM filtered_products
+    ) AS total_count, fp.*
+FROM filtered_products fp
+ORDER BY fp.created_at DESC
+LIMIT $5
+OFFSET
+    $6;
 
 -- CreateProduct: Creates a new product record
 -- Purpose: Add a new product to inventory
@@ -235,9 +294,48 @@ LIMIT $5 OFFSET $6;
 --   - Validates required fields
 --   - Initializes inventory tracking
 -- name: CreateProduct :one
-INSERT INTO products (merchant_id, category_id, name, description, price, count_in_stock, brand, weight, slug_product, image_product, barcode)
-VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
-RETURNING *;
+INSERT INTO
+    products (
+        merchant_id,
+        category_id,
+        name,
+        description,
+        price,
+        count_in_stock,
+        brand,
+        weight,
+        slug_product,
+        image_product,
+        barcode
+    )
+VALUES (
+        $1,
+        $2,
+        $3,
+        $4,
+        $5,
+        $6,
+        $7,
+        $8,
+        $9,
+        $10,
+        $11
+    )
+RETURNING
+    product_id,
+    merchant_id,
+    category_id,
+    name,
+    description,
+    price,
+    count_in_stock,
+    brand,
+    weight,
+    slug_product,
+    image_product,
+    barcode,
+    created_at,
+    updated_at;
 
 -- GetProductByID: Retrieves active product by ID
 -- Purpose: Fetch product details for display/purchase
@@ -248,10 +346,25 @@ RETURNING *;
 --   - Excludes deleted products
 --   - Used for product pages and checkout
 -- name: GetProductByID :one
-SELECT *
+SELECT
+    product_id,
+    merchant_id,
+    category_id,
+    name,
+    description,
+    price,
+    count_in_stock,
+    brand,
+    weight,
+    slug_product,
+    image_product,
+    barcode,
+    created_at,
+    updated_at
 FROM products
-WHERE product_id = $1
-  AND deleted_at IS NULL;
+WHERE
+    product_id = $1
+    AND deleted_at IS NULL;
 
 -- GetProductByIdTrashed: Retrieves product including deleted
 -- Purpose: View deleted products for restoration
@@ -262,7 +375,24 @@ WHERE product_id = $1
 --   - Bypasses deleted_at filter
 --   - Used in admin/recovery interfaces
 -- name: GetProductByIdTrashed :one
-SELECT * FROM products WHERE product_id = $1;
+SELECT
+    product_id,
+    merchant_id,
+    category_id,
+    name,
+    description,
+    price,
+    count_in_stock,
+    brand,
+    weight,
+    slug_product,
+    image_product,
+    barcode,
+    created_at,
+    updated_at
+FROM products
+WHERE
+    product_id = $1;
 
 -- UpdateProduct: Modifies product information
 -- Purpose: Update product details
@@ -284,7 +414,8 @@ SELECT * FROM products WHERE product_id = $1;
 --   - Validates all fields
 -- name: UpdateProduct :one
 UPDATE products
-SET category_id = $2,
+SET
+    category_id = $2,
     name = $3,
     description = $4,
     price = $5,
@@ -294,9 +425,24 @@ SET category_id = $2,
     image_product = $9,
     barcode = $10,
     updated_at = CURRENT_TIMESTAMP
-WHERE product_id = $1
-  AND deleted_at IS NULL
-  RETURNING *;
+WHERE
+    product_id = $1
+    AND deleted_at IS NULL
+RETURNING
+    product_id,
+    merchant_id,
+    category_id,
+    name,
+    description,
+    price,
+    count_in_stock,
+    brand,
+    weight,
+    slug_product,
+    image_product,
+    barcode,
+    created_at,
+    updated_at;
 
 -- UpdateProductCountStock: Updates inventory count
 -- Purpose: Adjust product stock levels
@@ -310,10 +456,15 @@ WHERE product_id = $1
 --   - Validates non-negative quantity
 -- name: UpdateProductCountStock :one
 UPDATE products
-SET count_in_stock = $2
-WHERE product_id = $1
+SET
+    count_in_stock = $2
+WHERE
+    product_id = $1
     AND deleted_at IS NULL
-RETURNING *;
+RETURNING
+    product_id,
+    price,
+    count_in_stock;
 
 -- TrashProduct: Soft-deletes a product
 -- Purpose: Remove product from active listings
@@ -331,7 +482,22 @@ SET
 WHERE
     product_id = $1
     AND deleted_at IS NULL
-    RETURNING *;
+RETURNING
+    product_id,
+    merchant_id,
+    category_id,
+    name,
+    description,
+    price,
+    count_in_stock,
+    brand,
+    weight,
+    slug_product,
+    image_product,
+    barcode,
+    created_at,
+    updated_at,
+    deleted_at;
 
 -- RestoreProduct: Recovers a soft-deleted product
 -- Purpose: Reactivate a removed product
@@ -348,7 +514,22 @@ SET
 WHERE
     product_id = $1
     AND deleted_at IS NOT NULL
-  RETURNING *;
+RETURNING
+    product_id,
+    merchant_id,
+    category_id,
+    name,
+    description,
+    price,
+    count_in_stock,
+    brand,
+    weight,
+    slug_product,
+    image_product,
+    barcode,
+    created_at,
+    updated_at,
+    deleted_at;
 
 -- DeleteProductPermanently: Hard-deletes a product
 -- Purpose: Completely remove product record
@@ -359,8 +540,10 @@ WHERE
 --   - Only affects already trashed products
 --   - Irreversible operation
 -- name: DeleteProductPermanently :exec
-DELETE FROM products WHERE product_id = $1 AND deleted_at IS NOT NULL;
-
+DELETE FROM products
+WHERE
+    product_id = $1
+    AND deleted_at IS NOT NULL;
 
 -- RestoreAllProducts: Mass restoration of deleted products
 -- Purpose: Reactivate all trashed products
@@ -380,6 +563,4 @@ WHERE
 --   - Bulk permanent deletion
 --   - Database maintenance operation
 -- name: DeleteAllPermanentProducts :exec
-DELETE FROM products
-WHERE
-    deleted_at IS NOT NULL;
+DELETE FROM products WHERE deleted_at IS NOT NULL;

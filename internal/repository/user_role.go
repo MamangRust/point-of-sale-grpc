@@ -2,56 +2,42 @@ package repository
 
 import (
 	"context"
-	"database/sql"
-	"errors"
-	"fmt"
-	"pointofsale/internal/domain/record"
 	"pointofsale/internal/domain/requests"
-	recordmapper "pointofsale/internal/mapper/record"
 	db "pointofsale/pkg/database/schema"
+	userrole_errors "pointofsale/pkg/errors/user_role_errors"
 )
 
 type userRoleRepository struct {
-	db      *db.Queries
-	ctx     context.Context
-	mapping recordmapper.UserRoleRecordMapping
+	db *db.Queries
 }
 
-func NewUserRoleRepository(db *db.Queries, ctx context.Context, mapping recordmapper.UserRoleRecordMapping) *userRoleRepository {
+func NewUserRoleRepository(db *db.Queries) *userRoleRepository {
 	return &userRoleRepository{
-		db:      db,
-		ctx:     ctx,
-		mapping: mapping,
+		db: db,
 	}
 }
 
-func (r *userRoleRepository) AssignRoleToUser(req *requests.CreateUserRoleRequest) (*record.UserRoleRecord, error) {
-	res, err := r.db.AssignRoleToUser(r.ctx, db.AssignRoleToUserParams{
+func (r *userRoleRepository) AssignRoleToUser(ctx context.Context, req *requests.CreateUserRoleRequest) (*db.UserRole, error) {
+	res, err := r.db.AssignRoleToUser(ctx, db.AssignRoleToUserParams{
 		UserID: int32(req.UserId),
 		RoleID: int32(req.RoleId),
 	})
 
 	if err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
-			return nil, fmt.Errorf("user ID %d or role ID %d not found", req.UserId, req.RoleId)
-		}
-		return nil, fmt.Errorf("failed to assign role to user: %w", err)
+		return nil, userrole_errors.ErrAssignRoleToUser
 	}
 
-	return r.mapping.ToUserRoleRecord(res), nil
+	return res, nil
 }
 
-func (r *userRoleRepository) RemoveRoleFromUser(req *requests.RemoveUserRoleRequest) error {
-	err := r.db.RemoveRoleFromUser(r.ctx, db.RemoveRoleFromUserParams{
+func (r *userRoleRepository) RemoveRoleFromUser(ctx context.Context, req *requests.RemoveUserRoleRequest) error {
+	err := r.db.RemoveRoleFromUser(ctx, db.RemoveRoleFromUserParams{
 		UserID: int32(req.UserId),
 		RoleID: int32(req.RoleId),
 	})
 
 	if err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
-			return fmt.Errorf("no role assignment found for user ID %d and role ID %d", req.UserId, req.RoleId)
-		}
-		return fmt.Errorf("failed to remove role from user: %w", err)
+		return userrole_errors.ErrRemoveRole
 	}
 
 	return nil

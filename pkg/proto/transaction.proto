@@ -77,7 +77,6 @@ message CreateTransactionRequest {
     int32 cashier_id = 2;
     string payment_method = 3;
     int32 amount = 4;
-    string payment_status = 5;
 }
 
 message UpdateTransactionRequest {

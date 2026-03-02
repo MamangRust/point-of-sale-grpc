@@ -17,16 +17,15 @@ SELECT
     created_at,
     updated_at,
     deleted_at,
-    COUNT(*) OVER() AS total_count
-FROM
-    roles
+    COUNT(*) OVER () AS total_count
+FROM roles
 WHERE
-    $1::TEXT IS NULL OR role_name ILIKE '%' || $1 || '%'
-ORDER BY
-    created_at ASC
-LIMIT $2 OFFSET $3;
-
-
+    $1::TEXT IS NULL
+    OR role_name ILIKE '%' || $1 || '%'
+ORDER BY created_at ASC
+LIMIT $2
+OFFSET
+    $3;
 
 -- GetRole: Retrieves role details by role_id
 -- Purpose: Fetch a single role record (regardless of deleted status)
@@ -39,13 +38,10 @@ SELECT
     role_id,
     role_name,
     created_at,
-    updated_at,
-    deleted_at
-FROM
-    roles
+    updated_at
+FROM roles
 WHERE
     role_id = $1;
-
 
 -- GetRoleByName: Retrieves role by exact role name
 -- Purpose: Check role existence or fetch role info based on name
@@ -58,13 +54,10 @@ SELECT
     role_id,
     role_name,
     created_at,
-    updated_at,
-    deleted_at
-FROM
-    roles
+    updated_at
+FROM roles
 WHERE
     role_name = $1;
-
 
 -- GetUserRoles: Retrieves all roles assigned to a specific user
 -- Purpose: Identify the access level(s) of a user
@@ -73,21 +66,12 @@ WHERE
 -- Returns:
 --   List of roles (id, name, timestamps)
 -- name: GetUserRoles :many
-SELECT
-    r.role_id,
-    r.role_name,
-    r.created_at,
-    r.updated_at,
-    r.deleted_at
-FROM
-    roles r
-JOIN
-    user_roles ur ON ur.role_id = r.role_id
+SELECT r.role_id, r.role_name, r.created_at, r.updated_at
+FROM roles r
+    JOIN user_roles ur ON ur.role_id = r.role_id
 WHERE
     ur.user_id = $1
-ORDER BY
-    r.created_at ASC;
-
+ORDER BY r.created_at ASC;
 
 -- GetActiveRoles: Retrieves only active (non-deleted) roles with optional search and pagination
 -- Purpose: Display roles that are currently usable in the system
@@ -104,16 +88,18 @@ SELECT
     created_at,
     updated_at,
     deleted_at,
-    COUNT(*) OVER() AS total_count
-FROM
-    roles
+    COUNT(*) OVER () AS total_count
+FROM roles
 WHERE
     deleted_at IS NULL
-    AND ($1::TEXT IS NULL OR role_name ILIKE '%' || $1 || '%')
-ORDER BY
-    created_at ASC
-LIMIT $2 OFFSET $3;
-
+    AND (
+        $1::TEXT IS NULL
+        OR role_name ILIKE '%' || $1 || '%'
+    )
+ORDER BY created_at ASC
+LIMIT $2
+OFFSET
+    $3;
 
 -- GetTrashedRoles: Retrieves only soft-deleted roles with optional search and pagination
 -- Purpose: For trash/recycle bin management
@@ -130,17 +116,18 @@ SELECT
     created_at,
     updated_at,
     deleted_at,
-    COUNT(*) OVER() AS total_count
-FROM
-    roles
+    COUNT(*) OVER () AS total_count
+FROM roles
 WHERE
     deleted_at IS NOT NULL
-    AND ($1::TEXT IS NULL OR role_name ILIKE '%' || $1 || '%')
-ORDER BY
-    deleted_at DESC
-LIMIT $2 OFFSET $3;
-
-
+    AND (
+        $1::TEXT IS NULL
+        OR role_name ILIKE '%' || $1 || '%'
+    )
+ORDER BY deleted_at DESC
+LIMIT $2
+OFFSET
+    $3;
 
 -- CreateRole: Inserts a new role into the system
 -- Purpose: Add new role definitions (e.g., Admin, Cashier, etc.)
@@ -149,21 +136,23 @@ LIMIT $2 OFFSET $3;
 -- Returns:
 --   Newly created role's full data (including timestamps)
 -- name: CreateRole :one
-INSERT INTO roles (
-    role_name,
-    created_at,
-    updated_at
-) VALUES (
-    $1,
-    current_timestamp,
-    current_timestamp
-) RETURNING
+INSERT INTO
+    roles (
+        role_name,
+        created_at,
+        updated_at
+    )
+VALUES (
+        $1,
+        current_timestamp,
+        current_timestamp
+    )
+RETURNING
     role_id,
     role_name,
     created_at,
     updated_at,
     deleted_at;
-
 
 -- UpdateRole: Updates role name by ID
 -- Purpose: Modify role information (e.g., name correction)
@@ -186,7 +175,6 @@ RETURNING
     updated_at,
     deleted_at;
 
-
 -- TrashRole: Soft-deletes a role (moves to trash)
 -- Purpose: Mark role as deleted without removing it permanently
 -- Parameters:
@@ -197,8 +185,8 @@ SET
     deleted_at = current_timestamp
 WHERE
     role_id = $1
-RETURNING *;
-
+RETURNING
+    *;
 
 -- RestoreRole: Restores a previously trashed role
 -- Purpose: Undelete a soft-deleted role
@@ -210,18 +198,15 @@ SET
     deleted_at = NULL
 WHERE
     role_id = $1
-RETURNING *;
-
+RETURNING
+    *;
 
 -- DeletePermanentRole: Permanently deletes a trashed role
 -- Purpose: Remove role from DB after soft delete
 -- Parameters:
 --   $1: Role ID
 -- name: DeletePermanentRole :exec
-DELETE FROM roles
-WHERE
-    role_id = $1 AND deleted_at IS NOT NULL;
-
+DELETE FROM roles WHERE role_id = $1 AND deleted_at IS NOT NULL;
 
 -- RestoreAllRoles: Restores all soft-deleted roles in bulk
 -- Purpose: Bulk recovery of all trashed roles
@@ -233,11 +218,8 @@ SET
 WHERE
     deleted_at IS NOT NULL;
 
-
 -- DeleteAllPermanentRoles: Permanently deletes all soft-deleted roles
 -- Purpose: Bulk cleanup of trashed roles
 -- Parameters: None
 -- name: DeleteAllPermanentRoles :exec
-DELETE FROM roles
-WHERE
-    deleted_at IS NOT NULL;
+DELETE FROM roles WHERE deleted_at IS NOT NULL;

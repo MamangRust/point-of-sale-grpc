@@ -13,13 +13,25 @@
 --   - Provides total_count for pagination calculations
 -- name: GetCashiers :many
 SELECT
-    *,
-    COUNT(*) OVER() AS total_count
+    cashier_id,
+    merchant_id,
+    user_id,
+    name,
+    created_at,
+    updated_at,
+    COUNT(*) OVER () AS total_count
 FROM cashiers
-WHERE deleted_at IS NULL
-  AND ($1::TEXT IS NULL OR name ILIKE '%' || $1 || '%' OR username ILIKE '%' || $1 || '%')
+WHERE
+    deleted_at IS NULL
+    AND (
+        $1::TEXT IS NULL
+        OR name ILIKE '%' || $1 || '%'
+        OR name ILIKE '%' || $1 || '%'
+    )
 ORDER BY created_at DESC
-LIMIT $2 OFFSET $3;
+LIMIT $2
+OFFSET
+    $3;
 
 -- GetCashiersActive: Retrieves paginated list of active cashiers with search capability
 -- Purpose: List all active cashiers for management UI
@@ -36,13 +48,26 @@ LIMIT $2 OFFSET $3;
 --   - Provides total_count for pagination calculations
 -- name: GetCashiersActive :many
 SELECT
-    *,
-    COUNT(*) OVER() AS total_count
+    cashier_id,
+    merchant_id,
+    user_id,
+    name,
+    created_at,
+    updated_at,
+    deleted_at,
+    COUNT(*) OVER () AS total_count
 FROM cashiers
-WHERE deleted_at IS NULL
-  AND ($1::TEXT IS NULL OR name ILIKE '%' || $1 || '%' OR username ILIKE '%' || $1 || '%')
+WHERE
+    deleted_at IS NULL
+    AND (
+        $1::TEXT IS NULL
+        OR name ILIKE '%' || $1 || '%'
+        OR name ILIKE '%' || $1 || '%'
+    )
 ORDER BY created_at DESC
-LIMIT $2 OFFSET $3;
+LIMIT $2
+OFFSET
+    $3;
 
 -- GetCashiersTrashed: Retrieves paginated list of soft-deleted cashiers with search capability
 -- Purpose: List all trashed (soft-deleted) cashiers for recovery or audit purposes
@@ -59,15 +84,26 @@ LIMIT $2 OFFSET $3;
 --   - Provides total_count for pagination calculations
 -- name: GetCashiersTrashed :many
 SELECT
-    *,
-    COUNT(*) OVER() AS total_count
+    cashier_id,
+    merchant_id,
+    user_id,
+    name,
+    created_at,
+    updated_at,
+    deleted_at,
+    COUNT(*) OVER () AS total_count
 FROM cashiers
-WHERE deleted_at IS NOT NULL
-  AND ($1::TEXT IS NULL OR name ILIKE '%' || $1 || '%' OR username ILIKE '%' || $1 || '%')
+WHERE
+    deleted_at IS NOT NULL
+    AND (
+        $1::TEXT IS NULL
+        OR name ILIKE '%' || $1 || '%'
+        OR name ILIKE '%' || $1 || '%'
+    )
 ORDER BY created_at DESC
-LIMIT $2 OFFSET $3;
-
-
+LIMIT $2
+OFFSET
+    $3;
 
 -- GetCashiersByMerchant: Retrieves active cashiers filtered by merchant_id
 -- Parameters:
@@ -79,16 +115,26 @@ LIMIT $2 OFFSET $3;
 --   Cashier records belonging to specified merchant with total_count
 -- name: GetCashiersByMerchant :many
 SELECT
-    *,
-    COUNT(*) OVER() AS total_count
+    cashier_id,
+    merchant_id,
+    user_id,
+    name,
+    created_at,
+    updated_at,
+    deleted_at,
+    COUNT(*) OVER () AS total_count
 FROM cashiers
-WHERE merchant_id = $1
-  AND deleted_at IS NULL
-  AND ($2::TEXT IS NULL OR name ILIKE '%' || $2 || '%')
+WHERE
+    merchant_id = $1
+    AND deleted_at IS NULL
+    AND (
+        $2::TEXT IS NULL
+        OR name ILIKE '%' || $2 || '%'
+    )
 ORDER BY created_at DESC
-LIMIT $3 OFFSET $4;
-
-
+LIMIT $3
+OFFSET
+    $4;
 
 -- GetMonthlyTotalSalesCashier: Retrieves monthly sales totals for cashiers across two date ranges
 -- Purpose: Compare sales performance between two time periods (typically current vs previous period)
@@ -107,50 +153,70 @@ LIMIT $3 OFFSET $4;
 --   - Only includes active/non-deleted orders and cashiers
 --   - Formats output for easy display in reports/dashboards
 -- name: GetMonthlyTotalSalesCashier :many
-WITH monthly_totals AS (
-    SELECT
-        EXTRACT(YEAR FROM o.created_at)::TEXT AS year,
-        EXTRACT(MONTH FROM o.created_at)::integer AS month,
-        COALESCE(SUM(o.total_price), 0)::INTEGER AS total_sales
-    FROM
-        orders o
-    JOIN
-        cashiers c ON o.cashier_id = c.cashier_id
-    WHERE
-        o.deleted_at IS NULL
-        AND c.deleted_at IS NULL
-        AND (
-            (o.created_at >= $1 AND o.created_at <= $2)  
-            OR (o.created_at >= $3 AND o.created_at <= $4)  
-        )
-    GROUP BY
-        EXTRACT(YEAR FROM o.created_at),
-        EXTRACT(MONTH FROM o.created_at)
-),
-all_months AS (
-    SELECT 
-        EXTRACT(YEAR FROM $1)::TEXT AS year,
-        EXTRACT(MONTH FROM $1)::integer AS month,
-        TO_CHAR($1, 'FMMonth') AS month_name
-    
-    UNION
-    
-    SELECT 
-        EXTRACT(YEAR FROM $3)::TEXT AS year,
-        EXTRACT(MONTH FROM $3)::integer AS month,
-        TO_CHAR($3, 'FMMonth') AS month_name
-)
-SELECT 
-    COALESCE(am.year, EXTRACT(YEAR FROM $1)::TEXT) AS year,
-    COALESCE(am.month_name, TO_CHAR($1, 'FMMonth')) AS month,
-    COALESCE(mt.total_sales, 0) AS total_sales
-FROM 
+WITH
+    monthly_totals AS (
+        SELECT EXTRACT(
+                YEAR
+                FROM o.created_at
+            )::TEXT AS year, EXTRACT(
+                MONTH
+                FROM o.created_at
+            )::integer AS month, COALESCE(SUM(o.total_price), 0)::INTEGER AS total_sales
+        FROM orders o
+            JOIN cashiers c ON o.cashier_id = c.cashier_id
+        WHERE
+            o.deleted_at IS NULL
+            AND c.deleted_at IS NULL
+            AND (
+                (
+                    o.created_at >= $1
+                    AND o.created_at <= $2
+                )
+                OR (
+                    o.created_at >= $3
+                    AND o.created_at <= $4
+                )
+            )
+        GROUP BY
+            EXTRACT(
+                YEAR
+                FROM o.created_at
+            ),
+            EXTRACT(
+                MONTH
+                FROM o.created_at
+            )
+    ),
+    all_months AS (
+        SELECT EXTRACT(
+                YEAR
+                FROM $1
+            )::TEXT AS year, EXTRACT(
+                MONTH
+                FROM $1
+            )::integer AS month, TO_CHAR($1, 'FMMonth') AS month_name
+        UNION
+        SELECT EXTRACT(
+                YEAR
+                FROM $3
+            )::TEXT AS year, EXTRACT(
+                MONTH
+                FROM $3
+            )::integer AS month, TO_CHAR($3, 'FMMonth') AS month_name
+    )
+SELECT COALESCE(
+        am.year, EXTRACT(
+            YEAR
+            FROM $1
+        )::TEXT
+    ) AS year, COALESCE(
+        am.month_name, TO_CHAR($1, 'FMMonth')
+    ) AS month, COALESCE(mt.total_sales, 0) AS total_sales
+FROM
     all_months am
-LEFT JOIN 
-    monthly_totals mt ON am.year = mt.year AND am.month = mt.month
-ORDER BY 
-    am.year::INT DESC,
-    am.month DESC;
+    LEFT JOIN monthly_totals mt ON am.year = mt.year
+    AND am.month = mt.month
+ORDER BY am.year::INT DESC, am.month DESC;
 
 -- GetYearlyTotalSalesCashier: Retrieves yearly sales totals for cashiers across current and previous year
 -- Purpose: Year-over-year sales comparison
@@ -164,45 +230,48 @@ ORDER BY
 --   - Includes zero-value years for complete reporting
 --   - Filters by merchant while maintaining data integrity
 -- name: GetYearlyTotalSalesCashier :many
-WITH yearly_data AS (
-    SELECT
-        EXTRACT(YEAR FROM o.created_at)::integer AS year,
-        COALESCE(SUM(o.total_price), 0)::INTEGER AS total_sales
-    FROM
-        orders o
-    JOIN
-        cashiers c ON o.cashier_id = c.cashier_id
-    WHERE
-        o.deleted_at IS NULL
-        AND c.deleted_at IS NULL
-        AND (
-            EXTRACT(YEAR FROM o.created_at) = $1::integer
-            OR EXTRACT(YEAR FROM o.created_at) = $1::integer - 1
-        )
-    GROUP BY
-        EXTRACT(YEAR FROM o.created_at)
-),
-all_years AS (
-    SELECT $1::integer AS year
-    UNION
-    SELECT $1::integer - 1 AS year
-)
-SELECT 
-    a.year::text AS year,
-    COALESCE(yd.total_sales, 0) AS total_sales
-FROM 
-    all_years a
-LEFT JOIN 
-    yearly_data yd ON a.year = yd.year
-ORDER BY 
-    a.year DESC;
-
+WITH
+    yearly_data AS (
+        SELECT EXTRACT(
+                YEAR
+                FROM o.created_at
+            )::integer AS year, COALESCE(SUM(o.total_price), 0)::INTEGER AS total_sales
+        FROM orders o
+            JOIN cashiers c ON o.cashier_id = c.cashier_id
+        WHERE
+            o.deleted_at IS NULL
+            AND c.deleted_at IS NULL
+            AND (
+                EXTRACT(
+                    YEAR
+                    FROM o.created_at
+                ) = $1::integer
+                OR EXTRACT(
+                    YEAR
+                    FROM o.created_at
+                ) = $1::integer - 1
+            )
+        GROUP BY
+            EXTRACT(
+                YEAR
+                FROM o.created_at
+            )
+    ),
+    all_years AS (
+        SELECT $1::integer AS year
+        UNION
+        SELECT $1::integer - 1 AS year
+    )
+SELECT a.year::text AS year, COALESCE(yd.total_sales, 0) AS total_sales
+FROM all_years a
+    LEFT JOIN yearly_data yd ON a.year = yd.year
+ORDER BY a.year DESC;
 
 -- GetMonthlyTotalSalesByMerchant: Retrieves monthly sales totals filtered by merchant ID
 -- Purpose: Provides monthly sales analytics for a specific merchant across two time periods
 -- Parameters:
 --   $1: Start date of first comparison period
---   $2: End date of first comparison period  
+--   $2: End date of first comparison period
 --   $3: Start date of second comparison period
 --   $4: End date of second comparison period
 --   $5: Merchant ID to filter by
@@ -216,60 +285,78 @@ ORDER BY
 --   - Only includes active/non-deleted orders and cashiers
 --   - Formats output for easy display in reports/dashboards
 -- name: GetMonthlyTotalSalesByMerchant :many
-WITH monthly_totals AS (
-    SELECT
-        EXTRACT(YEAR FROM o.created_at)::TEXT AS year,
-        EXTRACT(MONTH FROM o.created_at)::integer AS month,
-        COALESCE(SUM(o.total_price), 0)::INTEGER AS total_sales
-    FROM
-        orders o
-    JOIN
-        cashiers c ON o.cashier_id = c.cashier_id
-    WHERE
-        o.deleted_at IS NULL
-        AND c.deleted_at IS NULL
-        AND (
-            (o.created_at >= $1 AND o.created_at <= $2)  
-            OR (o.created_at >= $3 AND o.created_at <= $4)  
-        )
-        AND o.merchant_id = $5
-    GROUP BY
-        EXTRACT(YEAR FROM o.created_at),
-        EXTRACT(MONTH FROM o.created_at)
-),
-all_months AS (
-    SELECT 
-        EXTRACT(YEAR FROM $1)::TEXT AS year,
-        EXTRACT(MONTH FROM $1)::integer AS month,
-        TO_CHAR($1, 'FMMonth') AS month_name
-    
-    UNION
-    
-    SELECT 
-        EXTRACT(YEAR FROM $3)::TEXT AS year,
-        EXTRACT(MONTH FROM $3)::integer AS month,
-        TO_CHAR($3, 'FMMonth') AS month_name
-)
-SELECT 
-    COALESCE(am.year, EXTRACT(YEAR FROM $1)::TEXT) AS year,
-    COALESCE(am.month_name, TO_CHAR($1, 'FMMonth')) AS month,
-    COALESCE(mt.total_sales, 0) AS total_sales
-FROM 
+WITH
+    monthly_totals AS (
+        SELECT EXTRACT(
+                YEAR
+                FROM o.created_at
+            )::TEXT AS year, EXTRACT(
+                MONTH
+                FROM o.created_at
+            )::integer AS month, COALESCE(SUM(o.total_price), 0)::INTEGER AS total_sales
+        FROM orders o
+            JOIN cashiers c ON o.cashier_id = c.cashier_id
+        WHERE
+            o.deleted_at IS NULL
+            AND c.deleted_at IS NULL
+            AND (
+                (
+                    o.created_at >= $1
+                    AND o.created_at <= $2
+                )
+                OR (
+                    o.created_at >= $3
+                    AND o.created_at <= $4
+                )
+            )
+            AND o.merchant_id = $5
+        GROUP BY
+            EXTRACT(
+                YEAR
+                FROM o.created_at
+            ),
+            EXTRACT(
+                MONTH
+                FROM o.created_at
+            )
+    ),
+    all_months AS (
+        SELECT EXTRACT(
+                YEAR
+                FROM $1
+            )::TEXT AS year, EXTRACT(
+                MONTH
+                FROM $1
+            )::integer AS month, TO_CHAR($1, 'FMMonth') AS month_name
+        UNION
+        SELECT EXTRACT(
+                YEAR
+                FROM $3
+            )::TEXT AS year, EXTRACT(
+                MONTH
+                FROM $3
+            )::integer AS month, TO_CHAR($3, 'FMMonth') AS month_name
+    )
+SELECT COALESCE(
+        am.year, EXTRACT(
+            YEAR
+            FROM $1
+        )::TEXT
+    ) AS year, COALESCE(
+        am.month_name, TO_CHAR($1, 'FMMonth')
+    ) AS month, COALESCE(mt.total_sales, 0) AS total_sales
+FROM
     all_months am
-LEFT JOIN 
-    monthly_totals mt ON am.year = mt.year AND am.month = mt.month
-ORDER BY 
-    am.year::INT DESC,
-    am.month DESC;
+    LEFT JOIN monthly_totals mt ON am.year = mt.year
+    AND am.month = mt.month
+ORDER BY am.year::INT DESC, am.month DESC;
 
-
-
--- GetYearlyTotalSalesByMerchant: Retrieves yearly sales totals filtered by merchant ID  
+-- GetYearlyTotalSalesByMerchant: Retrieves yearly sales totals filtered by merchant ID
 -- Purpose: Provides year-over-year sales comparison for a specific merchant
 -- Parameters:
 --   $1: Current year to analyze (integer)
 --   $2: Merchant ID to filter by
--- Returns: 
+-- Returns:
 --   year: Year as text
 --   total_sales: Annual sales total (0 if no sales)
 -- Business Logic:
@@ -277,47 +364,49 @@ ORDER BY
 --   - Includes zero-value years for complete reporting
 --   - Filters by merchant while maintaining data integrity
 -- name: GetYearlyTotalSalesByMerchant :many
-WITH yearly_data AS (
-    SELECT
-        EXTRACT(YEAR FROM o.created_at)::integer AS year,
-        COALESCE(SUM(o.total_price), 0)::INTEGER AS total_sales
-    FROM
-        orders o
-    JOIN
-        cashiers c ON o.cashier_id = c.cashier_id
-    WHERE
-        o.deleted_at IS NULL
-        AND c.deleted_at IS NULL
-        AND (
-            EXTRACT(YEAR FROM o.created_at) = $1::integer
-            OR EXTRACT(YEAR FROM o.created_at) = $1::integer - 1
-        )
-        AND o.merchant_id = $2
-    GROUP BY
-        EXTRACT(YEAR FROM o.created_at)
-),
-all_years AS (
-    SELECT $1::integer AS year
-    UNION
-    SELECT $1::integer - 1 AS year
-)
-SELECT 
-    a.year::text AS year,
-    COALESCE(yd.total_sales, 0) AS total_sales
-FROM 
-    all_years a
-LEFT JOIN 
-    yearly_data yd ON a.year = yd.year
-ORDER BY 
-    a.year DESC;
-
-
+WITH
+    yearly_data AS (
+        SELECT EXTRACT(
+                YEAR
+                FROM o.created_at
+            )::integer AS year, COALESCE(SUM(o.total_price), 0)::INTEGER AS total_sales
+        FROM orders o
+            JOIN cashiers c ON o.cashier_id = c.cashier_id
+        WHERE
+            o.deleted_at IS NULL
+            AND c.deleted_at IS NULL
+            AND (
+                EXTRACT(
+                    YEAR
+                    FROM o.created_at
+                ) = $1::integer
+                OR EXTRACT(
+                    YEAR
+                    FROM o.created_at
+                ) = $1::integer - 1
+            )
+            AND o.merchant_id = $2
+        GROUP BY
+            EXTRACT(
+                YEAR
+                FROM o.created_at
+            )
+    ),
+    all_years AS (
+        SELECT $1::integer AS year
+        UNION
+        SELECT $1::integer - 1 AS year
+    )
+SELECT a.year::text AS year, COALESCE(yd.total_sales, 0) AS total_sales
+FROM all_years a
+    LEFT JOIN yearly_data yd ON a.year = yd.year
+ORDER BY a.year DESC;
 
 -- GetMonthlyTotalSalesById: Retrieves monthly sales totals filtered by cashier ID
 -- Purpose: Provides monthly sales analytics for a specific merchant across two time periods
 -- Parameters:
 --   $1: Start date of first comparison period
---   $2: End date of first comparison period  
+--   $2: End date of first comparison period
 --   $3: Start date of second comparison period
 --   $4: End date of second comparison period
 --   $5: Cashier ID to filter by
@@ -331,59 +420,78 @@ ORDER BY
 --   - Only includes active/non-deleted orders and cashiers
 --   - Formats output for easy display in reports/dashboards
 -- name: GetMonthlyTotalSalesById :many
-WITH monthly_totals AS (
-    SELECT
-        EXTRACT(YEAR FROM o.created_at)::TEXT AS year,
-        EXTRACT(MONTH FROM o.created_at)::integer AS month,
-        COALESCE(SUM(o.total_price), 0)::INTEGER AS total_sales
-    FROM
-        orders o
-    JOIN
-        cashiers c ON o.cashier_id = c.cashier_id
-    WHERE
-        o.deleted_at IS NULL
-        AND c.deleted_at IS NULL
-        AND (
-            (o.created_at >= $1 AND o.created_at <= $2)  
-            OR (o.created_at >= $3 AND o.created_at <= $4)  
-        )
-        AND c.cashier_id = $5
-    GROUP BY
-        EXTRACT(YEAR FROM o.created_at),
-        EXTRACT(MONTH FROM o.created_at)
-),
-all_months AS (
-    SELECT 
-        EXTRACT(YEAR FROM $1)::TEXT AS year,
-        EXTRACT(MONTH FROM $1)::integer AS month,
-        TO_CHAR($1, 'FMMonth') AS month_name
-    
-    UNION
-    
-    SELECT 
-        EXTRACT(YEAR FROM $3)::TEXT AS year,
-        EXTRACT(MONTH FROM $3)::integer AS month,
-        TO_CHAR($3, 'FMMonth') AS month_name
-)
-SELECT 
-    COALESCE(am.year, EXTRACT(YEAR FROM $1)::TEXT) AS year,
-    COALESCE(am.month_name, TO_CHAR($1, 'FMMonth')) AS month,
-    COALESCE(mt.total_sales, 0) AS total_sales
-FROM 
+WITH
+    monthly_totals AS (
+        SELECT EXTRACT(
+                YEAR
+                FROM o.created_at
+            )::TEXT AS year, EXTRACT(
+                MONTH
+                FROM o.created_at
+            )::integer AS month, COALESCE(SUM(o.total_price), 0)::INTEGER AS total_sales
+        FROM orders o
+            JOIN cashiers c ON o.cashier_id = c.cashier_id
+        WHERE
+            o.deleted_at IS NULL
+            AND c.deleted_at IS NULL
+            AND (
+                (
+                    o.created_at >= $1
+                    AND o.created_at <= $2
+                )
+                OR (
+                    o.created_at >= $3
+                    AND o.created_at <= $4
+                )
+            )
+            AND c.cashier_id = $5
+        GROUP BY
+            EXTRACT(
+                YEAR
+                FROM o.created_at
+            ),
+            EXTRACT(
+                MONTH
+                FROM o.created_at
+            )
+    ),
+    all_months AS (
+        SELECT EXTRACT(
+                YEAR
+                FROM $1
+            )::TEXT AS year, EXTRACT(
+                MONTH
+                FROM $1
+            )::integer AS month, TO_CHAR($1, 'FMMonth') AS month_name
+        UNION
+        SELECT EXTRACT(
+                YEAR
+                FROM $3
+            )::TEXT AS year, EXTRACT(
+                MONTH
+                FROM $3
+            )::integer AS month, TO_CHAR($3, 'FMMonth') AS month_name
+    )
+SELECT COALESCE(
+        am.year, EXTRACT(
+            YEAR
+            FROM $1
+        )::TEXT
+    ) AS year, COALESCE(
+        am.month_name, TO_CHAR($1, 'FMMonth')
+    ) AS month, COALESCE(mt.total_sales, 0) AS total_sales
+FROM
     all_months am
-LEFT JOIN 
-    monthly_totals mt ON am.year = mt.year AND am.month = mt.month
-ORDER BY 
-    am.year::INT DESC,
-    am.month DESC;
+    LEFT JOIN monthly_totals mt ON am.year = mt.year
+    AND am.month = mt.month
+ORDER BY am.year::INT DESC, am.month DESC;
 
-
--- GetYearlyTotalSalesById: Retrieves yearly sales totals filtered by cashier ID  
+-- GetYearlyTotalSalesById: Retrieves yearly sales totals filtered by cashier ID
 -- Purpose: Provides year-over-year sales comparison for a specific cashier
 -- Parameters:
 --   $1: Current year to analyze (integer)
 --   $2: Merchant ID to filter by
--- Returns: 
+-- Returns:
 --   year: Year as text
 --   total_sales: Annual sales total (0 if no sales)
 -- Business Logic:
@@ -391,41 +499,43 @@ ORDER BY
 --   - Includes zero-value years for complete reporting
 --   - Filters by cashier while maintaining data integrity
 -- name: GetYearlyTotalSalesById :many
-WITH yearly_data AS (
-    SELECT
-        EXTRACT(YEAR FROM o.created_at)::integer AS year,
-        COALESCE(SUM(o.total_price), 0)::INTEGER AS total_sales
-    FROM
-        orders o
-    JOIN
-        cashiers c ON o.cashier_id = c.cashier_id
-    WHERE
-        o.deleted_at IS NULL
-        AND c.deleted_at IS NULL
-        AND (
-            EXTRACT(YEAR FROM o.created_at) = $1::integer
-            OR EXTRACT(YEAR FROM o.created_at) = $1::integer - 1
-        )
-        AND c.cashier_id = $2
-    GROUP BY
-        EXTRACT(YEAR FROM o.created_at)
-),
-all_years AS (
-    SELECT $1::integer AS year
-    UNION
-    SELECT $1::integer - 1 AS year
-)
-SELECT 
-    a.year::text AS year,
-    COALESCE(yd.total_sales, 0) AS total_sales
-FROM 
-    all_years a
-LEFT JOIN 
-    yearly_data yd ON a.year = yd.year
-ORDER BY 
-    a.year DESC;
-
-
+WITH
+    yearly_data AS (
+        SELECT EXTRACT(
+                YEAR
+                FROM o.created_at
+            )::integer AS year, COALESCE(SUM(o.total_price), 0)::INTEGER AS total_sales
+        FROM orders o
+            JOIN cashiers c ON o.cashier_id = c.cashier_id
+        WHERE
+            o.deleted_at IS NULL
+            AND c.deleted_at IS NULL
+            AND (
+                EXTRACT(
+                    YEAR
+                    FROM o.created_at
+                ) = $1::integer
+                OR EXTRACT(
+                    YEAR
+                    FROM o.created_at
+                ) = $1::integer - 1
+            )
+            AND c.cashier_id = $2
+        GROUP BY
+            EXTRACT(
+                YEAR
+                FROM o.created_at
+            )
+    ),
+    all_years AS (
+        SELECT $1::integer AS year
+        UNION
+        SELECT $1::integer - 1 AS year
+    )
+SELECT a.year::text AS year, COALESCE(yd.total_sales, 0) AS total_sales
+FROM all_years a
+    LEFT JOIN yearly_data yd ON a.year = yd.year
+ORDER BY a.year DESC;
 
 -- GetMonthlyCashier: Retrieves monthly sales activity for all cashiers within a 1-year period
 -- Purpose: Provides cashier performance metrics by month for operational analysis
@@ -444,41 +554,37 @@ ORDER BY
 --   - Uses abbreviated month names for compact visual reporting
 --   - Orders chronologically for trend analysis
 -- name: GetMonthlyCashier :many
-WITH date_range AS (
-    SELECT 
-        date_trunc('month', $1::timestamp) AS start_date,
-        date_trunc('month', $1::timestamp) + interval '1 year' - interval '1 day' AS end_date
-),
-cashier_activity AS (
-    SELECT
-        c.cashier_id,
-        c.name AS cashier_name,
-        date_trunc('month', o.created_at) AS activity_month,
-        COUNT(o.order_id) AS order_count,
-        SUM(o.total_price)::NUMERIC AS total_sales
-    FROM
-        orders o
-    JOIN
-        cashiers c ON o.cashier_id = c.cashier_id
-    WHERE
-        o.deleted_at IS NULL
-        AND c.deleted_at IS NULL
-        AND o.created_at BETWEEN (SELECT start_date FROM date_range) 
-                             AND (SELECT end_date FROM date_range)
-    GROUP BY
-        c.cashier_id, c.name, activity_month
-)
-SELECT
-    ca.cashier_id,
-    ca.cashier_name,
-    TO_CHAR(ca.activity_month, 'Mon') AS month,
-    ca.order_count,
-    ca.total_sales
-FROM
-    cashier_activity ca
-ORDER BY
-    ca.activity_month, ca.cashier_id;
-
+WITH
+    date_range AS (
+        SELECT date_trunc('month', $1::timestamp) AS start_date, date_trunc('month', $1::timestamp) + interval '1 year' - interval '1 day' AS end_date
+    ),
+    cashier_activity AS (
+        SELECT
+            c.cashier_id,
+            c.name AS cashier_name,
+            date_trunc('month', o.created_at) AS activity_month,
+            COUNT(o.order_id) AS order_count,
+            SUM(o.total_price)::NUMERIC AS total_sales
+        FROM orders o
+            JOIN cashiers c ON o.cashier_id = c.cashier_id
+        WHERE
+            o.deleted_at IS NULL
+            AND c.deleted_at IS NULL
+            AND o.created_at BETWEEN (
+                SELECT start_date
+                FROM date_range
+            ) AND (
+                SELECT end_date
+                FROM date_range
+            )
+        GROUP BY
+            c.cashier_id,
+            c.name,
+            activity_month
+    )
+SELECT ca.cashier_id, ca.cashier_name, TO_CHAR(ca.activity_month, 'Mon') AS month, ca.order_count, ca.total_sales
+FROM cashier_activity ca
+ORDER BY ca.activity_month, ca.cashier_id;
 
 -- GetYearlyCashier: Retrieves annual sales performance for cashiers over 5-year span
 -- Purpose: Enables long-term cashier productivity trend analysis
@@ -486,7 +592,7 @@ ORDER BY
 --   $1: Reference date (timestamp) - determines the 5-year analysis window
 -- Returns:
 --   year: 4-digit year as text
---   cashier_id: Unique cashier identifier  
+--   cashier_id: Unique cashier identifier
 --   cashier_name: Full name of the cashier
 --   order_count: Annual transaction volume
 --   total_sales: Yearly revenue generated
@@ -497,36 +603,50 @@ ORDER BY
 --   - Orders results chronologically then by cashier for consistent reporting
 --   - Designed for workforce planning and incentive calculations
 -- name: GetYearlyCashier :many
-WITH last_five_years AS (
-    SELECT
-        c.cashier_id,
-        c.name AS cashier_name,
-        EXTRACT(YEAR FROM o.created_at)::text AS year,
-        COUNT(o.order_id) AS order_count,
-        SUM(o.total_price) AS total_sales
-    FROM
-        orders o
-    JOIN
-        cashiers c ON o.cashier_id = c.cashier_id
-    WHERE
-        o.deleted_at IS NULL
-        AND c.deleted_at IS NULL
-        AND EXTRACT(YEAR FROM o.created_at) BETWEEN (EXTRACT(YEAR FROM $1::timestamp) - 4) AND EXTRACT(YEAR FROM $1::timestamp)
-    GROUP BY
-        c.cashier_id, c.name, EXTRACT(YEAR FROM o.created_at)
-)
+WITH
+    last_five_years AS (
+        SELECT
+            c.cashier_id,
+            c.name AS cashier_name,
+            EXTRACT(
+                YEAR
+                FROM o.created_at
+            )::text AS year,
+            COUNT(o.order_id) AS order_count,
+            SUM(o.total_price) AS total_sales
+        FROM orders o
+            JOIN cashiers c ON o.cashier_id = c.cashier_id
+        WHERE
+            o.deleted_at IS NULL
+            AND c.deleted_at IS NULL
+            AND EXTRACT(
+                YEAR
+                FROM o.created_at
+            ) BETWEEN (
+                EXTRACT(
+                    YEAR
+                    FROM $1::timestamp
+                ) - 4
+            ) AND EXTRACT(
+                YEAR
+                FROM $1::timestamp
+            )
+        GROUP BY
+            c.cashier_id,
+            c.name,
+            EXTRACT(
+                YEAR
+                FROM o.created_at
+            )
+    )
 SELECT
     year,
     cashier_id,
     cashier_name,
     order_count,
     total_sales
-FROM
-    last_five_years
-ORDER BY
-    year, cashier_id;
-
-
+FROM last_five_years
+ORDER BY year, cashier_id;
 
 -- GetMonthlyCashierByCashierId: Retrieves monthly sales activity for all cashiers within a 1-year period by cashier id
 -- Purpose: Provides cashier performance metrics by month for operational analysis
@@ -546,43 +666,38 @@ ORDER BY
 --   - Uses abbreviated month names for compact visual reporting
 --   - Orders chronologically for trend analysis
 -- name: GetMonthlyCashierByCashierId :many
-WITH date_range AS (
-    SELECT 
-        date_trunc('month', $1::timestamp) AS start_date,
-        date_trunc('month', $1::timestamp) + interval '1 year' - interval '1 day' AS end_date
-),
-cashier_activity AS (
-    SELECT
-        c.cashier_id,
-        c.name AS cashier_name,
-        date_trunc('month', o.created_at) AS activity_month,
-        COUNT(o.order_id) AS order_count,
-        SUM(o.total_price) AS total_sales
-    FROM
-        orders o
-    JOIN
-        cashiers c ON o.cashier_id = c.cashier_id
-    WHERE
-        o.deleted_at IS NULL
-        AND c.deleted_at IS NULL
-        AND c.cashier_id = $2
-        AND o.created_at BETWEEN (SELECT start_date FROM date_range) 
-                             AND (SELECT end_date FROM date_range)
-    GROUP BY
-        c.cashier_id, c.name, activity_month
-)
-SELECT
-    ca.cashier_id,
-    ca.cashier_name,
-    TO_CHAR(ca.activity_month, 'Mon') AS month,
-    ca.order_count,
-    ca.total_sales
-FROM
-    cashier_activity ca
-ORDER BY
-    ca.activity_month, ca.cashier_id;
-
-
+WITH
+    date_range AS (
+        SELECT date_trunc('month', $1::timestamp) AS start_date, date_trunc('month', $1::timestamp) + interval '1 year' - interval '1 day' AS end_date
+    ),
+    cashier_activity AS (
+        SELECT
+            c.cashier_id,
+            c.name AS cashier_name,
+            date_trunc('month', o.created_at) AS activity_month,
+            COUNT(o.order_id) AS order_count,
+            SUM(o.total_price) AS total_sales
+        FROM orders o
+            JOIN cashiers c ON o.cashier_id = c.cashier_id
+        WHERE
+            o.deleted_at IS NULL
+            AND c.deleted_at IS NULL
+            AND c.cashier_id = $2
+            AND o.created_at BETWEEN (
+                SELECT start_date
+                FROM date_range
+            ) AND (
+                SELECT end_date
+                FROM date_range
+            )
+        GROUP BY
+            c.cashier_id,
+            c.name,
+            activity_month
+    )
+SELECT ca.cashier_id, ca.cashier_name, TO_CHAR(ca.activity_month, 'Mon') AS month, ca.order_count, ca.total_sales
+FROM cashier_activity ca
+ORDER BY ca.activity_month, ca.cashier_id;
 
 -- GetYearlyCashierByCashierId: Retrieves annual sales performance for cashiers over 5-year span by cashier id
 -- Purpose: Enables long-term cashier productivity trend analysis
@@ -591,7 +706,7 @@ ORDER BY
 --   $2: Reference cashier_id
 -- Returns:
 --   year: 4-digit year as text
---   cashier_id: Unique cashier identifier  
+--   cashier_id: Unique cashier identifier
 --   cashier_name: Full name of the cashier
 --   order_count: Annual transaction volume
 --   total_sales: Yearly revenue generated
@@ -602,37 +717,51 @@ ORDER BY
 --   - Orders results chronologically then by cashier for consistent reporting
 --   - Designed for workforce planning and incentive calculations
 -- name: GetYearlyCashierByCashierId :many
-WITH last_five_years AS (
-    SELECT
-        c.cashier_id,
-        c.name AS cashier_name,
-        EXTRACT(YEAR FROM o.created_at)::text AS year,
-        COUNT(o.order_id) AS order_count,
-        SUM(o.total_price) AS total_sales
-    FROM
-        orders o
-    JOIN
-        cashiers c ON o.cashier_id = c.cashier_id
-    WHERE
-        o.deleted_at IS NULL
-        AND c.deleted_at IS NULL
-        AND c.cashier_id = $2
-        AND EXTRACT(YEAR FROM o.created_at) BETWEEN (EXTRACT(YEAR FROM $1::timestamp) - 4) AND EXTRACT(YEAR FROM $1::timestamp)
-    GROUP BY
-        c.cashier_id, c.name, EXTRACT(YEAR FROM o.created_at)
-)
+WITH
+    last_five_years AS (
+        SELECT
+            c.cashier_id,
+            c.name AS cashier_name,
+            EXTRACT(
+                YEAR
+                FROM o.created_at
+            )::text AS year,
+            COUNT(o.order_id) AS order_count,
+            SUM(o.total_price) AS total_sales
+        FROM orders o
+            JOIN cashiers c ON o.cashier_id = c.cashier_id
+        WHERE
+            o.deleted_at IS NULL
+            AND c.deleted_at IS NULL
+            AND c.cashier_id = $2
+            AND EXTRACT(
+                YEAR
+                FROM o.created_at
+            ) BETWEEN (
+                EXTRACT(
+                    YEAR
+                    FROM $1::timestamp
+                ) - 4
+            ) AND EXTRACT(
+                YEAR
+                FROM $1::timestamp
+            )
+        GROUP BY
+            c.cashier_id,
+            c.name,
+            EXTRACT(
+                YEAR
+                FROM o.created_at
+            )
+    )
 SELECT
     year,
     cashier_id,
     cashier_name,
     order_count,
     total_sales
-FROM
-    last_five_years
-ORDER BY
-    year, cashier_id;
-
-
+FROM last_five_years
+ORDER BY year, cashier_id;
 
 -- GetMonthlyCashierByMerchant: Retrieves monthly sales activity for all cashiers within a 1-year period by merchant id
 -- Purpose: Provides cashier performance metrics by month for operational analysis
@@ -652,43 +781,38 @@ ORDER BY
 --   - Uses abbreviated month names for compact visual reporting
 --   - Orders chronologically for trend analysis
 -- name: GetMonthlyCashierByMerchant :many
-WITH date_range AS (
-    SELECT 
-        date_trunc('month', $1::timestamp) AS start_date,
-        date_trunc('month', $1::timestamp) + interval '1 year' - interval '1 day' AS end_date
-),
-cashier_activity AS (
-    SELECT
-        c.cashier_id,
-        c.name AS cashier_name,
-        date_trunc('month', o.created_at) AS activity_month,
-        COUNT(o.order_id) AS order_count,
-        SUM(o.total_price) AS total_sales
-    FROM
-        orders o
-    JOIN
-        cashiers c ON o.cashier_id = c.cashier_id
-    WHERE
-        o.deleted_at IS NULL
-        AND c.deleted_at IS NULL
-        AND c.merchant_id = $2
-        AND o.created_at BETWEEN (SELECT start_date FROM date_range) 
-                             AND (SELECT end_date FROM date_range)
-    GROUP BY
-        c.cashier_id, c.name, activity_month
-)
-SELECT
-    ca.cashier_id,
-    ca.cashier_name,
-    TO_CHAR(ca.activity_month, 'Mon') AS month,
-    ca.order_count,
-    ca.total_sales
-FROM
-    cashier_activity ca
-ORDER BY
-    ca.activity_month, ca.cashier_id;
-
-
+WITH
+    date_range AS (
+        SELECT date_trunc('month', $1::timestamp) AS start_date, date_trunc('month', $1::timestamp) + interval '1 year' - interval '1 day' AS end_date
+    ),
+    cashier_activity AS (
+        SELECT
+            c.cashier_id,
+            c.name AS cashier_name,
+            date_trunc('month', o.created_at) AS activity_month,
+            COUNT(o.order_id) AS order_count,
+            SUM(o.total_price) AS total_sales
+        FROM orders o
+            JOIN cashiers c ON o.cashier_id = c.cashier_id
+        WHERE
+            o.deleted_at IS NULL
+            AND c.deleted_at IS NULL
+            AND c.merchant_id = $2
+            AND o.created_at BETWEEN (
+                SELECT start_date
+                FROM date_range
+            ) AND (
+                SELECT end_date
+                FROM date_range
+            )
+        GROUP BY
+            c.cashier_id,
+            c.name,
+            activity_month
+    )
+SELECT ca.cashier_id, ca.cashier_name, TO_CHAR(ca.activity_month, 'Mon') AS month, ca.order_count, ca.total_sales
+FROM cashier_activity ca
+ORDER BY ca.activity_month, ca.cashier_id;
 
 -- GetYearlyCashierByMerchant: Retrieves annual sales performance for cashiers over 5-year span by merchant id
 -- Purpose: Enables long-term cashier productivity trend analysis
@@ -697,7 +821,7 @@ ORDER BY
 --   $2: Reference cashier_id
 -- Returns:
 --   year: 4-digit year as text
---   cashier_id: Unique cashier identifier  
+--   cashier_id: Unique cashier identifier
 --   cashier_name: Full name of the cashier
 --   order_count: Annual transaction volume
 --   total_sales: Yearly revenue generated
@@ -708,36 +832,51 @@ ORDER BY
 --   - Orders results chronologically then by cashier for consistent reporting
 --   - Designed for workforce planning and incentive calculations
 -- name: GetYearlyCashierByMerchant :many
-WITH last_five_years AS (
-    SELECT
-        c.cashier_id,
-        c.name AS cashier_name,
-        EXTRACT(YEAR FROM o.created_at)::text AS year,
-        COUNT(o.order_id) AS order_count,
-        SUM(o.total_price) AS total_sales
-    FROM
-        orders o
-    JOIN
-        cashiers c ON o.cashier_id = c.cashier_id
-    WHERE
-        o.deleted_at IS NULL
-        AND c.deleted_at IS NULL
-        AND c.merchant_id = $2
-        AND EXTRACT(YEAR FROM o.created_at) BETWEEN (EXTRACT(YEAR FROM $1::timestamp) - 4) AND EXTRACT(YEAR FROM $1::timestamp)
-    GROUP BY
-        c.cashier_id, c.name, EXTRACT(YEAR FROM o.created_at)
-)
+WITH
+    last_five_years AS (
+        SELECT
+            c.cashier_id,
+            c.name AS cashier_name,
+            EXTRACT(
+                YEAR
+                FROM o.created_at
+            )::text AS year,
+            COUNT(o.order_id) AS order_count,
+            SUM(o.total_price) AS total_sales
+        FROM orders o
+            JOIN cashiers c ON o.cashier_id = c.cashier_id
+        WHERE
+            o.deleted_at IS NULL
+            AND c.deleted_at IS NULL
+            AND c.merchant_id = $2
+            AND EXTRACT(
+                YEAR
+                FROM o.created_at
+            ) BETWEEN (
+                EXTRACT(
+                    YEAR
+                    FROM $1::timestamp
+                ) - 4
+            ) AND EXTRACT(
+                YEAR
+                FROM $1::timestamp
+            )
+        GROUP BY
+            c.cashier_id,
+            c.name,
+            EXTRACT(
+                YEAR
+                FROM o.created_at
+            )
+    )
 SELECT
     year,
     cashier_id,
     cashier_name,
     order_count,
     total_sales
-FROM
-    last_five_years
-ORDER BY
-    year, cashier_id;
-
+FROM last_five_years
+ORDER BY year, cashier_id;
 
 -- CreateCashier: Creates a new cashier record
 -- Purpose: Add new cashier to the system
@@ -750,9 +889,16 @@ ORDER BY
 --   - Sets created_at timestamp automatically
 --   - Requires all mandatory fields
 -- name: CreateCashier :one
-INSERT INTO cashiers (merchant_id, user_id, name)
-VALUES ($1, $2, $3) RETURNING *;
-
+INSERT INTO
+    cashiers (merchant_id, user_id, name)
+VALUES ($1, $2, $3)
+RETURNING
+    cashier_id,
+    merchant_id,
+    user_id,
+    name,
+    created_at,
+    updated_at;
 
 -- GetCashierByID: Retrieves active cashier by ID
 -- Purpose: Fetch cashier details for display/editing
@@ -763,11 +909,17 @@ VALUES ($1, $2, $3) RETURNING *;
 --   - Excludes soft-deleted records
 --   - Returns single record or nothing
 -- name: GetCashierById :one
-SELECT *
+SELECT
+    cashier_id,
+    merchant_id,
+    user_id,
+    name,
+    created_at,
+    updated_at
 FROM cashiers
-WHERE cashier_id = $1
-  AND deleted_at IS NULL;
-
+WHERE
+    cashier_id = $1
+    AND deleted_at IS NULL;
 
 -- UpdateCashier: Modifies cashier information
 -- Purpose: Update cashier details
@@ -781,11 +933,19 @@ WHERE cashier_id = $1
 --   - Returns the modified record for confirmation
 -- name: UpdateCashier :one
 UPDATE cashiers
-SET name = $2,
+SET
+    name = $2,
     updated_at = CURRENT_TIMESTAMP
-WHERE cashier_id = $1
-  AND deleted_at IS NULL
-  RETURNING *;
+WHERE
+    cashier_id = $1
+    AND deleted_at IS NULL
+RETURNING
+    cashier_id,
+    merchant_id,
+    user_id,
+    name,
+    created_at,
+    updated_at;
 
 -- TrashCashier: Soft-deletes a cashier record
 -- Purpose: Remove cashier from active use without permanent deletion
@@ -803,7 +963,14 @@ SET
 WHERE
     cashier_id = $1
     AND deleted_at IS NULL
-    RETURNING *;
+RETURNING
+    cashier_id,
+    merchant_id,
+    user_id,
+    name,
+    created_at,
+    updated_at,
+    deleted_at;
 
 -- RestoreCashier: Recovers a soft-deleted cashier
 -- Purpose: Reactivate a previously trashed cashier
@@ -821,7 +988,14 @@ SET
 WHERE
     cashier_id = $1
     AND deleted_at IS NOT NULL
-  RETURNING *;
+RETURNING
+    cashier_id,
+    merchant_id,
+    user_id,
+    name,
+    created_at,
+    updated_at,
+    deleted_at;
 
 -- DeleteCashierPermanently: Hard-deletes a cashier
 -- Purpose: Completely remove cashier from database
@@ -832,7 +1006,10 @@ WHERE
 --   - No return value (exec-only)
 --   - Use with caution - irreversible operation
 -- name: DeleteCashierPermanently :exec
-DELETE FROM cashiers WHERE cashier_id = $1 AND deleted_at IS NOT NULL;
+DELETE FROM cashiers
+WHERE
+    cashier_id = $1
+    AND deleted_at IS NOT NULL;
 
 -- RestoreAllCashiers: Mass restoration of deleted cashiers
 -- Purpose: Recover all trashed cashiers at once
@@ -854,6 +1031,4 @@ WHERE
 --   - Only affects already soft-deleted records
 --   - Typically used during database maintenance
 -- name: DeleteAllPermanentCashiers :exec
-DELETE FROM cashiers
-WHERE
-    deleted_at IS NOT NULL;
+DELETE FROM cashiers WHERE deleted_at IS NOT NULL;

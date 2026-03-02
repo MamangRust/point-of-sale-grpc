@@ -1,264 +1,400 @@
 package service
 
 import (
+	"context"
 	"database/sql"
 	"errors"
-	"net/http"
+	auth_cache "pointofsale/internal/cache/auth"
 	"pointofsale/internal/domain/requests"
 	"pointofsale/internal/domain/response"
-	response_service "pointofsale/internal/mapper/response/service"
+	"pointofsale/internal/errorhandler"
 	"pointofsale/internal/repository"
 	"pointofsale/pkg/auth"
+	db "pointofsale/pkg/database/schema"
 	refreshtoken_errors "pointofsale/pkg/errors/refresh_token_errors"
+	"pointofsale/pkg/errors/role_errors"
 	"pointofsale/pkg/errors/user_errors"
 	userrole_errors "pointofsale/pkg/errors/user_role_errors"
 	"pointofsale/pkg/hash"
 	"pointofsale/pkg/logger"
+	"pointofsale/pkg/observability"
 	"strconv"
 	"time"
+
+	"go.opentelemetry.io/otel/attribute"
 
 	"go.uber.org/zap"
 )
 
 type authService struct {
-	auth         repository.UserRepository
-	refreshToken repository.RefreshTokenRepository
-	userRole     repository.UserRoleRepository
-	role         repository.RoleRepository
-	hash         hash.HashPassword
-	token        auth.TokenManager
-	logger       logger.LoggerInterface
-	mapping      response_service.UserResponseMapper
+	auth          repository.UserRepository
+	refreshToken  repository.RefreshTokenRepository
+	userRole      repository.UserRoleRepository
+	role          repository.RoleRepository
+	hash          hash.HashPassword
+	token         auth.TokenManager
+	logger        logger.LoggerInterface
+	observability observability.TraceLoggerObservability
+	cache         auth_cache.AuthMencache
 }
 
-func NewAuthService(auth repository.UserRepository, refreshToken repository.RefreshTokenRepository, role repository.RoleRepository, userRole repository.UserRoleRepository, hash hash.HashPassword, token auth.TokenManager, logger logger.LoggerInterface, mapping response_service.UserResponseMapper) *authService {
-	return &authService{auth: auth, refreshToken: refreshToken, role: role, userRole: userRole, hash: hash, token: token, logger: logger, mapping: mapping}
+type AuthServiceDeps struct {
+	UserRepo         repository.UserRepository
+	RefreshTokenRepo repository.RefreshTokenRepository
+	RoleRepo         repository.RoleRepository
+	UserRoleRepo     repository.UserRoleRepository
+	Hash             hash.HashPassword
+	TokenManager     auth.TokenManager
+	Logger           logger.LoggerInterface
+	Observability    observability.TraceLoggerObservability
+	Cache            auth_cache.AuthMencache
 }
 
-func (s *authService) Register(request *requests.CreateUserRequest) (*response.UserResponse, *response.ErrorResponse) {
+func NewAuthService(deps AuthServiceDeps) *authService {
+	return &authService{
+		auth:          deps.UserRepo,
+		refreshToken:  deps.RefreshTokenRepo,
+		role:          deps.RoleRepo,
+		userRole:      deps.UserRoleRepo,
+		hash:          deps.Hash,
+		token:         deps.TokenManager,
+		logger:        deps.Logger,
+		observability: deps.Observability,
+		cache:         deps.Cache,
+	}
+}
+
+func (s *authService) Register(ctx context.Context, request *requests.CreateUserRequest) (*db.CreateUserRow, error) {
+	const method = "Register"
+
+	ctx, span, end, status, logSuccess := s.observability.StartTracingAndLogging(ctx, method, attribute.String("email", request.Email))
+
+	defer func() {
+		end(status)
+	}()
+
 	s.logger.Debug("Starting user registration",
 		zap.String("email", request.Email),
 		zap.String("first_name", request.FirstName),
 		zap.String("last_name", request.LastName),
 	)
 
-	existingUser, err := s.auth.FindByEmail(request.Email)
+	existingUser, err := s.auth.FindByEmail(ctx, request.Email)
 	if err == nil && existingUser != nil {
-		s.logger.Debug("Email already exists",
+		status = "error"
+		return errorhandler.HandleError[*db.CreateUserRow](
+			s.logger,
+			user_errors.ErrUserEmailAlready,
+			method,
+			span,
 			zap.String("email", request.Email),
 		)
-		return nil, user_errors.ErrUserEmailAlready
 	}
 
 	passwordHash, err := s.hash.HashPassword(request.Password)
 	if err != nil {
-		s.logger.Error("Failed to hash password",
-			zap.Error(err),
+		status = "error"
+		return errorhandler.HandleError[*db.CreateUserRow](
+			s.logger,
+			user_errors.ErrUserPassword,
+			method,
+			span,
 		)
-		return nil, user_errors.ErrUserPassword
 	}
 	request.Password = passwordHash
 
-	const defaultRoleName = "Cashier"
-	role, err := s.role.FindByName(defaultRoleName)
+	const defaultRoleName = "ROLE_ADMIN"
+	role, err := s.role.FindByName(ctx, defaultRoleName)
 	if err != nil || role == nil {
-		s.logger.Error("Failed to find default role",
+		status = "error"
+		return errorhandler.HandleError[*db.CreateUserRow](
+			s.logger,
+			role_errors.ErrRoleNotFoundRes,
+			method,
+			span,
 			zap.String("role", defaultRoleName),
-			zap.Error(err),
 		)
-		return nil, &response.ErrorResponse{
-			Code:    http.StatusInternalServerError,
-			Status:  "server_error",
-			Message: "Failed to assign user role",
-		}
-	}
-	newUser, err := s.auth.CreateUser(request)
-	if err != nil {
-		s.logger.Error("Failed to create user",
-			zap.String("email", request.Email),
-			zap.Error(err),
-		)
-		return nil, user_errors.ErrFailedCreateUser
 	}
 
-	_, err = s.userRole.AssignRoleToUser(&requests.CreateUserRoleRequest{
-		UserId: newUser.ID,
-		RoleId: role.ID,
+	newUser, err := s.auth.CreateUser(ctx, request)
+	if err != nil {
+		status = "error"
+		return errorhandler.HandleError[*db.CreateUserRow](
+			s.logger,
+			user_errors.ErrFailedCreateUser,
+			method,
+			span,
+			zap.String("email", request.Email),
+		)
+	}
+
+	_, err = s.userRole.AssignRoleToUser(ctx, &requests.CreateUserRoleRequest{
+		UserId: int(newUser.UserID),
+		RoleId: int(role.RoleID),
 	})
 	if err != nil {
-		s.logger.Error("Failed to assign role to user",
-			zap.Int("user_id", newUser.ID),
-			zap.Int("role_id", role.ID),
-			zap.Error(err),
+		status = "error"
+		return errorhandler.HandleError[*db.CreateUserRow](
+			s.logger,
+			userrole_errors.ErrFailedAssignRoleToUser,
+			method,
+			span,
+			zap.Int("user_id", int(newUser.UserID)),
+			zap.Int("role_id", int(role.RoleID)),
 		)
-		return nil, userrole_errors.ErrFailedAssignRoleToUser
 	}
 
-	userResponse := s.mapping.ToUserResponse(newUser)
+	s.cache.DeleteCachedUserInfo(ctx, strconv.Itoa(int(newUser.UserID)))
 
-	s.logger.Debug("User registered successfully",
-		zap.Int("user_id", newUser.ID),
+	logSuccess("User registered successfully",
+		zap.Int("user_id", int(newUser.UserID)),
 		zap.String("email", request.Email),
 	)
 
-	return userResponse, nil
+	return newUser, nil
 }
 
-func (s *authService) Login(request *requests.AuthRequest) (*response.TokenResponse, *response.ErrorResponse) {
+func (s *authService) Login(ctx context.Context, request *requests.AuthRequest) (*response.TokenResponse, error) {
+	const method = "Login"
+
+	ctx, span, end, status, logSuccess := s.observability.StartTracingAndLogging(ctx, method, attribute.String("email", request.Email))
+
+	defer func() {
+		end(status)
+	}()
+
 	s.logger.Debug("Starting login process",
 		zap.String("email", request.Email),
 	)
 
-	res, err := s.auth.FindByEmail(request.Email)
+	if cachedResponse, found := s.cache.GetCachedLogin(ctx, request.Email); found {
+		logSuccess("Successfully retrieved login data from cache", zap.String("email", request.Email))
+		return cachedResponse, nil
+	}
+
+	res, err := s.auth.FindByEmailWithPassword(ctx, request.Email)
 	if err != nil {
-		s.logger.Error("Failed to get user",
+		status = "error"
+		return errorhandler.HandleError[*response.TokenResponse](
+			s.logger,
+			user_errors.ErrUserNotFoundRes,
+			method,
+			span,
 			zap.String("email", request.Email),
-			zap.Error(err),
 		)
-		return nil, user_errors.ErrUserNotFoundRes
 	}
-	if err := s.hash.ComparePassword(res.Password, request.Password); err != nil {
-		s.logger.Debug("Invalid password attempt",
+
+	err = s.hash.ComparePassword(res.Password, request.Password)
+	if err != nil {
+		status = "error"
+		return errorhandler.HandleError[*response.TokenResponse](
+			s.logger,
+			user_errors.ErrUserPassword,
+			method,
+			span,
 			zap.String("email", request.Email),
-			zap.Error(err),
 		)
-		return nil, user_errors.ErrUserPassword
 	}
 
-	token, err := s.createAccessToken(res.ID)
+	token, err := s.createAccessToken(int(res.UserID))
 	if err != nil {
-		s.logger.Error("Failed to generate JWT token",
-			zap.Int("user_id", res.ID),
-			zap.Error(err),
+		status = "error"
+		return errorhandler.HandleError[*response.TokenResponse](
+			s.logger,
+			refreshtoken_errors.ErrFailedCreateAccess,
+			method,
+			span,
+			zap.Int("user_id", int(res.UserID)),
 		)
-		return nil, refreshtoken_errors.ErrFailedCreateAccess
 	}
 
-	refreshToken, err := s.createRefreshToken(res.ID)
+	refreshToken, err := s.createRefreshToken(ctx, int(res.UserID))
 	if err != nil {
-		s.logger.Error("Failed to generate refresh token",
-			zap.Int("user_id", res.ID),
-			zap.Error(err),
+		status = "error"
+		return errorhandler.HandleError[*response.TokenResponse](
+			s.logger,
+			refreshtoken_errors.ErrFailedCreateRefresh,
+			method,
+			span,
+			zap.Int("user_id", int(res.UserID)),
 		)
-		return nil, refreshtoken_errors.ErrFailedCreateRefresh
 	}
 
-	s.logger.Debug("User logged in successfully",
-		zap.Int("user_id", res.ID),
-		zap.String("email", request.Email),
-	)
+	tokenResponse := &response.TokenResponse{AccessToken: token, RefreshToken: refreshToken}
 
-	return &response.TokenResponse{
-		AccessToken:  token,
-		RefreshToken: refreshToken,
-	}, nil
+	s.cache.SetCachedLogin(ctx, request.Email, tokenResponse, 24*time.Hour)
+
+	logSuccess("User logged in successfully", zap.String("email", request.Email))
+
+	return tokenResponse, nil
 }
 
-func (s *authService) RefreshToken(token string) (*response.TokenResponse, *response.ErrorResponse) {
-	s.logger.Debug("Refreshing token",
-		zap.String("token", token),
-	)
+func (s *authService) RefreshToken(ctx context.Context, token string) (*response.TokenResponse, error) {
+	const method = "RefreshToken"
+
+	ctx, span, end, status, logSuccess := s.observability.StartTracingAndLogging(ctx, method, attribute.String("token", token))
+
+	defer func() {
+		end(status)
+	}()
+
+	s.logger.Debug("Refreshing token", zap.String("token", token))
 
 	userIdStr, err := s.token.ValidateToken(token)
-
 	if err != nil {
+		status = "error"
 		if errors.Is(err, auth.ErrTokenExpired) {
-			if err := s.refreshToken.DeleteRefreshToken(token); err != nil {
-				s.logger.Error("Failed to delete expired refresh token", zap.Error(err))
-
-				return nil, refreshtoken_errors.ErrFailedDeleteRefreshToken
+			if err := s.refreshToken.DeleteRefreshToken(ctx, token); err != nil {
+				return errorhandler.HandleError[*response.TokenResponse](
+					s.logger,
+					refreshtoken_errors.ErrFailedDeleteRefreshToken,
+					method,
+					span,
+					zap.String("token", token),
+				)
 			}
-
-			s.logger.Error("Refresh token has expired", zap.Error(err))
-
-			return nil, refreshtoken_errors.ErrFailedExpire
+			return errorhandler.HandleError[*response.TokenResponse](
+				s.logger,
+				refreshtoken_errors.ErrFailedExpire,
+				method,
+				span,
+				zap.String("token", token),
+			)
 		}
-		s.logger.Error("Invalid refresh token", zap.Error(err))
-		return nil, refreshtoken_errors.ErrRefreshTokenNotFound
+		return errorhandler.HandleError[*response.TokenResponse](
+			s.logger,
+			refreshtoken_errors.ErrRefreshTokenNotFound,
+			method,
+			span,
+			zap.String("token", token),
+		)
 	}
 
 	userId, err := strconv.Atoi(userIdStr)
-
 	if err != nil {
-		s.logger.Error("Invalid user ID format in token", zap.Error(err))
-		return nil, user_errors.ErrUserIDInValid
+		status = "error"
+		return errorhandler.HandleError[*response.TokenResponse](
+			s.logger,
+			user_errors.ErrUserNotFoundRes,
+			method,
+			span,
+			zap.String("user_id_str", userIdStr),
+		)
 	}
 
 	accessToken, err := s.createAccessToken(userId)
 	if err != nil {
-		s.logger.Error("Failed to generate new access token", zap.Error(err))
-
-		return nil, refreshtoken_errors.ErrFailedCreateAccess
+		status = "error"
+		return errorhandler.HandleError[*response.TokenResponse](
+			s.logger,
+			refreshtoken_errors.ErrFailedCreateAccess,
+			method,
+			span,
+			zap.Int("user_id", userId),
+		)
 	}
 
-	refreshToken, err := s.createRefreshToken(userId)
+	refreshToken, err := s.createRefreshToken(ctx, userId)
 	if err != nil {
-		s.logger.Error("Failed to generate new refresh token", zap.Error(err))
-
-		return nil, refreshtoken_errors.ErrFailedCreateRefreshToken
+		status = "error"
+		return errorhandler.HandleError[*response.TokenResponse](
+			s.logger,
+			refreshtoken_errors.ErrFailedCreateRefresh,
+			method,
+			span,
+			zap.Int("user_id", userId),
+		)
 	}
 
 	expiryTime := time.Now().Add(24 * time.Hour)
-
 	updateRequest := &requests.UpdateRefreshToken{
 		UserId:    userId,
 		Token:     refreshToken,
 		ExpiresAt: expiryTime.Format("2006-01-02 15:04:05"),
 	}
 
-	if _, err = s.refreshToken.UpdateRefreshToken(updateRequest); err != nil {
-		s.logger.Error("Failed to update refresh token in storage", zap.Error(err))
-
-		return nil, refreshtoken_errors.ErrFailedUpdateRefreshToken
+	if _, err = s.refreshToken.UpdateRefreshToken(ctx, updateRequest); err != nil {
+		status = "error"
+		return errorhandler.HandleError[*response.TokenResponse](
+			s.logger,
+			refreshtoken_errors.ErrFailedUpdateRefreshToken,
+			method,
+			span,
+			zap.Int("user_id", userId),
+		)
 	}
 
-	s.logger.Debug("Refresh token refreshed successfully")
-
-	return &response.TokenResponse{
+	tokenResponse := &response.TokenResponse{
 		AccessToken:  accessToken,
 		RefreshToken: refreshToken,
-	}, nil
+	}
+
+	s.cache.SetRefreshToken(ctx, refreshToken, 24*time.Hour)
+
+	s.cache.DeleteCachedUserInfo(ctx, userIdStr)
+
+	logSuccess("Refresh token refreshed successfully")
+
+	return tokenResponse, nil
 }
 
-func (s *authService) GetMe(token string) (*response.UserResponse, *response.ErrorResponse) {
-	s.logger.Debug("Fetching user details",
-		zap.String("token", token),
-	)
+func (s *authService) GetMe(ctx context.Context, token string) (*db.GetUserByIDRow, error) {
+	const method = "GetMe"
+
+	ctx, span, end, status, logSuccess := s.observability.StartTracingAndLogging(ctx, method, attribute.String("token", token))
+
+	defer func() {
+		end(status)
+	}()
+
+	s.logger.Debug("Fetching user details", zap.String("token", token))
 
 	userIdStr, err := s.token.ValidateToken(token)
-
 	if err != nil {
-		s.logger.Error("Invalid access token", zap.Error(err))
-		return nil, refreshtoken_errors.ErrFailedInValidToken
+		status = "error"
+		return errorhandler.HandleError[*db.GetUserByIDRow](
+			s.logger,
+			refreshtoken_errors.ErrFailedInValidToken,
+			method,
+			span,
+			zap.String("token", token),
+		)
+	}
+
+	if cachedUser, found := s.cache.GetCachedUserInfo(ctx, userIdStr); found {
+		logSuccess("Successfully retrieved user info from cache", zap.String("user_id", userIdStr))
+		return cachedUser, nil
 	}
 
 	userId, err := strconv.Atoi(userIdStr)
 	if err != nil {
-		s.logger.Error("Invalid user ID format in token", zap.Error(err))
-		return nil, refreshtoken_errors.ErrFailedInValidUserId
+		status = "error"
+		return errorhandler.HandleError[*db.GetUserByIDRow](
+			s.logger,
+			refreshtoken_errors.ErrFailedInValidUserId,
+			method,
+			span,
+			zap.String("user_id_str", userIdStr),
+		)
 	}
 
-	user, err := s.auth.FindById(userId)
-
+	user, err := s.auth.FindById(ctx, userId)
 	if err != nil {
-		s.logger.Error("Failed to find user by ID", zap.Error(err))
-		return nil, user_errors.ErrUserNotFoundRes
+		status = "error"
+		return errorhandler.HandleError[*db.GetUserByIDRow](
+			s.logger,
+			user_errors.ErrUserNotFoundRes,
+			method,
+			span,
+			zap.Int("user_id", userId),
+		)
 	}
 
-	so := s.mapping.ToUserResponse(user)
+	s.cache.SetCachedUserInfo(ctx, user, 24*time.Hour)
 
-	s.logger.Debug("User details fetched successfully",
-		zap.Int("userID", userId),
-	)
+	logSuccess("User details fetched successfully", zap.Int("userID", userId))
 
-	return so, nil
-}
-
-func maskToken(token string) string {
-	if len(token) < 8 {
-		return "******"
-	}
-	return token[:4] + "****" + token[len(token)-4:]
+	return user, nil
 }
 
 func (s *authService) createAccessToken(id int) (string, error) {
@@ -282,7 +418,7 @@ func (s *authService) createAccessToken(id int) (string, error) {
 	return res, nil
 }
 
-func (s *authService) createRefreshToken(id int) (string, error) {
+func (s *authService) createRefreshToken(ctx context.Context, id int) (string, error) {
 	s.logger.Debug("Creating refresh token",
 		zap.Int("userID", id),
 	)
@@ -292,18 +428,17 @@ func (s *authService) createRefreshToken(id int) (string, error) {
 	if err != nil {
 		s.logger.Error("Failed to create refresh token",
 			zap.Int("userID", id),
-			zap.Error(err),
 		)
 
 		return "", err
 	}
 
-	if err := s.refreshToken.DeleteRefreshTokenByUserId(id); err != nil && !errors.Is(err, sql.ErrNoRows) {
+	if err := s.refreshToken.DeleteRefreshTokenByUserId(ctx, id); err != nil && !errors.Is(err, sql.ErrNoRows) {
 		s.logger.Error("Failed to delete existing refresh token", zap.Error(err))
 		return "", err
 	}
 
-	_, err = s.refreshToken.CreateRefreshToken(&requests.CreateRefreshToken{Token: res, UserId: id, ExpiresAt: time.Now().Add(24 * time.Hour).Format("2006-01-02 15:04:05")})
+	_, err = s.refreshToken.CreateRefreshToken(ctx, &requests.CreateRefreshToken{Token: res, UserId: id, ExpiresAt: time.Now().Add(24 * time.Hour).Format("2006-01-02 15:04:05")})
 	if err != nil {
 		s.logger.Error("Failed to create refresh token", zap.Error(err))
 
@@ -315,4 +450,11 @@ func (s *authService) createRefreshToken(id int) (string, error) {
 	)
 
 	return res, nil
+}
+
+func maskToken(token string) string {
+	if len(token) < 8 {
+		return "******"
+	}
+	return token[:4] + "****" + token[len(token)-4:]
 }

@@ -11,8 +11,8 @@ type FindAllProducts struct {
 type ProductByCategoryRequest struct {
 	Search       string `json:"search" validate:"required"`
 	Page         int    `json:"page" validate:"min=1"`
-	MinPrice     *int   `json:"min_price"`
-	MaxPrice     *int   `json:"max_price"`
+	MinPrice     int    `json:"min_price"`
+	MaxPrice     int    `json:"max_price"`
 	PageSize     int    `json:"page_size" validate:"min=1,max=100"`
 	CategoryName string `json:"category_name" validate:"required"`
 }
@@ -20,9 +20,9 @@ type ProductByCategoryRequest struct {
 type ProductByMerchantRequest struct {
 	MerchantID int    `json:"merchant_id" validate:"required"`
 	Search     string `json:"search"`
-	CategoryID *int   `json:"category_id"`
-	MinPrice   *int   `json:"min_price"`
-	MaxPrice   *int   `json:"max_price"`
+	CategoryID int    `json:"category_id"`
+	MinPrice   int    `json:"min_price"`
+	MaxPrice   int    `json:"max_price"`
 	Page       int    `json:"page" validate:"min=1"`
 	PageSize   int    `json:"page_size" validate:"min=1,max=100"`
 }

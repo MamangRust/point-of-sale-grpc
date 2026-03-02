@@ -2,21 +2,26 @@ package api
 
 import (
 	"net/http"
-	"pointofsale/internal/domain/response"
-	response_api "pointofsale/internal/mapper/response/api"
+	orderitem_cache "pointofsale/internal/cache/api/order_item"
+	"pointofsale/internal/domain/requests"
+	response_api "pointofsale/internal/mapper"
 	"pointofsale/internal/pb"
-	orderitem_errors "pointofsale/pkg/errors/order_item_errors"
+	"pointofsale/pkg/errors"
 	"pointofsale/pkg/logger"
 	"strconv"
 
 	"github.com/labstack/echo/v4"
 	"go.uber.org/zap"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 )
 
 type orderItemHandleApi struct {
-	client  pb.OrderItemServiceClient
-	logger  logger.LoggerInterface
-	mapping response_api.OrderItemResponseMapper
+	client     pb.OrderItemServiceClient
+	logger     logger.LoggerInterface
+	mapping    response_api.OrderItemResponseMapper
+	apiHandler errors.ApiHandler
+	cache      orderitem_cache.OrderItemCache
 }
 
 func NewHandlerOrderItem(
@@ -24,21 +29,25 @@ func NewHandlerOrderItem(
 	client pb.OrderItemServiceClient,
 	logger logger.LoggerInterface,
 	mapping response_api.OrderItemResponseMapper,
+	apiHandler errors.ApiHandler,
+	cache orderitem_cache.OrderItemCache,
 ) *orderItemHandleApi {
-	categoryHandler := &orderItemHandleApi{
-		client:  client,
-		logger:  logger,
-		mapping: mapping,
+	orderItemHandler := &orderItemHandleApi{
+		client:     client,
+		logger:     logger,
+		mapping:    mapping,
+		apiHandler: apiHandler,
+		cache:      cache,
 	}
 
-	routercategory := router.Group("/api/order-item")
+	routerOrderItem := router.Group("/api/order-item")
 
-	routercategory.GET("", categoryHandler.FindAllOrderItems)
-	routercategory.GET("/:order_id", categoryHandler.FindOrderItemByOrder)
-	routercategory.GET("/active", categoryHandler.FindByActive)
-	routercategory.GET("/trashed", categoryHandler.FindByTrashed)
+	routerOrderItem.GET("", orderItemHandler.FindAllOrderItems)
+	routerOrderItem.GET("/:order_id", orderItemHandler.FindOrderItemByOrder)
+	routerOrderItem.GET("/active", orderItemHandler.FindByActive)
+	routerOrderItem.GET("/trashed", orderItemHandler.FindByTrashed)
 
-	return categoryHandler
+	return orderItemHandler
 }
 
 // @Security Bearer
@@ -68,20 +77,31 @@ func (h *orderItemHandleApi) FindAllOrderItems(c echo.Context) error {
 
 	ctx := c.Request().Context()
 
-	req := &pb.FindAllOrderItemRequest{
+	req := &requests.FindAllOrderItems{
+		Page:     page,
+		PageSize: pageSize,
+		Search:   search,
+	}
+
+	if cached, found := h.cache.GetCachedOrderItemsAll(ctx, req); found {
+		return c.JSON(http.StatusOK, cached)
+	}
+
+	grpcReq := &pb.FindAllOrderItemRequest{
 		Page:     int32(page),
 		PageSize: int32(pageSize),
 		Search:   search,
 	}
 
-	res, err := h.client.FindAll(ctx, req)
-
+	res, err := h.client.FindAll(ctx, grpcReq)
 	if err != nil {
 		h.logger.Error("Failed to fetch order-items", zap.Error(err))
-		return orderitem_errors.ErrApiOrderItemFailedFindAll(c)
+		return h.handleGrpcError(err, "FindAllOrderItems")
 	}
 
 	so := h.mapping.ToApiResponsePaginationOrderItem(res)
+
+	h.cache.SetCachedOrderItemsAll(ctx, req, so)
 
 	return c.JSON(http.StatusOK, so)
 }
@@ -113,20 +133,31 @@ func (h *orderItemHandleApi) FindByActive(c echo.Context) error {
 
 	ctx := c.Request().Context()
 
-	req := &pb.FindAllOrderItemRequest{
+	req := &requests.FindAllOrderItems{
+		Page:     page,
+		PageSize: pageSize,
+		Search:   search,
+	}
+
+	if cached, found := h.cache.GetCachedOrderItemActive(ctx, req); found {
+		return c.JSON(http.StatusOK, cached)
+	}
+
+	grpcReq := &pb.FindAllOrderItemRequest{
 		Page:     int32(page),
 		PageSize: int32(pageSize),
 		Search:   search,
 	}
 
-	res, err := h.client.FindByActive(ctx, req)
-
+	res, err := h.client.FindByActive(ctx, grpcReq)
 	if err != nil {
 		h.logger.Error("Failed to fetch active order-items", zap.Error(err))
-		return orderitem_errors.ErrApiOrderItemFailedFindByActive(c)
+		return h.handleGrpcError(err, "FindByActive")
 	}
 
 	so := h.mapping.ToApiResponsePaginationOrderItemDeleteAt(res)
+
+	h.cache.SetCachedOrderItemActive(ctx, req, so)
 
 	return c.JSON(http.StatusOK, so)
 }
@@ -158,20 +189,31 @@ func (h *orderItemHandleApi) FindByTrashed(c echo.Context) error {
 
 	ctx := c.Request().Context()
 
-	req := &pb.FindAllOrderItemRequest{
+	req := &requests.FindAllOrderItems{
+		Page:     page,
+		PageSize: pageSize,
+		Search:   search,
+	}
+
+	if cached, found := h.cache.GetCachedOrderItemTrashed(ctx, req); found {
+		return c.JSON(http.StatusOK, cached)
+	}
+
+	grpcReq := &pb.FindAllOrderItemRequest{
 		Page:     int32(page),
 		PageSize: int32(pageSize),
 		Search:   search,
 	}
 
-	res, err := h.client.FindByTrashed(ctx, req)
-
+	res, err := h.client.FindByTrashed(ctx, grpcReq)
 	if err != nil {
 		h.logger.Error("Failed to fetch archived order-items", zap.Error(err))
-		return orderitem_errors.ErrApiOrderItemFailedFindByTrashed(c)
+		return h.handleGrpcError(err, "FindByTrashed")
 	}
 
 	so := h.mapping.ToApiResponsePaginationOrderItemDeleteAt(res)
+
+	h.cache.SetCachedOrderItemTrashed(ctx, req, so)
 
 	return c.JSON(http.StatusOK, so)
 }
@@ -189,30 +231,66 @@ func (h *orderItemHandleApi) FindByTrashed(c echo.Context) error {
 // @Router /api/order-item/order/{order_id} [get]
 func (h *orderItemHandleApi) FindOrderItemByOrder(c echo.Context) error {
 	orderID, err := strconv.Atoi(c.Param("order_id"))
-
 	if err != nil {
 		h.logger.Debug("Invalid order ID format", zap.Error(err))
-		return c.JSON(http.StatusBadRequest, response.ErrorResponse{
-			Status:  "invalid_input",
-			Message: "Please provide a valid order ID.",
-			Code:    http.StatusBadRequest,
-		})
+		return errors.NewBadRequestError("Please provide a valid order ID")
 	}
 
 	ctx := c.Request().Context()
 
-	req := &pb.FindByIdOrderItemRequest{
+	if cached, found := h.cache.GetCachedOrderItems(ctx, orderID); found {
+		return c.JSON(http.StatusOK, cached)
+	}
+
+	grpcReq := &pb.FindByIdOrderItemRequest{
 		Id: int32(orderID),
 	}
 
-	res, err := h.client.FindOrderItemByOrder(ctx, req)
-
+	res, err := h.client.FindOrderItemByOrder(ctx, grpcReq)
 	if err != nil {
 		h.logger.Error("Failed to fetch order item details", zap.Error(err))
-		return orderitem_errors.ErrApiOrderItemFailedFindByOrderId(c)
+		return h.handleGrpcError(err, "FindOrderItemByOrder")
 	}
 
 	so := h.mapping.ToApiResponsesOrderItem(res)
 
+	h.cache.SetCachedOrderItems(ctx, so)
+
 	return c.JSON(http.StatusOK, so)
+}
+
+func (h *orderItemHandleApi) handleGrpcError(err error, operation string) *errors.AppError {
+	st, ok := status.FromError(err)
+	if !ok {
+		return errors.NewInternalError(err).WithMessage("Failed to " + operation)
+	}
+
+	switch st.Code() {
+	case codes.NotFound:
+		return errors.NewNotFoundError("OrderItem").WithInternal(err)
+
+	case codes.AlreadyExists:
+		return errors.NewConflictError("OrderItem already exists").WithInternal(err)
+
+	case codes.InvalidArgument:
+		return errors.NewBadRequestError(st.Message()).WithInternal(err)
+
+	case codes.PermissionDenied:
+		return errors.ErrForbidden.WithInternal(err)
+
+	case codes.Unauthenticated:
+		return errors.ErrUnauthorized.WithInternal(err)
+
+	case codes.ResourceExhausted:
+		return errors.ErrTooManyRequests.WithInternal(err)
+
+	case codes.Unavailable:
+		return errors.NewServiceUnavailableError("OrderItem service").WithInternal(err)
+
+	case codes.DeadlineExceeded:
+		return errors.ErrTimeout.WithInternal(err)
+
+	default:
+		return errors.NewInternalError(err).WithMessage("Failed to " + operation)
+	}
 }

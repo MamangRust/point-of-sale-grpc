@@ -14,13 +14,29 @@
 --   - Uses window function COUNT(*) OVER() for efficient total count
 -- name: GetMerchants :many
 SELECT
-    *,
-    COUNT(*) OVER() AS total_count
+    merchant_id,
+    user_id,
+    name,
+    description,
+    address,
+    contact_email,
+    contact_phone,
+    status,
+    created_at,
+    updated_at,
+    COUNT(*) OVER () AS total_count
 FROM merchants
-WHERE deleted_at IS NULL
-AND ($1::TEXT IS NULL OR name ILIKE '%' || $1 || '%' OR contact_email ILIKE '%' || $1 || '%')
+WHERE
+    deleted_at IS NULL
+    AND (
+        $1::TEXT IS NULL
+        OR name ILIKE '%' || $1 || '%'
+        OR contact_email ILIKE '%' || $1 || '%'
+    )
 ORDER BY created_at DESC
-LIMIT $2 OFFSET $3;
+LIMIT $2
+OFFSET
+    $3;
 
 -- GetMerchantsActive: Retrieves paginated list of active merchants (identical to GetMerchants)
 -- Purpose: Maintains consistent API pattern with other active/trashed endpoints
@@ -36,13 +52,30 @@ LIMIT $2 OFFSET $3;
 -- Note: Could be consolidated with GetMerchants if duplicate functionality is undesired
 -- name: GetMerchantsActive :many
 SELECT
-    *,
-    COUNT(*) OVER() AS total_count
+    merchant_id,
+    user_id,
+    name,
+    description,
+    address,
+    contact_email,
+    contact_phone,
+    status,
+    created_at,
+    updated_at,
+    deleted_at,
+    COUNT(*) OVER () AS total_count
 FROM merchants
-WHERE deleted_at IS NULL
-AND ($1::TEXT IS NULL OR name ILIKE '%' || $1 || '%' OR contact_email ILIKE '%' || $1 || '%')
+WHERE
+    deleted_at IS NULL
+    AND (
+        $1::TEXT IS NULL
+        OR name ILIKE '%' || $1 || '%'
+        OR contact_email ILIKE '%' || $1 || '%'
+    )
 ORDER BY created_at DESC
-LIMIT $2 OFFSET $3;
+LIMIT $2
+OFFSET
+    $3;
 
 -- GetMerchantsTrashed: Retrieves paginated list of soft-deleted merchants
 -- Purpose: View and manage deleted merchants for potential restoration
@@ -60,14 +93,30 @@ LIMIT $2 OFFSET $3;
 --   - Includes total_count for pagination in trash management UI
 -- name: GetMerchantsTrashed :many
 SELECT
-    *,
-    COUNT(*) OVER() AS total_count
+    merchant_id,
+    user_id,
+    name,
+    description,
+    address,
+    contact_email,
+    contact_phone,
+    status,
+    created_at,
+    updated_at,
+    deleted_at,
+    COUNT(*) OVER () AS total_count
 FROM merchants
-WHERE deleted_at IS NOT NULL
-AND ($1::TEXT IS NULL OR name ILIKE '%' || $1 || '%' OR contact_email ILIKE '%' || $1 || '%')
+WHERE
+    deleted_at IS NOT NULL
+    AND (
+        $1::TEXT IS NULL
+        OR name ILIKE '%' || $1 || '%'
+        OR contact_email ILIKE '%' || $1 || '%'
+    )
 ORDER BY created_at DESC
-LIMIT $2 OFFSET $3;
-
+LIMIT $2
+OFFSET
+    $3;
 
 -- CreateMerchant: Creates a new merchant account
 -- Purpose: Register a new merchant in the system
@@ -85,9 +134,28 @@ LIMIT $2 OFFSET $3;
 --   - Requires all mandatory merchant fields
 --   - Status defaults to 'active' unless specified otherwise
 -- name: CreateMerchant :one
-INSERT INTO merchants (user_id, name, description, address, contact_email, contact_phone, status)
+INSERT INTO
+    merchants (
+        user_id,
+        name,
+        description,
+        address,
+        contact_email,
+        contact_phone,
+        status
+    )
 VALUES ($1, $2, $3, $4, $5, $6, $7)
-RETURNING *;
+RETURNING
+    merchant_id,
+    user_id,
+    name,
+    description,
+    address,
+    contact_email,
+    contact_phone,
+    status,
+    created_at,
+    updated_at;
 
 -- GetMerchantByID: Retrieves active merchant by ID
 -- Purpose: Fetch merchant details for display/editing
@@ -99,10 +167,21 @@ RETURNING *;
 --   - Returns single record or nothing
 --   - Used for merchant profile viewing and editing
 -- name: GetMerchantByID :one
-SELECT *
+SELECT
+    merchant_id,
+    user_id,
+    name,
+    description,
+    address,
+    contact_email,
+    contact_phone,
+    status,
+    created_at,
+    updated_at
 FROM merchants
-WHERE merchant_id = $1
-  AND deleted_at IS NULL;
+WHERE
+    merchant_id = $1
+    AND deleted_at IS NULL;
 
 -- UpdateMerchant: Modifies merchant information
 -- Purpose: Update merchant profile details
@@ -122,16 +201,28 @@ WHERE merchant_id = $1
 --   - Returns modified record for confirmation
 -- name: UpdateMerchant :one
 UPDATE merchants
-SET name = $2,
+SET
+    name = $2,
     description = $3,
     address = $4,
     contact_email = $5,
     contact_phone = $6,
     status = $7,
     updated_at = CURRENT_TIMESTAMP
-WHERE merchant_id = $1
-  AND deleted_at IS NULL
-  RETURNING *;
+WHERE
+    merchant_id = $1
+    AND deleted_at IS NULL
+RETURNING
+    merchant_id,
+    user_id,
+    name,
+    description,
+    address,
+    contact_email,
+    contact_phone,
+    status,
+    created_at,
+    updated_at;
 
 -- TrashMerchant: Soft-deletes a merchant account
 -- Purpose: Deactivate merchant without permanent deletion
@@ -150,7 +241,18 @@ SET
 WHERE
     merchant_id = $1
     AND deleted_at IS NULL
-    RETURNING *;
+RETURNING
+    merchant_id,
+    user_id,
+    name,
+    description,
+    address,
+    contact_email,
+    contact_phone,
+    status,
+    created_at,
+    updated_at,
+    deleted_at;
 
 -- RestoreMerchant: Recovers a soft-deleted merchant
 -- Purpose: Reactivate a previously deactivated merchant
@@ -169,7 +271,18 @@ SET
 WHERE
     merchant_id = $1
     AND deleted_at IS NOT NULL
-  RETURNING *;
+RETURNING
+    merchant_id,
+    user_id,
+    name,
+    description,
+    address,
+    contact_email,
+    contact_phone,
+    status,
+    created_at,
+    updated_at,
+    deleted_at;
 
 -- DeleteMerchantPermanently: Hard-deletes a merchant
 -- Purpose: Completely remove merchant from database
@@ -181,7 +294,10 @@ WHERE
 --   - Irreversible action - use with caution
 --   - Should trigger cleanup of related records
 -- name: DeleteMerchantPermanently :exec
-DELETE FROM merchants WHERE merchant_id = $1 AND deleted_at IS NOT NULL;
+DELETE FROM merchants
+WHERE
+    merchant_id = $1
+    AND deleted_at IS NOT NULL;
 
 -- RestoreAllMerchants: Mass restoration of deleted merchants
 -- Purpose: Recover all trashed merchants at once
@@ -205,6 +321,4 @@ WHERE
 --   - Typically used during database maintenance
 --   - Should be restricted to admin users
 -- name: DeleteAllPermanentMerchants :exec
-DELETE FROM merchants
-WHERE
-    deleted_at IS NOT NULL;
+DELETE FROM merchants WHERE deleted_at IS NOT NULL;

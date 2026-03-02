@@ -14,6 +14,7 @@ var whiteListPaths = []string{
 	"/api/auth/register",
 	"/api/auth/hello",
 	"/docs/",
+	"/uploads/",
 	"/docs",
 	"/swagger",
 }
@@ -38,11 +39,10 @@ func WebSecurityConfig(e *echo.Echo) {
 
 }
 
-func skipAuth(e echo.Context) bool {
-	path := e.Path()
-
+func skipAuth(c echo.Context) bool {
+	path := c.Request().URL.Path
 	for _, p := range whiteListPaths {
-		if path == p || strings.HasPrefix(path, "/swagger") {
+		if strings.HasPrefix(path, p) {
 			return true
 		}
 	}

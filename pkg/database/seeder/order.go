@@ -2,7 +2,6 @@ package seeder
 
 import (
 	"context"
-	"database/sql"
 	db "pointofsale/pkg/database/schema"
 	"pointofsale/pkg/logger"
 
@@ -67,15 +66,19 @@ func (r *orderSeeder) Seed() error {
 
 		orderID := order.OrderID
 
-		products, err := r.db.GetProductsByMerchant(r.ctx, db.GetProductsByMerchantParams{
-			MerchantID: merchant.MerchantID,
-			Column2:    sql.NullString{},
-			Column3:    0,
-			Column4:    0,
-			Column5:    0,
-			Limit:      10,
-			Offset:     0,
-		})
+		products, err := r.db.GetProductsByMerchant(
+			r.ctx,
+			db.GetProductsByMerchantParams{
+				MerchantID: merchant.MerchantID,
+				Column2:    nil,
+				Column3:    nil,
+				Column4:    nil,
+				Column5:    nil,
+				Limit:      10,
+				Offset:     0,
+			},
+		)
+
 		if err != nil {
 			r.logger.Error("Failed to get products", zap.Error(err))
 			return err

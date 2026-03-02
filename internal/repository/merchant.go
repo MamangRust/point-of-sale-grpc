@@ -2,29 +2,22 @@ package repository
 
 import (
 	"context"
-	"database/sql"
-	"pointofsale/internal/domain/record"
 	"pointofsale/internal/domain/requests"
-	recordmapper "pointofsale/internal/mapper/record"
 	db "pointofsale/pkg/database/schema"
 	"pointofsale/pkg/errors/merchant_errors"
 )
 
 type merchantRepository struct {
-	db      *db.Queries
-	ctx     context.Context
-	mapping recordmapper.MerchantRecordMapping
+	db *db.Queries
 }
 
-func NewMerchantRepository(db *db.Queries, ctx context.Context, mapping recordmapper.MerchantRecordMapping) *merchantRepository {
+func NewMerchantRepository(db *db.Queries) *merchantRepository {
 	return &merchantRepository{
-		db:      db,
-		ctx:     ctx,
-		mapping: mapping,
+		db: db,
 	}
 }
 
-func (r *merchantRepository) FindAllMerchants(req *requests.FindAllMerchants) ([]*record.MerchantRecord, *int, error) {
+func (r *merchantRepository) FindAllMerchants(ctx context.Context, req *requests.FindAllMerchants) ([]*db.GetMerchantsRow, error) {
 	offset := (req.Page - 1) * req.PageSize
 
 	reqDb := db.GetMerchantsParams{
@@ -33,23 +26,16 @@ func (r *merchantRepository) FindAllMerchants(req *requests.FindAllMerchants) ([
 		Offset:  int32(offset),
 	}
 
-	res, err := r.db.GetMerchants(r.ctx, reqDb)
+	res, err := r.db.GetMerchants(ctx, reqDb)
 
 	if err != nil {
-		return nil, nil, merchant_errors.ErrFindAllMerchants
+		return nil, merchant_errors.ErrFindAllMerchants
 	}
 
-	var totalCount int
-	if len(res) > 0 {
-		totalCount = int(res[0].TotalCount)
-	} else {
-		totalCount = 0
-	}
-
-	return r.mapping.ToMerchantsRecordPagination(res), &totalCount, nil
+	return res, nil
 }
 
-func (r *merchantRepository) FindByActive(req *requests.FindAllMerchants) ([]*record.MerchantRecord, *int, error) {
+func (r *merchantRepository) FindByActive(ctx context.Context, req *requests.FindAllMerchants) ([]*db.GetMerchantsActiveRow, error) {
 	offset := (req.Page - 1) * req.PageSize
 
 	reqDb := db.GetMerchantsActiveParams{
@@ -58,23 +44,16 @@ func (r *merchantRepository) FindByActive(req *requests.FindAllMerchants) ([]*re
 		Offset:  int32(offset),
 	}
 
-	res, err := r.db.GetMerchantsActive(r.ctx, reqDb)
+	res, err := r.db.GetMerchantsActive(ctx, reqDb)
 
 	if err != nil {
-		return nil, nil, merchant_errors.ErrFindByActive
+		return nil, merchant_errors.ErrFindByActive
 	}
 
-	var totalCount int
-	if len(res) > 0 {
-		totalCount = int(res[0].TotalCount)
-	} else {
-		totalCount = 0
-	}
-
-	return r.mapping.ToMerchantsRecordActivePagination(res), &totalCount, nil
+	return res, nil
 }
 
-func (r *merchantRepository) FindByTrashed(req *requests.FindAllMerchants) ([]*record.MerchantRecord, *int, error) {
+func (r *merchantRepository) FindByTrashed(ctx context.Context, req *requests.FindAllMerchants) ([]*db.GetMerchantsTrashedRow, error) {
 	offset := (req.Page - 1) * req.PageSize
 
 	reqDb := db.GetMerchantsTrashedParams{
@@ -83,94 +62,87 @@ func (r *merchantRepository) FindByTrashed(req *requests.FindAllMerchants) ([]*r
 		Offset:  int32(offset),
 	}
 
-	res, err := r.db.GetMerchantsTrashed(r.ctx, reqDb)
+	res, err := r.db.GetMerchantsTrashed(ctx, reqDb)
 
 	if err != nil {
-		return nil, nil, merchant_errors.ErrFindByTrashed
+		return nil, merchant_errors.ErrFindByTrashed
 	}
 
-	var totalCount int
-	if len(res) > 0 {
-		totalCount = int(res[0].TotalCount)
-	} else {
-		totalCount = 0
-	}
-
-	return r.mapping.ToMerchantsRecordTrashedPagination(res), &totalCount, nil
+	return res, nil
 }
 
-func (r *merchantRepository) FindById(user_id int) (*record.MerchantRecord, error) {
-	res, err := r.db.GetMerchantByID(r.ctx, int32(user_id))
+func (r *merchantRepository) FindById(ctx context.Context, user_id int) (*db.GetMerchantByIDRow, error) {
+	res, err := r.db.GetMerchantByID(ctx, int32(user_id))
 
 	if err != nil {
 		return nil, merchant_errors.ErrFindById
 	}
 
-	return r.mapping.ToMerchantRecord(res), nil
+	return res, nil
 }
 
-func (r *merchantRepository) CreateMerchant(request *requests.CreateMerchantRequest) (*record.MerchantRecord, error) {
+func (r *merchantRepository) CreateMerchant(ctx context.Context, request *requests.CreateMerchantRequest) (*db.CreateMerchantRow, error) {
 	req := db.CreateMerchantParams{
 		UserID:       int32(request.UserID),
 		Name:         request.Name,
-		Description:  sql.NullString{String: request.Description, Valid: request.Description != ""},
-		Address:      sql.NullString{String: request.Address, Valid: request.Address != ""},
-		ContactEmail: sql.NullString{String: request.ContactEmail, Valid: request.ContactEmail != ""},
-		ContactPhone: sql.NullString{String: request.ContactPhone, Valid: request.ContactPhone != ""},
+		Description:  &request.Description,
+		Address:      &request.Address,
+		ContactEmail: &request.ContactEmail,
+		ContactPhone: &request.ContactPhone,
 		Status:       request.Status,
 	}
 
-	merchant, err := r.db.CreateMerchant(r.ctx, req)
+	merchant, err := r.db.CreateMerchant(ctx, req)
 
 	if err != nil {
 		return nil, merchant_errors.ErrCreateMerchant
 	}
 
-	return r.mapping.ToMerchantRecord(merchant), nil
+	return merchant, nil
 }
 
-func (r *merchantRepository) UpdateMerchant(request *requests.UpdateMerchantRequest) (*record.MerchantRecord, error) {
+func (r *merchantRepository) UpdateMerchant(ctx context.Context, request *requests.UpdateMerchantRequest) (*db.UpdateMerchantRow, error) {
 	req := db.UpdateMerchantParams{
 		MerchantID:   int32(*request.MerchantID),
 		Name:         request.Name,
-		Description:  sql.NullString{String: request.Description, Valid: request.Description != ""},
-		Address:      sql.NullString{String: request.Address, Valid: request.Address != ""},
-		ContactEmail: sql.NullString{String: request.ContactEmail, Valid: request.ContactEmail != ""},
-		ContactPhone: sql.NullString{String: request.ContactPhone, Valid: request.ContactPhone != ""},
+		Description:  &request.Description,
+		Address:      &request.Address,
+		ContactEmail: &request.ContactEmail,
+		ContactPhone: &request.ContactPhone,
 		Status:       request.Status,
 	}
 
-	res, err := r.db.UpdateMerchant(r.ctx, req)
+	res, err := r.db.UpdateMerchant(ctx, req)
 
 	if err != nil {
 		return nil, merchant_errors.ErrUpdateMerchant
 	}
 
-	return r.mapping.ToMerchantRecord(res), nil
+	return res, nil
 }
 
-func (r *merchantRepository) TrashedMerchant(merchant_id int) (*record.MerchantRecord, error) {
-	res, err := r.db.TrashMerchant(r.ctx, int32(merchant_id))
+func (r *merchantRepository) TrashedMerchant(ctx context.Context, merchant_id int) (*db.Merchant, error) {
+	res, err := r.db.TrashMerchant(ctx, int32(merchant_id))
 
 	if err != nil {
 		return nil, merchant_errors.ErrTrashedMerchant
 	}
 
-	return r.mapping.ToMerchantRecord(res), nil
+	return res, nil
 }
 
-func (r *merchantRepository) RestoreMerchant(merchant_id int) (*record.MerchantRecord, error) {
-	res, err := r.db.RestoreMerchant(r.ctx, int32(merchant_id))
+func (r *merchantRepository) RestoreMerchant(ctx context.Context, merchant_id int) (*db.Merchant, error) {
+	res, err := r.db.RestoreMerchant(ctx, int32(merchant_id))
 
 	if err != nil {
 		return nil, merchant_errors.ErrRestoreMerchant
 	}
 
-	return r.mapping.ToMerchantRecord(res), nil
+	return res, nil
 }
 
-func (r *merchantRepository) DeleteMerchantPermanent(merchant_id int) (bool, error) {
-	err := r.db.DeleteMerchantPermanently(r.ctx, int32(merchant_id))
+func (r *merchantRepository) DeleteMerchantPermanent(ctx context.Context, merchant_id int) (bool, error) {
+	err := r.db.DeleteMerchantPermanently(ctx, int32(merchant_id))
 
 	if err != nil {
 		return false, merchant_errors.ErrDeleteMerchantPermanent
@@ -179,8 +151,8 @@ func (r *merchantRepository) DeleteMerchantPermanent(merchant_id int) (bool, err
 	return true, nil
 }
 
-func (r *merchantRepository) RestoreAllMerchant() (bool, error) {
-	err := r.db.RestoreAllMerchants(r.ctx)
+func (r *merchantRepository) RestoreAllMerchant(ctx context.Context) (bool, error) {
+	err := r.db.RestoreAllMerchants(ctx)
 
 	if err != nil {
 		return false, merchant_errors.ErrRestoreAllMerchant
@@ -188,8 +160,8 @@ func (r *merchantRepository) RestoreAllMerchant() (bool, error) {
 	return true, nil
 }
 
-func (r *merchantRepository) DeleteAllMerchantPermanent() (bool, error) {
-	err := r.db.DeleteAllPermanentMerchants(r.ctx)
+func (r *merchantRepository) DeleteAllMerchantPermanent(ctx context.Context) (bool, error) {
+	err := r.db.DeleteAllPermanentMerchants(ctx)
 
 	if err != nil {
 		return false, merchant_errors.ErrDeleteAllMerchantPermanent

@@ -36,10 +36,9 @@ type OrderYearlyResponse struct {
 }
 
 type OrderMonthlyTotalRevenueResponse struct {
-	Year           string `json:"year"`
-	Month          string `json:"month"`
-	TotalRevenue   int    `json:"total_revenue"`
-	TotalItemsSold int    `json:"total_items_sold"`
+	Year         string `json:"year"`
+	Month        string `json:"month"`
+	TotalRevenue int    `json:"total_revenue"`
 }
 
 type OrderYearlyTotalRevenueResponse struct {

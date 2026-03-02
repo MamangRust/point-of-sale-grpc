@@ -2,7 +2,6 @@ package seeder
 
 import (
 	"context"
-	"database/sql"
 	"fmt"
 	db "pointofsale/pkg/database/schema"
 	"pointofsale/pkg/logger"
@@ -64,27 +63,30 @@ func (r *productSeeder) Seed() error {
 	for i := 0; i < 10; i++ {
 		merchant := merchants[rand.Intn(len(merchants))]
 		category := categories[rand.Intn(len(categories))]
+
 		name := productNames[rand.Intn(len(productNames))]
-		brand := sql.NullString{String: brands[rand.Intn(len(brands))], Valid: true}
-		price := int32(rand.Intn(5000000) + 50000)
+		price := int32(rand.Intn(5_000_000) + 50_000)
 		countInStock := int32(rand.Intn(100) + 1)
-		weight := sql.NullInt32{Int32: int32(rand.Intn(5000) + 100), Valid: true}
-		slug := sql.NullString{String: fmt.Sprintf("%s-%d", name, rand.Intn(1000)), Valid: true}
-		image := sql.NullString{String: images[rand.Intn(len(images))], Valid: true}
-		barcode := sql.NullString{String: fmt.Sprintf("BC-%d", rand.Intn(9999999)), Valid: true}
+
+		brand := brands[rand.Intn(len(brands))]
+		weight := int32(rand.Intn(5000) + 100)
+		slug := fmt.Sprintf("%s-%d", name, rand.Intn(1000))
+		image := images[rand.Intn(len(images))]
+		barcode := fmt.Sprintf("BC-%d", rand.Intn(9_999_999))
+		desc := fmt.Sprintf("Description for %s", name)
 
 		_, err := r.db.CreateProduct(r.ctx, db.CreateProductParams{
 			MerchantID:   merchant.MerchantID,
 			CategoryID:   category.CategoryID,
 			Name:         name,
-			Description:  sql.NullString{String: fmt.Sprintf("Description for %s", name), Valid: true},
+			Description:  &desc,
 			Price:        price,
 			CountInStock: countInStock,
-			Brand:        brand,
-			Weight:       weight,
-			SlugProduct:  slug,
-			ImageProduct: image,
-			Barcode:      barcode,
+			Brand:        &brand,
+			Weight:       &weight,
+			SlugProduct:  &slug,
+			ImageProduct: &image,
+			Barcode:      &barcode,
 		})
 
 		if err != nil {

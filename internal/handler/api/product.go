@@ -2,11 +2,11 @@ package api
 
 import (
 	"net/http"
+	product_cache "pointofsale/internal/cache/api/product"
 	"pointofsale/internal/domain/requests"
-	"pointofsale/internal/domain/response"
-	response_api "pointofsale/internal/mapper/response/api"
+	response_api "pointofsale/internal/mapper"
 	"pointofsale/internal/pb"
-	"pointofsale/pkg/errors/product_errors"
+	"pointofsale/pkg/errors"
 	"pointofsale/pkg/logger"
 	"pointofsale/pkg/upload_image"
 	"strconv"
@@ -14,6 +14,8 @@ import (
 
 	"github.com/labstack/echo/v4"
 	"go.uber.org/zap"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/emptypb"
 )
 
@@ -22,6 +24,8 @@ type productHandleApi struct {
 	logger       logger.LoggerInterface
 	mapping      response_api.ProductResponseMapper
 	upload_image upload_image.ImageUploads
+	apiHandler   errors.ApiHandler
+	cache        product_cache.ProductMencache
 }
 
 func NewHandlerProduct(
@@ -30,33 +34,37 @@ func NewHandlerProduct(
 	logger logger.LoggerInterface,
 	mapping response_api.ProductResponseMapper,
 	upload_image upload_image.ImageUploads,
+	apiHandler errors.ApiHandler,
+	cache product_cache.ProductMencache,
 ) *productHandleApi {
 	productHandler := &productHandleApi{
 		client:       client,
 		logger:       logger,
 		mapping:      mapping,
 		upload_image: upload_image,
+		apiHandler:   apiHandler,
+		cache:        cache,
 	}
 
-	routercategory := router.Group("/api/product")
+	routerProduct := router.Group("/api/product")
 
-	routercategory.GET("", productHandler.FindAllProduct)
-	routercategory.GET("/:id", productHandler.FindById)
-	routercategory.GET("/merchant/:merchant_id", productHandler.FindByMerchant)
-	routercategory.GET("/category/:category_name", productHandler.FindByCategory)
+	routerProduct.GET("", productHandler.FindAllProduct)
+	routerProduct.GET("/:id", productHandler.FindById)
+	routerProduct.GET("/merchant/:merchant_id", productHandler.FindByMerchant)
+	routerProduct.GET("/category/:category_name", productHandler.FindByCategory)
 
-	routercategory.GET("/active", productHandler.FindByActive)
-	routercategory.GET("/trashed", productHandler.FindByTrashed)
+	routerProduct.GET("/active", productHandler.FindByActive)
+	routerProduct.GET("/trashed", productHandler.FindByTrashed)
 
-	routercategory.POST("/create", productHandler.Create)
-	routercategory.POST("/update/:id", productHandler.Update)
+	routerProduct.POST("/create", apiHandler.Handle("create", productHandler.Create))
+	routerProduct.POST("/update/:id", apiHandler.Handle("update", productHandler.Update))
 
-	routercategory.POST("/trashed/:id", productHandler.TrashedProduct)
-	routercategory.POST("/restore/:id", productHandler.RestoreProduct)
-	routercategory.DELETE("/permanent/:id", productHandler.DeleteProductPermanent)
+	routerProduct.POST("/trashed/:id", apiHandler.Handle("trashed", productHandler.TrashedProduct))
+	routerProduct.POST("/restore/:id", apiHandler.Handle("restore", productHandler.RestoreProduct))
+	routerProduct.DELETE("/permanent/:id", apiHandler.Handle("delete", productHandler.DeleteProductPermanent))
 
-	routercategory.POST("/restore/all", productHandler.RestoreAllProduct)
-	routercategory.POST("/permanent/all", productHandler.DeleteAllProductPermanent)
+	routerProduct.POST("/restore/all", apiHandler.Handle("restore-all", productHandler.RestoreAllProduct))
+	routerProduct.POST("/permanent/all", apiHandler.Handle("delete-all", productHandler.DeleteAllProductPermanent))
 
 	return productHandler
 }
@@ -88,20 +96,32 @@ func (h *productHandleApi) FindAllProduct(c echo.Context) error {
 
 	ctx := c.Request().Context()
 
-	req := &pb.FindAllProductRequest{
+	req := &requests.FindAllProducts{
+		Page:     page,
+		PageSize: pageSize,
+		Search:   search,
+	}
+
+	if cached, found := h.cache.GetCachedProducts(ctx, req); found {
+		return c.JSON(http.StatusOK, cached)
+	}
+
+	grpcReq := &pb.FindAllProductRequest{
 		Page:     int32(page),
 		PageSize: int32(pageSize),
 		Search:   search,
 	}
 
-	res, err := h.client.FindAll(ctx, req)
+	res, err := h.client.FindAll(ctx, grpcReq)
 
 	if err != nil {
 		h.logger.Debug("Failed to retrieve product data", zap.Error(err))
-		return product_errors.ErrApiProductFailedFindAll(c)
+		return h.handleGrpcError(err, "FindAllProduct")
 	}
 
 	so := h.mapping.ToApiResponsePaginationProduct(res)
+
+	h.cache.SetCachedProducts(ctx, req, so)
 
 	return c.JSON(http.StatusOK, so)
 }
@@ -127,7 +147,7 @@ func (h *productHandleApi) FindByMerchant(c echo.Context) error {
 	merchantID, err := strconv.Atoi(c.Param("merchant_id"))
 	if err != nil || merchantID <= 0 {
 		h.logger.Debug("Invalid merchant ID", zap.Error(err))
-		return product_errors.ErrApiProductInvalidMerchantId(c)
+		return errors.NewBadRequestError("Invalid merchant ID")
 	}
 
 	page, err := strconv.Atoi(c.QueryParam("page"))
@@ -140,48 +160,63 @@ func (h *productHandleApi) FindByMerchant(c echo.Context) error {
 		pageSize = 12
 	}
 
-	req := &pb.FindAllProductMerchantRequest{
-		MerchantId: int32(merchantID),
-		Page:       int32(page),
-		PageSize:   int32(pageSize),
+	req := &requests.ProductByMerchantRequest{
+		MerchantID: merchantID,
+		Page:       page,
+		PageSize:   pageSize,
 		Search:     strings.TrimSpace(c.QueryParam("search")),
 	}
 
 	if c.QueryParam("category_id") != "" {
 		if id, err := strconv.Atoi(c.QueryParam("category_id")); err == nil && id > 0 {
-			categoryID := int32(id)
-			req.CategoryId = categoryID
+			req.CategoryID = id
 		}
 	}
 
 	if minPriceStr := c.QueryParam("min_price"); minPriceStr != "" {
 		if price, err := strconv.Atoi(minPriceStr); err == nil && price >= 0 {
-			minPrice := int32(price)
-			req.MinPrice = minPrice
+			req.MinPrice = price
 		}
 	}
 
 	if maxPriceStr := c.QueryParam("max_price"); maxPriceStr != "" {
 		if price, err := strconv.Atoi(maxPriceStr); err == nil && price >= 0 {
-			maxPrice := int32(price)
-			req.MaxPrice = maxPrice
+			req.MaxPrice = price
 		}
 	}
-
 	ctx := c.Request().Context()
-	res, err := h.client.FindByMerchant(ctx, req)
+
+	if cached, found := h.cache.GetCachedProductsByMerchant(ctx, req); found {
+		return c.JSON(http.StatusOK, cached)
+	}
+
+	grpcReq := &pb.FindAllProductMerchantRequest{
+		MerchantId: int32(merchantID),
+		Page:       int32(page),
+		PageSize:   int32(pageSize),
+		Search:     req.Search,
+		CategoryId: int32(req.CategoryID),
+		MinPrice:   int32(req.MinPrice),
+		MaxPrice:   int32(req.MaxPrice),
+	}
+
+	res, err := h.client.FindByMerchant(ctx, grpcReq)
 
 	if err != nil {
 		h.logger.Error("Failed to retrieve product data by merchant",
 			zap.Error(err),
 			zap.Int("merchant_id", merchantID),
-			zap.Any("request", req),
+			zap.Any("request", grpcReq),
 		)
 
-		return product_errors.ErrApiProductFailedFindByMerchant(c)
+		return h.handleGrpcError(err, "FindByMerchant")
 	}
 
-	return c.JSON(http.StatusOK, h.mapping.ToApiResponsePaginationProduct(res))
+	so := h.mapping.ToApiResponsePaginationProduct(res)
+
+	h.cache.SetCachedProductsByMerchant(ctx, req, so)
+
+	return c.JSON(http.StatusOK, so)
 }
 
 // @Security Bearer
@@ -200,7 +235,7 @@ func (h *productHandleApi) FindByMerchant(c echo.Context) error {
 func (h *productHandleApi) FindByCategory(c echo.Context) error {
 	categoryName := c.Param("category_name")
 	if categoryName == "" {
-		return product_errors.ErrApiProductInvalidCategoryName(c)
+		return errors.NewBadRequestError("category name is required")
 	}
 
 	page, err := strconv.Atoi(c.QueryParam("page"))
@@ -217,20 +252,34 @@ func (h *productHandleApi) FindByCategory(c echo.Context) error {
 
 	ctx := c.Request().Context()
 
-	req := &pb.FindAllProductCategoryRequest{
+	req := &requests.ProductByCategoryRequest{
+		CategoryName: categoryName,
+		Page:         page,
+		PageSize:     pageSize,
+		Search:       search,
+	}
+
+	if cached, found := h.cache.GetCachedProductsByCategory(ctx, req); found {
+		return c.JSON(http.StatusOK, cached)
+	}
+
+	grpcReq := &pb.FindAllProductCategoryRequest{
 		CategoryName: categoryName,
 		Page:         int32(page),
 		PageSize:     int32(pageSize),
 		Search:       search,
 	}
 
-	res, err := h.client.FindByCategory(ctx, req)
+	res, err := h.client.FindByCategory(ctx, grpcReq)
 	if err != nil {
 		h.logger.Debug("Failed to retrieve product data by category", zap.Error(err))
-		return product_errors.ErrApiProductFailedFindByCategory(c)
+		return h.handleGrpcError(err, "FindByCategory")
 	}
 
 	so := h.mapping.ToApiResponsePaginationProduct(res)
+
+	h.cache.SetCachedProductsByCategory(ctx, req, so)
+
 	return c.JSON(http.StatusOK, so)
 }
 
@@ -250,23 +299,29 @@ func (h *productHandleApi) FindById(c echo.Context) error {
 
 	if err != nil {
 		h.logger.Debug("Invalid product ID", zap.Error(err))
-		return product_errors.ErrApiProductInvalidId(c)
+		return errors.NewBadRequestError("Invalid product ID")
 	}
 
 	ctx := c.Request().Context()
 
-	req := &pb.FindByIdProductRequest{
+	if cached, found := h.cache.GetCachedProduct(ctx, id); found {
+		return c.JSON(http.StatusOK, cached)
+	}
+
+	grpcReq := &pb.FindByIdProductRequest{
 		Id: int32(id),
 	}
 
-	res, err := h.client.FindById(ctx, req)
+	res, err := h.client.FindById(ctx, grpcReq)
 
 	if err != nil {
 		h.logger.Debug("Failed to retrieve product data", zap.Error(err))
-		return product_errors.ErrApiProductFailedFindById(c)
+		return h.handleGrpcError(err, "FindById")
 	}
 
 	so := h.mapping.ToApiResponseProduct(res)
+
+	h.cache.SetCachedProduct(ctx, so)
 
 	return c.JSON(http.StatusOK, so)
 }
@@ -298,20 +353,32 @@ func (h *productHandleApi) FindByActive(c echo.Context) error {
 
 	ctx := c.Request().Context()
 
-	req := &pb.FindAllProductRequest{
+	req := &requests.FindAllProducts{
+		Page:     page,
+		PageSize: pageSize,
+		Search:   search,
+	}
+
+	if cached, found := h.cache.GetCachedProductActive(ctx, req); found {
+		return c.JSON(http.StatusOK, cached)
+	}
+
+	grpcReq := &pb.FindAllProductRequest{
 		Page:     int32(page),
 		PageSize: int32(pageSize),
 		Search:   search,
 	}
 
-	res, err := h.client.FindByActive(ctx, req)
+	res, err := h.client.FindByActive(ctx, grpcReq)
 
 	if err != nil {
 		h.logger.Debug("Failed to retrieve product data", zap.Error(err))
-		return product_errors.ErrApiProductFailedFindByActive(c)
+		return h.handleGrpcError(err, "FindByActive")
 	}
 
 	so := h.mapping.ToApiResponsePaginationProductDeleteAt(res)
+
+	h.cache.SetCachedProductActive(ctx, req, so)
 
 	return c.JSON(http.StatusOK, so)
 }
@@ -343,20 +410,32 @@ func (h *productHandleApi) FindByTrashed(c echo.Context) error {
 
 	ctx := c.Request().Context()
 
-	req := &pb.FindAllProductRequest{
+	req := &requests.FindAllProducts{
+		Page:     page,
+		PageSize: pageSize,
+		Search:   search,
+	}
+
+	if cached, found := h.cache.GetCachedProductTrashed(ctx, req); found {
+		return c.JSON(http.StatusOK, cached)
+	}
+
+	grpcReq := &pb.FindAllProductRequest{
 		Page:     int32(page),
 		PageSize: int32(pageSize),
 		Search:   search,
 	}
 
-	res, err := h.client.FindByTrashed(ctx, req)
+	res, err := h.client.FindByTrashed(ctx, grpcReq)
 
 	if err != nil {
 		h.logger.Debug("Failed to retrieve product data", zap.Error(err))
-		return product_errors.ErrApiProductFailedFindByTrashed(c)
+		return h.handleGrpcError(err, "FindByTrashed")
 	}
 
 	so := h.mapping.ToApiResponsePaginationProductDeleteAt(res)
+
+	h.cache.SetCachedProductTrashed(ctx, req, so)
 
 	return c.JSON(http.StatusOK, so)
 }
@@ -386,11 +465,11 @@ func (h *productHandleApi) FindByTrashed(c echo.Context) error {
 func (h *productHandleApi) Create(c echo.Context) error {
 	formData, err := h.parseProductForm(c, true)
 	if err != nil {
-		return product_errors.ErrApiProductFailedCreate(c)
+		return h.handleGrpcError(err, "Create")
 	}
 
 	ctx := c.Request().Context()
-	req := &pb.CreateProductRequest{
+	grpcReq := &pb.CreateProductRequest{
 		MerchantId:   int32(formData.MerchantID),
 		CategoryId:   int32(formData.CategoryID),
 		Name:         formData.Name,
@@ -402,22 +481,25 @@ func (h *productHandleApi) Create(c echo.Context) error {
 		ImageProduct: formData.ImagePath,
 	}
 
-	res, err := h.client.Create(ctx, req)
+	res, err := h.client.Create(ctx, grpcReq)
 	if err != nil {
 		if formData.ImagePath != "" {
 			h.upload_image.CleanupImageOnFailure(formData.ImagePath)
-
 		}
 
 		h.logger.Error("Product creation failed",
 			zap.Error(err),
-			zap.Any("request", req),
+			zap.Any("request", grpcReq),
 		)
 
-		return product_errors.ErrApiProductFailedCreate(c)
+		return h.handleGrpcError(err, "Create")
 	}
 
 	so := h.mapping.ToApiResponseProduct(res)
+
+	// Invalidate cache for related data
+	h.cache.DeleteCachedProduct(ctx, int(res.Data.Id))
+
 	return c.JSON(http.StatusCreated, so)
 }
 
@@ -447,16 +529,16 @@ func (h *productHandleApi) Create(c echo.Context) error {
 func (h *productHandleApi) Update(c echo.Context) error {
 	productID, err := strconv.Atoi(c.Param("id"))
 	if err != nil {
-		return product_errors.ErrApiProductInvalidId(c)
+		return errors.NewBadRequestError("Invalid product ID")
 	}
 
 	formData, err := h.parseProductForm(c, false)
 	if err != nil {
-		return product_errors.ErrApiProductFailedUpdate(c)
+		return h.handleGrpcError(err, "Update")
 	}
 
 	ctx := c.Request().Context()
-	req := &pb.UpdateProductRequest{
+	grpcReq := &pb.UpdateProductRequest{
 		ProductId:    int32(productID),
 		MerchantId:   int32(formData.MerchantID),
 		CategoryId:   int32(formData.CategoryID),
@@ -469,7 +551,7 @@ func (h *productHandleApi) Update(c echo.Context) error {
 		ImageProduct: formData.ImagePath,
 	}
 
-	res, err := h.client.Update(ctx, req)
+	res, err := h.client.Update(ctx, grpcReq)
 	if err != nil {
 		if formData.ImagePath != "" {
 			h.upload_image.CleanupImageOnFailure(formData.ImagePath)
@@ -477,13 +559,17 @@ func (h *productHandleApi) Update(c echo.Context) error {
 
 		h.logger.Error("Product update failed",
 			zap.Error(err),
-			zap.Any("request", req),
+			zap.Any("request", grpcReq),
 		)
 
-		return product_errors.ErrApiProductFailedUpdate(c)
+		return h.handleGrpcError(err, "Update")
 	}
 
 	so := h.mapping.ToApiResponseProduct(res)
+
+	// Invalidate cache for related data
+	h.cache.DeleteCachedProduct(ctx, productID)
+
 	return c.JSON(http.StatusOK, so)
 }
 
@@ -504,23 +590,26 @@ func (h *productHandleApi) TrashedProduct(c echo.Context) error {
 
 	if err != nil {
 		h.logger.Debug("Invalid product ID format", zap.Error(err))
-		return product_errors.ErrApiProductInvalidId(c)
+		return errors.NewBadRequestError("Invalid product ID")
 	}
 
 	ctx := c.Request().Context()
 
-	req := &pb.FindByIdProductRequest{
+	grpcReq := &pb.FindByIdProductRequest{
 		Id: int32(id),
 	}
 
-	res, err := h.client.TrashedProduct(ctx, req)
+	res, err := h.client.TrashedProduct(ctx, grpcReq)
 
 	if err != nil {
 		h.logger.Error("Failed to archive product", zap.Error(err))
-		return product_errors.ErrApiProductFailedFindByActive(c)
+		return h.handleGrpcError(err, "TrashedProduct")
 	}
 
 	so := h.mapping.ToApiResponsesProductDeleteAt(res)
+
+	// Invalidate cache for related data
+	h.cache.DeleteCachedProduct(ctx, id)
 
 	return c.JSON(http.StatusOK, so)
 }
@@ -542,23 +631,26 @@ func (h *productHandleApi) RestoreProduct(c echo.Context) error {
 
 	if err != nil {
 		h.logger.Debug("Invalid product ID format", zap.Error(err))
-		return product_errors.ErrApiProductInvalidId(c)
+		return errors.NewBadRequestError("Invalid product ID")
 	}
 
 	ctx := c.Request().Context()
 
-	req := &pb.FindByIdProductRequest{
+	grpcReq := &pb.FindByIdProductRequest{
 		Id: int32(id),
 	}
 
-	res, err := h.client.RestoreProduct(ctx, req)
+	res, err := h.client.RestoreProduct(ctx, grpcReq)
 
 	if err != nil {
 		h.logger.Error("Failed to restore product", zap.Error(err))
-		return product_errors.ErrApiProductFailedRestore(c)
+		return h.handleGrpcError(err, "RestoreProduct")
 	}
 
 	so := h.mapping.ToApiResponsesProductDeleteAt(res)
+
+	// Invalidate cache for related data
+	h.cache.DeleteCachedProduct(ctx, id)
 
 	return c.JSON(http.StatusOK, so)
 }
@@ -580,23 +672,26 @@ func (h *productHandleApi) DeleteProductPermanent(c echo.Context) error {
 
 	if err != nil {
 		h.logger.Debug("Invalid product ID format", zap.Error(err))
-		return product_errors.ErrApiProductInvalidId(c)
+		return errors.NewBadRequestError("Invalid product ID")
 	}
 
 	ctx := c.Request().Context()
 
-	req := &pb.FindByIdProductRequest{
+	grpcReq := &pb.FindByIdProductRequest{
 		Id: int32(id),
 	}
 
-	res, err := h.client.DeleteProductPermanent(ctx, req)
+	res, err := h.client.DeleteProductPermanent(ctx, grpcReq)
 
 	if err != nil {
 		h.logger.Error("Failed to permanently delete product", zap.Error(err))
-		return product_errors.ErrApiProductFailedDeletePermanent(c)
+		return h.handleGrpcError(err, "DeleteProductPermanent")
 	}
 
 	so := h.mapping.ToApiResponseProductDelete(res)
+
+	// Invalidate cache for related data
+	h.cache.DeleteCachedProduct(ctx, id)
 
 	return c.JSON(http.StatusOK, so)
 }
@@ -618,7 +713,7 @@ func (h *productHandleApi) RestoreAllProduct(c echo.Context) error {
 
 	if err != nil {
 		h.logger.Error("Bulk products restoration failed", zap.Error(err))
-		return product_errors.ErrApiProductFailedRestoreAll(c)
+		return h.handleGrpcError(err, "RestoreAllProduct")
 	}
 
 	so := h.mapping.ToApiResponseProductAll(res)
@@ -645,7 +740,7 @@ func (h *productHandleApi) DeleteAllProductPermanent(c echo.Context) error {
 
 	if err != nil {
 		h.logger.Error("Bulk products deletion failed", zap.Error(err))
-		return product_errors.ErrApiProductFailedDeleteAllPermanent(c)
+		return h.handleGrpcError(err, "DeleteAllProductPermanent")
 	}
 
 	so := h.mapping.ToApiResponseProductAll(res)
@@ -659,31 +754,24 @@ func (h *productHandleApi) parseProductForm(c echo.Context, requireImage bool) (
 	var formData requests.ProductFormData
 	var err error
 
+	if h.upload_image == nil {
+		h.logger.Error("upload_image not initialized")
+		return formData, errors.NewInternalError(nil).WithMessage("internal server error")
+	}
+
 	formData.MerchantID, err = strconv.Atoi(c.FormValue("merchant_id"))
 	if err != nil || formData.MerchantID <= 0 {
-		return formData, c.JSON(http.StatusBadRequest, response.ErrorResponse{
-			Status:  "invalid_merchant",
-			Message: "Please provide a valid merchant ID",
-			Code:    http.StatusBadRequest,
-		})
+		return formData, errors.NewBadRequestError("Please provide a valid merchant ID")
 	}
 
 	formData.CategoryID, err = strconv.Atoi(c.FormValue("category_id"))
 	if err != nil || formData.CategoryID <= 0 {
-		return formData, c.JSON(http.StatusBadRequest, response.ErrorResponse{
-			Status:  "invalid_category",
-			Message: "Please provide a valid category ID",
-			Code:    http.StatusBadRequest,
-		})
+		return formData, errors.NewBadRequestError("Please provide a valid category ID")
 	}
 
 	formData.Name = strings.TrimSpace(c.FormValue("name"))
 	if formData.Name == "" {
-		return formData, c.JSON(http.StatusBadRequest, response.ErrorResponse{
-			Status:  "validation_error",
-			Message: "Product name is required",
-			Code:    http.StatusBadRequest,
-		})
+		return formData, errors.NewBadRequestError("Product name is required")
 	}
 
 	formData.Description = strings.TrimSpace(c.FormValue("description"))
@@ -691,40 +779,24 @@ func (h *productHandleApi) parseProductForm(c echo.Context, requireImage bool) (
 
 	formData.Price, err = strconv.Atoi(c.FormValue("price"))
 	if err != nil || formData.Price <= 0 {
-		return formData, c.JSON(http.StatusBadRequest, response.ErrorResponse{
-			Status:  "invalid_price",
-			Message: "Please provide a valid positive price",
-			Code:    http.StatusBadRequest,
-		})
+		return formData, errors.NewBadRequestError("Please provide a valid positive price")
 	}
 
 	formData.CountInStock, err = strconv.Atoi(c.FormValue("count_in_stock"))
 	if err != nil || formData.CountInStock < 0 {
-		return formData, c.JSON(http.StatusBadRequest, response.ErrorResponse{
-			Status:  "invalid_stock",
-			Message: "Please provide a valid stock count (zero or positive)",
-			Code:    http.StatusBadRequest,
-		})
+		return formData, errors.NewBadRequestError("Please provide a valid stock count (zero or positive)")
 	}
 
 	formData.Weight, err = strconv.Atoi(c.FormValue("weight"))
 	if err != nil || formData.Weight <= 0 {
-		return formData, c.JSON(http.StatusBadRequest, response.ErrorResponse{
-			Status:  "invalid_weight",
-			Message: "Please provide a valid positive weight",
-			Code:    http.StatusBadRequest,
-		})
+		return formData, errors.NewBadRequestError("Please provide a valid positive weight")
 	}
 
 	file, err := c.FormFile("image_product")
 	if err != nil {
 		if requireImage {
 			h.logger.Debug("Image upload error", zap.Error(err))
-			return formData, c.JSON(http.StatusBadRequest, response.ErrorResponse{
-				Status:  "image_required",
-				Message: "A product image is required",
-				Code:    http.StatusBadRequest,
-			})
+			return formData, errors.NewBadRequestError("A product image is required")
 		}
 
 		return formData, nil
@@ -737,4 +809,40 @@ func (h *productHandleApi) parseProductForm(c echo.Context, requireImage bool) (
 
 	formData.ImagePath = imagePath
 	return formData, nil
+}
+
+func (h *productHandleApi) handleGrpcError(err error, operation string) *errors.AppError {
+	st, ok := status.FromError(err)
+	if !ok {
+		return errors.NewInternalError(err).WithMessage("Failed to " + operation)
+	}
+
+	switch st.Code() {
+	case codes.NotFound:
+		return errors.NewNotFoundError("Product").WithInternal(err)
+
+	case codes.AlreadyExists:
+		return errors.NewConflictError("Product already exists").WithInternal(err)
+
+	case codes.InvalidArgument:
+		return errors.NewBadRequestError(st.Message()).WithInternal(err)
+
+	case codes.PermissionDenied:
+		return errors.ErrForbidden.WithInternal(err)
+
+	case codes.Unauthenticated:
+		return errors.ErrUnauthorized.WithInternal(err)
+
+	case codes.ResourceExhausted:
+		return errors.ErrTooManyRequests.WithInternal(err)
+
+	case codes.Unavailable:
+		return errors.NewServiceUnavailableError("Product service").WithInternal(err)
+
+	case codes.DeadlineExceeded:
+		return errors.ErrTimeout.WithInternal(err)
+
+	default:
+		return errors.NewInternalError(err).WithMessage("Failed to " + operation)
+	}
 }
