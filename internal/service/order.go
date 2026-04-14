@@ -985,19 +985,19 @@ func (s *orderService) TrashedOrder(ctx context.Context, order_id int) (*db.Orde
 		end(status)
 	}()
 
-	_, err := s.orderRepository.FindByIdTrashed(ctx, order_id)
+	_, err := s.orderRepository.FindById(ctx, order_id)
 	if err != nil {
 		status = "error"
 		return errorhandler.HandleError[*db.Order](
 			s.logger,
-			order_errors.ErrFailedTrashOrder,
+			order_errors.ErrFailedFindOrderById,
 			method,
 			span,
 			zap.Int("order_id", order_id),
 		)
 	}
 
-	orderItems, err := s.orderItemRepository.FindOrderItemByOrderTrashed(ctx, order_id)
+	orderItems, err := s.orderItemRepository.FindOrderItemByOrder(ctx, order_id)
 	if err != nil {
 		status = "error"
 		return errorhandler.HandleError[*db.Order](
@@ -1028,7 +1028,7 @@ func (s *orderService) TrashedOrder(ctx context.Context, order_id int) (*db.Orde
 		status = "error"
 		return errorhandler.HandleError[*db.Order](
 			s.logger,
-			order_errors.ErrFailedCreateOrder,
+			order_errors.ErrFailedTrashOrder,
 			method,
 			span,
 			zap.Int("order_id", order_id),
@@ -1052,7 +1052,7 @@ func (s *orderService) RestoreOrder(ctx context.Context, order_id int) (*db.Orde
 		end(status)
 	}()
 
-	orderItems, err := s.orderItemRepository.FindOrderItemByOrder(ctx, order_id)
+	orderItems, err := s.orderItemRepository.FindOrderItemByOrderTrashed(ctx, order_id)
 	if err != nil {
 		status = "error"
 		return errorhandler.HandleError[*db.Order](

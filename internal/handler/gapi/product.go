@@ -136,9 +136,9 @@ func (s *productHandleGrpc) FindByMerchant(ctx context.Context, request *pb.Find
 	for _, product := range products {
 		productResponses = append(productResponses, &pb.ProductResponse{
 			Id:           int32(product.ProductID),
-			MerchantId:   product.MerchantID,
+			MerchantId:   int32(product.MerchantID),
 			CategoryId:   int32(product.CategoryID),
-			Name:         product.CategoryName,
+			Name:         product.Name,
 			Description:  *product.Description,
 			Price:        int32(product.Price),
 			CountInStock: int32(product.CountInStock),
@@ -294,9 +294,9 @@ func (s *productHandleGrpc) FindByActive(ctx context.Context, request *pb.FindAl
 
 	var productResponses []*pb.ProductResponseDeleteAt
 	for _, product := range products {
-		var deletedAt string
+		var deletedAt *wrapperspb.StringValue
 		if product.DeletedAt.Valid {
-			deletedAt = product.DeletedAt.Time.String()
+			deletedAt = &wrapperspb.StringValue{Value: product.DeletedAt.Time.String()}
 		}
 
 		productResponses = append(productResponses, &pb.ProductResponseDeleteAt{
@@ -314,7 +314,7 @@ func (s *productHandleGrpc) FindByActive(ctx context.Context, request *pb.FindAl
 			Barcode:      *product.Barcode,
 			CreatedAt:    product.CreatedAt.Time.String(),
 			UpdatedAt:    product.UpdatedAt.Time.String(),
-			DeletedAt:    &wrapperspb.StringValue{Value: deletedAt},
+			DeletedAt:    deletedAt,
 		})
 	}
 
@@ -360,9 +360,9 @@ func (s *productHandleGrpc) FindByTrashed(ctx context.Context, request *pb.FindA
 
 	var productResponses []*pb.ProductResponseDeleteAt
 	for _, product := range products {
-		var deletedAt string
+		var deletedAt *wrapperspb.StringValue
 		if product.DeletedAt.Valid {
-			deletedAt = product.DeletedAt.Time.String()
+			deletedAt = &wrapperspb.StringValue{Value: product.DeletedAt.Time.String()}
 		}
 
 		productResponses = append(productResponses, &pb.ProductResponseDeleteAt{
@@ -380,7 +380,7 @@ func (s *productHandleGrpc) FindByTrashed(ctx context.Context, request *pb.FindA
 			Barcode:      *product.Barcode,
 			CreatedAt:    product.CreatedAt.Time.String(),
 			UpdatedAt:    product.UpdatedAt.Time.String(),
-			DeletedAt:    &wrapperspb.StringValue{Value: deletedAt},
+			DeletedAt:    deletedAt,
 		})
 	}
 
@@ -499,9 +499,9 @@ func (s *productHandleGrpc) TrashedProduct(ctx context.Context, request *pb.Find
 		return nil, errors.ToGrpcError(err)
 	}
 
-	var deletedAt string
+	var deletedAt *wrapperspb.StringValue
 	if product.DeletedAt.Valid {
-		deletedAt = product.DeletedAt.Time.String()
+		deletedAt = &wrapperspb.StringValue{Value: product.DeletedAt.Time.String()}
 	}
 
 	return &pb.ApiResponseProductDeleteAt{
@@ -522,7 +522,7 @@ func (s *productHandleGrpc) TrashedProduct(ctx context.Context, request *pb.Find
 			Barcode:      *product.Barcode,
 			CreatedAt:    product.CreatedAt.Time.String(),
 			UpdatedAt:    product.UpdatedAt.Time.String(),
-			DeletedAt:    &wrapperspb.StringValue{Value: deletedAt},
+			DeletedAt:    deletedAt,
 		},
 	}, nil
 }
@@ -539,9 +539,9 @@ func (s *productHandleGrpc) RestoreProduct(ctx context.Context, request *pb.Find
 		return nil, errors.ToGrpcError(err)
 	}
 
-	var deletedAt string
+	var deletedAt *wrapperspb.StringValue
 	if product.DeletedAt.Valid {
-		deletedAt = product.DeletedAt.Time.String()
+		deletedAt = &wrapperspb.StringValue{Value: product.DeletedAt.Time.String()}
 	}
 
 	return &pb.ApiResponseProductDeleteAt{
@@ -562,7 +562,7 @@ func (s *productHandleGrpc) RestoreProduct(ctx context.Context, request *pb.Find
 			Barcode:      *product.Barcode,
 			CreatedAt:    product.CreatedAt.Time.String(),
 			UpdatedAt:    product.UpdatedAt.Time.String(),
-			DeletedAt:    &wrapperspb.StringValue{Value: deletedAt},
+			DeletedAt:    deletedAt,
 		},
 	}, nil
 }

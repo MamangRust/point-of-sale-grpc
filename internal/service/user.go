@@ -2,7 +2,6 @@ package service
 
 import (
 	"context"
-	"database/sql"
 	"errors"
 	user_cache "pointofsale/internal/cache/user"
 	"pointofsale/internal/domain/requests"
@@ -279,7 +278,7 @@ func (s *userService) CreateUser(ctx context.Context, request *requests.CreateUs
 
 	existingUser, err := s.userRepository.FindByEmail(ctx, request.Email)
 	if err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
+		if errors.Is(err, user_errors.ErrUserNotFound) {
 			s.logger.Debug("Email is available, proceeding to create user", zap.String("email", request.Email))
 		} else {
 			status = "error"
@@ -367,9 +366,19 @@ func (s *userService) UpdateUser(
 	}
 
 	updateReq := &requests.UpdateUserRequest{
-		UserID:   request.UserID,
-		Email:    existingUser.Email,
-		Password: "",
+		UserID:    request.UserID,
+		FirstName: existingUser.Firstname,
+		LastName:  existingUser.Lastname,
+		Email:     existingUser.Email,
+		Password:  "",
+	}
+
+	if request.FirstName != "" {
+		updateReq.FirstName = request.FirstName
+	}
+
+	if request.LastName != "" {
+		updateReq.LastName = request.LastName
 	}
 
 	if request.Email != "" && request.Email != existingUser.Email {

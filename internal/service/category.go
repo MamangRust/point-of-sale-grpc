@@ -28,7 +28,7 @@ type CategoryServiceDeps struct {
 	CategoryRepo  repository.CategoryRepository
 	Logger        logger.LoggerInterface
 	Observability observability.TraceLoggerObservability
-	cache         category_cache.CategoryMencache
+	Cache         category_cache.CategoryMencache
 }
 
 func NewCategoryService(deps CategoryServiceDeps) *categoryService {
@@ -36,7 +36,7 @@ func NewCategoryService(deps CategoryServiceDeps) *categoryService {
 		categoryRepository: deps.CategoryRepo,
 		logger:             deps.Logger,
 		observability:      deps.Observability,
-		cache:              deps.cache,
+		cache:              deps.Cache,
 	}
 }
 
@@ -753,17 +753,6 @@ func (s *categoryService) CreateCategory(ctx context.Context, req *requests.Crea
 	slug := utils.GenerateSlug(req.Name)
 	req.SlugCategory = &slug
 
-	_, err := s.categoryRepository.FindByName(ctx, req.Name)
-	if err != nil {
-		status = "error"
-		return errorhandler.HandleError[*db.CreateCategoryRow](
-			s.logger,
-			category_errors.ErrFailedFindCategoryByName,
-			method,
-			span,
-			zap.String("name", req.Name))
-	}
-
 	category, err := s.categoryRepository.CreateCategory(ctx, req)
 	if err != nil {
 		status = "error"
@@ -797,21 +786,6 @@ func (s *categoryService) UpdateCategory(ctx context.Context, req *requests.Upda
 
 	slug := utils.GenerateSlug(req.Name)
 	req.SlugCategory = &slug
-
-	_, err := s.categoryRepository.FindByNameAndId(ctx, &requests.CategoryNameAndId{
-		Name:       req.Name,
-		CategoryID: *req.CategoryID,
-	})
-	if err != nil {
-		status = "error"
-		return errorhandler.HandleError[*db.UpdateCategoryRow](
-			s.logger,
-			category_errors.ErrFailedFindCategoryByName,
-			method,
-			span,
-			zap.Int("category_id", *req.CategoryID),
-			zap.String("name", req.Name))
-	}
 
 	category, err := s.categoryRepository.UpdateCategory(ctx, req)
 	if err != nil {

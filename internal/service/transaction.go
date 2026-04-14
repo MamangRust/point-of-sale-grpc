@@ -1199,7 +1199,7 @@ func (s *transactionService) UpdateTransaction(ctx context.Context, req *request
 			zap.Error(err))
 	}
 
-	if existingTx.PaymentStatus == "paid" || existingTx.PaymentStatus == "refunded" {
+	if existingTx.PaymentStatus == "paid" || existingTx.PaymentStatus == "success" || existingTx.PaymentStatus == "refunded" {
 		status = "error"
 		return errorhandler.HandleError[*db.UpdateTransactionRow](
 			s.logger,

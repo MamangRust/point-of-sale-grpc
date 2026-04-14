@@ -164,6 +164,7 @@ WITH
             p.product_id,
             p.merchant_id,
             p.category_id,
+            p.name,
             p.description,
             p.price,
             p.count_in_stock,
@@ -183,7 +184,7 @@ WITH
             AND (
                 p.name ILIKE '%' || COALESCE($2, '') || '%'
                 OR p.description ILIKE '%' || COALESCE($2, '') || '%'
-                OR $2 IS NULL
+                OR $2::TEXT IS NULL
             )
             AND (
                 c.category_id = NULLIF($3, 0)
@@ -249,19 +250,13 @@ WITH
             p.deleted_at IS NULL
             AND c.name = $1
             AND (
-                $2 IS NULL
+                $2::TEXT IS NULL
                 OR p.name ILIKE '%' || $2 || '%'
                 OR p.description ILIKE '%' || $2 || '%'
             )
             AND (
-                (
-                    $3 IS NULL
-                    OR p.price >= $3
-                )
-                AND (
-                    $4 IS NULL
-                    OR p.price <= $4
-                )
+                p.price >= COALESCE(NULLIF($3::INTEGER, 0), 0)
+                AND p.price <= COALESCE(NULLIF($4::INTEGER, 0), 999999999)
             )
     )
 SELECT (

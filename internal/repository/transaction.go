@@ -386,15 +386,23 @@ func (r *transactionRepository) FindByOrderId(ctx context.Context, order_id int)
 }
 
 func (r *transactionRepository) CreateTransaction(ctx context.Context, request *requests.CreateTransactionRequest) (*db.CreateTransactionRow, error) {
-	amount := int32(*request.ChangeAmount)
+	var changeAmount int32
+	if request.ChangeAmount != nil {
+		changeAmount = int32(*request.ChangeAmount)
+	}
+
+	var paymentStatus string = "completed"
+	if request.PaymentStatus != nil {
+		paymentStatus = *request.PaymentStatus
+	}
 
 	req := db.CreateTransactionParams{
 		OrderID:       int32(request.OrderID),
 		MerchantID:    int32(request.MerchantID),
 		PaymentMethod: request.PaymentMethod,
 		Amount:        int32(request.Amount),
-		ChangeAmount:  &amount,
-		PaymentStatus: *request.PaymentStatus,
+		ChangeAmount:  &changeAmount,
+		PaymentStatus: paymentStatus,
 	}
 
 	transaction, err := r.db.CreateTransaction(ctx, req)
@@ -407,16 +415,24 @@ func (r *transactionRepository) CreateTransaction(ctx context.Context, request *
 }
 
 func (r *transactionRepository) UpdateTransaction(ctx context.Context, request *requests.UpdateTransactionRequest) (*db.UpdateTransactionRow, error) {
-	amount := int32(*request.ChangeAmount)
+	var changeAmount int32
+	if request.ChangeAmount != nil {
+		changeAmount = int32(*request.ChangeAmount)
+	}
+
+	var paymentStatus string = "completed"
+	if request.PaymentStatus != nil {
+		paymentStatus = *request.PaymentStatus
+	}
 
 	req := db.UpdateTransactionParams{
 		TransactionID: int32(*request.TransactionID),
 		MerchantID:    int32(request.MerchantID),
 		PaymentMethod: request.PaymentMethod,
 		Amount:        int32(request.Amount),
-		ChangeAmount:  &amount,
+		ChangeAmount:  &changeAmount,
 		OrderID:       int32(request.OrderID),
-		PaymentStatus: *request.PaymentStatus,
+		PaymentStatus: paymentStatus,
 	}
 
 	res, err := r.db.UpdateTransaction(ctx, req)

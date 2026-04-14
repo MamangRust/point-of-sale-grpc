@@ -1,270 +1,220 @@
-# 💳 Proyek Point of Sale (POS) gRPC
+# Point of Sale (POS) System
 
-Proyek ini merupakan **implementasi backend untuk sistem Point of Sale (POS)** yang dirancang dengan arsitektur **monolitik terstruktur**. Meskipun monolitik, proyek ini disusun dengan modul-modul yang jelas sehingga setiap domain (misalnya pengguna, merchant, inventaris, dan transaksi) tetap mudah dikelola serta memungkinkan pengembangan lebih lanjut tanpa kehilangan keteraturan.
+This repository contains a structured monolithic backend implementation for a modern Point of Sale (POS) system. Designed for high performance and scalability, the architecture leverages gRPC for internal communication and a RESTful API gateway for client interactions.
 
-Tujuan utama dari proyek ini adalah untuk menghadirkan **fondasi kuat, aman, dan skalabel** bagi aplikasi kasir modern yang digunakan oleh berbagai jenis bisnis ritel. Dengan desain yang terstruktur, sistem mampu menangani kebutuhan kasir sehari-hari mulai dari pengelolaan pengguna, inventaris, hingga pencatatan transaksi penjualan, sambil tetap mudah di-deploy di berbagai lingkungan.
-
-Komunikasi antara klien dengan server dilakukan melalui **REST API**, sementara komunikasi internal antara API Gateway dan layanan utama menggunakan **gRPC** dengan **Protobuf**. Hal ini memastikan sistem memiliki **latensi rendah dan throughput tinggi**, sehingga tetap responsif meskipun menangani transaksi dalam jumlah besar. Data transaksi dan manajemen entitas disimpan dengan aman di dalam **PostgreSQL**, yang dikenal stabil dan handal untuk kebutuhan finansial serta operasional.
-
-### Lingkup dan Fungsi Utama
-
-* **🔐 Manajemen Pengguna & Peran**
-  Sistem mendukung otentikasi dan otorisasi dengan level akses berbeda (admin, pemilik merchant, kasir). Hal ini memastikan hanya pihak berwenang yang dapat melakukan aksi tertentu sesuai tanggung jawabnya.
-
-* **🏬 Manajemen Merchant**
-  Pemilik bisnis dapat mendaftarkan toko/merchant, mengatur informasi penting seperti nama toko, API key, hingga struktur operasional yang mereka miliki.
-
-* **👨‍💼 Manajemen Kasir**
-  Merchant dapat menambahkan akun kasir, memberikan akses sesuai kebutuhan, serta memantau aktivitas kasir mereka secara langsung.
-
-* **📦 Manajemen Inventaris**
-  Mendukung CRUD penuh terhadap produk dan kategori, mencakup detail stok, harga, deskripsi, hingga kategori produk. Dengan sistem ini, stok selalu up-to-date dan bisa dikontrol secara efisien.
-
-* **💳 Proses Transaksi**
-  Sistem menyediakan alur lengkap untuk membuat pesanan, menambahkan item ke keranjang, menghitung total pembayaran, hingga mencatat transaksi secara permanen di database.
-
-* **⚡ Komunikasi gRPC Internal**
-  API Gateway berkomunikasi dengan server utama melalui gRPC, yang memberikan performa tinggi serta mempermudah scaling di masa depan jika sistem ingin dipecah menjadi microservices.
-
-* **📖 Dokumentasi API Otomatis**
-  REST API secara otomatis terdokumentasi dengan Swagger (**Swago**), sehingga memudahkan developer maupun tim integrasi untuk memahami dan menguji endpoint yang tersedia.
-
-* **🐳 Kontainerisasi dengan Docker**
-  Sistem siap dijalankan pada lingkungan terisolasi dengan Docker & Docker Compose, membuat proses setup menjadi cepat, konsisten, dan mudah di-deploy di berbagai platform.
+The system provides a robust foundation for retail operations, managing complex workflows including user authorization, merchant management, inventory control, and transaction processing.
 
 ---
 
-## 🧰 Tech Teknologi
+## Architectural Overview
 
-- 🐹 **Go (Golang)** — Bahasa implementasi.
-- 🌐 **Echo** — Kerangka kerja web minimalis untuk membangun REST API.
-- 🪵 **Zap Logger** — Pencatatan terstruktur untuk aplikasi berkinerja tinggi.
-- 📦 **SQLC** — Menghasilkan kode Go yang aman dari tipe dari kueri SQL.
-- 🚀 **gRPC** — RPC berkinerja tinggi untuk komunikasi layanan internal.
-- 🧳 **Goose** — Alat migrasi untuk mengelola perubahan skema database.
-- 🐳 **Docker** — Platform kontainerisasi untuk lingkungan pengembangan yang konsisten.
-- 📄 **Swago** — Menghasilkan dokumentasi Swagger 2.0 untuk rute Echo.
-- 🔗 **Docker Compose** — Mengelola aplikasi Docker multi-kontainer.
+The system utilizes a structured monolith pattern where domain logic is clearly decoupled into manageable modules. This design ensures maintainability while providing a clear path toward microservices if required by organizational growth.
 
----
+### Technical Stack
 
+- **Primary Language**: Go (Golang)
+- **Web Framework**: Echo (REST API Gateway)
+- **Communication Layer**: gRPC with Protocol Buffers (Internal RPC)
+- **Database Architecture**: PostgreSQL
+- **Query Generation**: SQLC (Type-safe SQL)
+- **Schema Management**: Goose (Database Migrations)
+- **Observability Stack**: OpenTelemetry, Prometheus, Grafana, Loki
+- **Containerization**: Docker & Docker Compose
+- **API Documentation**: Swagger (via Swago)
 
-## Arsitektur
-Aplikasi ini dirancang dengan arsitektur berorientasi layanan monolith (monolith). REST API yang menghadap klien bertindak sebagai gateway, menerjemahkan permintaan HTTP menjadi panggilan gRPC ke server backend. Server ini berisi logika bisnis inti dan berkomunikasi dengan database PostgreSQL.
+### System Architecture Diagram
 
 ```mermaid
 graph TD
-    subgraph "Interaksi Pengguna"
-        Pengguna -- "HTTP/REST (JSON)" --> Klien[Klien/API Gateway]
+    classDef external fill:#f9f9f9,stroke:#333,stroke-width:2px;
+    classDef gateway fill:#e1f5fe,stroke:#01579b,stroke-width:2px;
+    classDef service fill:#f3e5f5,stroke:#4a148c,stroke-width:2px;
+    classDef storage fill:#e8f5e9,stroke:#1b5e20,stroke-width:2px;
+    classDef ops fill:#fff3e0,stroke:#e65100,stroke-width:2px;
+
+    User([User Client]) --> |HTTP/REST| API[API Gateway / Echo]
+    
+    subgraph "Application Core"
+        API --> |gRPC / Protobuf| GRPC[gRPC Backend Server]
+        GRPC --> |SQL / SQLC| DB[(PostgreSQL)]
     end
 
-    subgraph "Layanan Aplikasi"
-        Klien -- "gRPC (Protobuf)" --> Server[Server gRPC]
-        Server -- "SQL" --> Database[(PostgreSQL)]
+    subgraph "Observability & Ops"
+        GRPC -.-> |Otel/Metrics| PROM[Prometheus]
+        GRPC -.-> |Loki/Logs| LOKI[Loki]
+        PROM --> GRAF[Grafana]
+        LOKI --> GRAF
+        MIG[Migration Runner] --> |Goose| DB
     end
 
-    subgraph "Pengembangan & Operasi"
-        Migrasi[Proses Migrasi] -- "SQL" --> Database
-    end
-
-    style Klien fill:#d3869b,stroke:#3c3836,stroke-width:2px,color:#282828
-    style Server fill:#83a598,stroke:#3c3836,stroke-width:2px,color:#282828
-    style Database fill:#b8bb26,stroke:#3c3836,stroke-width:2px,color:#282828
-    style Migrasi fill:#fe8019,stroke:#3c3836,stroke-width:2px,color:#282828
+    class User external;
+    class API gateway;
+    class GRPC service;
+    class DB storage;
+    class PROM,LOKI,GRAF,MIG ops;
 ```
 
-## 🗃️ Diagram ERD (Entity-Relationship Diagram)
+---
 
-Diagram ini menunjukkan struktur dan hubungan antar tabel dalam database.
+## Domain Capabilities
+
+- **Identity & Access Management (IAM)**: Sophisticated RBAC (Role-Based Access Control) supporting multiple tiers including Administrators, Merchant Owners, and Cashiers.
+- **Merchant Ecosystem**: Centralized management for business entities, including operational configuration and API authentication.
+- **Inventory Lifecycle**: Comprehensive CRUD operations for products and categories, featuring real-time stock tracking and pricing management.
+- **Transactional Engine**: End-to-end sales workflow encompassing order initiation, line-item management, and permanent transaction recording.
+- **High-Performance RPC**: Optimized internal service communication using gRPC, ensuring low latency and high throughput for high-concurrency environments.
+
+---
+
+## Database Architecture
+
+The following Entity-Relationship Diagram (ERD) outlines the normalized database schema designed for consistency and referential integrity.
 
 ```mermaid
 erDiagram
-    users {
-        INT user_id PK
-        VARCHAR firstname
-        VARCHAR lastname
-        VARCHAR email
-        VARCHAR password
-        TIMESTAMP created_at
-        TIMESTAMP updated_at
-    }
+    USERS ||--o{ USER_ROLES : "assigns"
+    ROLES ||--o{ USER_ROLES : "belongs_to"
+    USERS ||--o{ REFRESH_TOKENS : "possesses"
+    USERS ||--o{ MERCHANTS : "manages"
+    USERS ||--o{ CASHIERS : "operates_as"
+    MERCHANTS ||--o{ CASHIERS : "employs"
+    MERCHANTS ||--o{ PRODUCTS : "lists"
+    CATEGORIES ||--o{ PRODUCTS : "classifies"
+    MERCHANTS ||--o{ ORDERS : "fulfills"
+    CASHIERS ||--o{ ORDERS : "processes"
+    ORDERS ||--o{ ORDER_ITEMS : "contains"
+    PRODUCTS ||--o{ ORDER_ITEMS : "included_in"
+    ORDERS ||--o{ TRANSACTIONS : "recorded_as"
+    MERCHANTS ||--o{ TRANSACTIONS : "reconciles"
 
-    roles {
-        INT role_id PK
-        VARCHAR role_name
-        TIMESTAMP created_at
-        TIMESTAMP updated_at
+    USERS {
+        int user_id PK
+        string firstname
+        string lastname
+        string email
+        string password
     }
-
-    user_roles {
-        INT user_role_id PK
-        INT user_id FK
-        INT role_id FK
+    ROLES {
+        int role_id PK
+        string role_name
     }
-
-    refresh_tokens {
-        INT refresh_token_id PK
-        INT user_id FK
-        VARCHAR token
-        TIMESTAMP expiration
+    MERCHANTS {
+        int merchant_id PK
+        int user_id FK
+        string name
+        string status
     }
-
-    merchants {
-        INT merchant_id PK
-        INT user_id FK
-        VARCHAR name
-        TEXT description
-        VARCHAR status
+    PRODUCTS {
+        int product_id PK
+        int merchant_id FK
+        int category_id FK
+        string name
+        int price
+        int stock
     }
-
-    cashiers {
-        INT cashier_id PK
-        INT merchant_id FK
-        INT user_id FK
-        VARCHAR name
+    ORDERS {
+        int order_id PK
+        int merchant_id FK
+        int cashier_id FK
+        bigint total_price
     }
-
-    categories {
-        INT category_id PK
-        VARCHAR name
-        TEXT description
-        VARCHAR slug_category
-    }
-
-    products {
-        INT product_id PK
-        INT merchant_id FK
-        INT category_id FK
-        VARCHAR name
-        INT price
-        INT count_in_stock
-    }
-
-    orders {
-        INT order_id PK
-        INT merchant_id FK
-        INT cashier_id FK
-        BIGINT total_price
-    }
-
-    order_items {
-        INT order_item_id PK
-        INT order_id FK
-        INT product_id FK
-        INT quantity
-        INT price
-    }
-
-    transactions {
-        INT transaction_id PK
-        INT order_id FK
-        INT merchant_id FK
-        VARCHAR payment_method
-        INT amount
-        VARCHAR payment_status
-    }
-
-    users ||--o{ user_roles : "memiliki"
-    roles ||--o{ user_roles : "termasuk"
-    users ||--o{ refresh_tokens : "memiliki"
-    users ||--o{ merchants : "memiliki"
-    users ||--o{ cashiers : "adalah"
-    merchants ||--o{ cashiers : "mempekerjakan"
-    merchants ||--o{ products : "menjual"
-    categories ||--o{ products : "mengandung"
-    merchants ||--o{ orders : "menerima"
-    cashiers ||--o{ orders : "membuat"
-    orders ||--o{ order_items : "memiliki"
-    products ||--o{ order_items : "adalah bagian dari"
-    orders ||--o{ transactions : "memiliki"
-    merchants ||--o{ transactions : "memproses"
 ```
 
 ---
 
-## 🚀 Panduan Menjalankan Proyek
+## Getting Started
 
-Ikuti langkah-langkah ini untuk menjalankan proyek di lingkungan lokal Anda.
+### Prerequisites
 
-### 1. Prasyarat
+- **Go**: Version 1.20 or higher
+- **Containerization**: Docker and Docker Compose
+- **Build Tooling**: GNU Make
+- **Version Control**: Git
 
-- [Go](https://golang.org/doc/install) (versi 1.20+)
-- [Docker](https://www.docker.com/get-started) dan [Docker Compose](https://docs.docker.com/compose/install/)
-- [Make](https://www.gnu.org/software/make/)
-- [Git](https://git-scm.com/downloads)
+### Installation
 
-### 2. Klon Repositori
+1. **Clone the repository**:
+   ```bash
+   git clone https://github.com/MamangRust/point-of-sale-grpc.git
+   cd point-of-sale-grpc
+   ```
 
-```bash
-git clone https://github.com/your-username/point-of-sale-grpc.git
-cd point-of-sale-grpc
-```
+2. **Environment Configuration**:
+   Provision your local environment variables:
+   ```bash
+   cp .env.example .env
+   cp docker.env.example docker.env
+   ```
+   *Note: Ensure the database credentials in `.env` match your local or Docker configuration.*
 
-### 3. Konfigurasi Lingkungan
+### Deployment with Docker (Recommended)
 
-Salin file `.env.example` menjadi `.env` untuk konfigurasi lokal dan `docker.env.example` menjadi `docker.env` untuk konfigurasi Docker.
-
-```bash
-cp .env.example .env
-cp docker.env.example docker.env
-```
-
-Sesuaikan variabel di dalam file `.env` dan `docker.env` sesuai dengan pengaturan lokal Anda (misalnya, kredensial database).
-
-### 4. Menjalankan dengan Docker (Direkomendasikan)
-
-Ini adalah cara termudah untuk memulai.
+The most efficient way to orchestrate the entire stack:
 
 ```bash
-make docker-up
+just docker-up
 ```
 
-Perintah ini akan:
-1. Membangun image Docker untuk `server`, `client`, dan `migrate`.
-2. Menjalankan database PostgreSQL.
-3. Menjalankan migrasi database secara otomatis.
-4. Menjalankan `server` gRPC dan `client` REST API.
+This command automates the following processes:
+- Build and initialization of `server`, `client`, and `migration` containers.
+- Deployment of a PostgreSQL instance.
+- Automatic execution of database migrations.
+- Bootstrapping of the gRPC backend and REST API Gateway.
 
-Untuk menghentikan semua layanan, jalankan:
+To terminate the services:
 ```bash
-make docker-down
+just docker-down
 ```
 
-### 5. Menjalankan Secara Lokal
+### Manual Local Execution
 
-Jika Anda tidak ingin menggunakan Docker, ikuti langkah-langkah berikut:
+If running outside of Docker:
 
-**a. Jalankan Database**
-Pastikan Anda memiliki instance PostgreSQL yang berjalan secara lokal dan konfigurasikan koneksi di file `.env`.
+1. **Database Migration**:
+   ```bash
+   just migrate
+   ```
 
-**b. Lakukan Migrasi Database**
-```bash
-make migrate
-```
+2. **Code Generation** (Optional, if `.proto` files are modified):
+   ```bash
+   just generate-proto
+   ```
 
-**c. Hasilkan Kode Protobuf**
-Jika Anda mengubah file `.proto`, jalankan perintah ini:
-```bash
-make generate-proto
-```
+3. **Backend Server (gRPC)**:
+   ```bash
+   just run-server
+   ```
+   *Default Port: 50051*
 
-**d. Jalankan Server gRPC**
-```bash
-make run-server
-```
-Server akan berjalan di port yang ditentukan di `.env` (default: `50051`).
-
-**e. Jalankan Client (REST API)**
-Buka terminal baru dan jalankan:
-```bash
-make run-client
-```
-Client REST API akan berjalan di port yang ditentukan di `.env` (default: `5000`).
+4. **API Gateway (REST)**:
+   ```bash
+   just run-client
+   ```
+   *Default Port: 5000*
 
 ---
 
-## 📚 Dokumentasi API
+## Observability & Documentation
 
-Setelah menjalankan `client`, dokumentasi API Swagger akan tersedia di:
+### API Reference
+Once the API Gateway is operational, comprehensive interactive documentation is available via Swagger:
+- **URL**: [http://localhost:5000/swagger/index.html](http://localhost:5000/swagger/index.html)
 
-[http://localhost:5000/swagger/index.html](http://localhost:5000/swagger/index.html)
+### Monitoring
+The system includes a pre-configured observability stack accessible via Grafana. This allows for real-time monitoring of service health, performance metrics, and log aggregation.
+- **Grafana URL**: [http://localhost:3000](http://localhost:3000) (default credentials usually apply)
+
+---
+
+## Testing Framework
+
+The project maintains high reliability through multiple testing layers:
+
+- **Integration Testing**: Orchestrated via [Hurl](https://hurl.dev/) for end-to-end API validation.
+- **Performance Benchmarking**: Stress and load testing implemented with [k6](https://k6.io/).
+- **Unit & Feature Testing**: Standard Go testing suite located in the `/tests` directory.
+
+To execute the test suite:
+```bash
+just test-all
+```

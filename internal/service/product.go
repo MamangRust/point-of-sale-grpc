@@ -35,7 +35,7 @@ type ProductServiceDeps struct {
 	ProductRepo   repository.ProductRepository
 	Logger        logger.LoggerInterface
 	Observability observability.TraceLoggerObservability
-	cache         product_cache.ProductMencache
+	Cache         product_cache.ProductMencache
 }
 
 func NewProductService(deps ProductServiceDeps) *productService {
@@ -45,7 +45,7 @@ func NewProductService(deps ProductServiceDeps) *productService {
 		productRepository:  deps.ProductRepo,
 		logger:             deps.Logger,
 		observability:      deps.Observability,
-		cache:              deps.cache,
+		cache:              deps.Cache,
 	}
 }
 

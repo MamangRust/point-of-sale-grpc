@@ -2,7 +2,6 @@ package repository
 
 import (
 	"context"
-	"database/sql"
 	"pointofsale/internal/domain/requests"
 	db "pointofsale/pkg/database/schema"
 	"pointofsale/pkg/errors/product_errors"
@@ -99,9 +98,9 @@ func (r *productRepository) FindByCategory(ctx context.Context, req *requests.Pr
 
 	reqDb := db.GetProductsByCategoryNameParams{
 		Name:    req.CategoryName,
-		Column2: sql.NullString{String: req.Search, Valid: true},
-		Column3: req.MinPrice,
-		Column4: req.MaxPrice,
+		Column2: req.Search,
+		Column3: int32(req.MinPrice),
+		Column4: int32(req.MaxPrice),
 		Limit:   int32(req.PageSize),
 		Offset:  int32(offset),
 	}
@@ -109,7 +108,7 @@ func (r *productRepository) FindByCategory(ctx context.Context, req *requests.Pr
 	res, err := r.db.GetProductsByCategoryName(ctx, reqDb)
 
 	if err != nil {
-		return nil, product_errors.ErrFindByCategory
+		return nil, err
 	}
 
 	return res, nil

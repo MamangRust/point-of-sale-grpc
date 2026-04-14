@@ -20,7 +20,7 @@ type merchantService struct {
 	merchantRepository repository.MerchantRepository
 	logger             logger.LoggerInterface
 	observability      observability.TraceLoggerObservability
-	cache              merchant_cache.MerchantMenCache
+	Cache              merchant_cache.MerchantMenCache
 }
 
 type MerchantServiceDeps struct {
@@ -35,7 +35,7 @@ func NewMerchantService(deps MerchantServiceDeps) *merchantService {
 		merchantRepository: deps.MerchantRepo,
 		logger:             deps.Logger,
 		observability:      deps.Observability,
-		cache:              deps.Cache,
+		Cache:              deps.Cache,
 	}
 }
 
@@ -63,7 +63,7 @@ func (s *merchantService) FindAllMerchants(ctx context.Context, req *requests.Fi
 		end(status)
 	}()
 
-	if data, total, found := s.cache.GetCachedMerchants(ctx, req); found {
+	if data, total, found := s.Cache.GetCachedMerchants(ctx, req); found {
 		logSuccess("Successfully retrieved all merchant records from cache",
 			zap.Int("totalRecords", *total),
 			zap.Int("page", page),
@@ -92,7 +92,7 @@ func (s *merchantService) FindAllMerchants(ctx context.Context, req *requests.Fi
 		totalCount = 0
 	}
 
-	s.cache.SetCachedMerchants(ctx, req, merchants, &totalCount)
+	s.Cache.SetCachedMerchants(ctx, req, merchants, &totalCount)
 
 	logSuccess("Successfully fetched merchants",
 		zap.Int("totalRecords", totalCount),
@@ -126,7 +126,7 @@ func (s *merchantService) FindByActive(ctx context.Context, req *requests.FindAl
 		end(status)
 	}()
 
-	if data, total, found := s.cache.GetCachedMerchantActive(ctx, req); found {
+	if data, total, found := s.Cache.GetCachedMerchantActive(ctx, req); found {
 		logSuccess("Successfully retrieved active merchant records from cache",
 			zap.Int("totalRecords", *total),
 			zap.Int("page", page),
@@ -155,7 +155,7 @@ func (s *merchantService) FindByActive(ctx context.Context, req *requests.FindAl
 		totalCount = 0
 	}
 
-	s.cache.SetCachedMerchantActive(ctx, req, merchants, &totalCount)
+	s.Cache.SetCachedMerchantActive(ctx, req, merchants, &totalCount)
 
 	logSuccess("Successfully fetched active merchants",
 		zap.Int("totalRecords", totalCount),
@@ -189,7 +189,7 @@ func (s *merchantService) FindByTrashed(ctx context.Context, req *requests.FindA
 		end(status)
 	}()
 
-	if data, total, found := s.cache.GetCachedMerchantTrashed(ctx, req); found {
+	if data, total, found := s.Cache.GetCachedMerchantTrashed(ctx, req); found {
 		logSuccess("Successfully retrieved trashed merchant records from cache",
 			zap.Int("totalRecords", *total),
 			zap.Int("page", page),
@@ -218,7 +218,7 @@ func (s *merchantService) FindByTrashed(ctx context.Context, req *requests.FindA
 		totalCount = 0
 	}
 
-	s.cache.SetCachedMerchantTrashed(ctx, req, merchants, &totalCount)
+	s.Cache.SetCachedMerchantTrashed(ctx, req, merchants, &totalCount)
 
 	logSuccess("Successfully fetched trashed merchants",
 		zap.Int("totalRecords", totalCount),
@@ -238,7 +238,7 @@ func (s *merchantService) FindById(ctx context.Context, merchantID int) (*db.Get
 		end(status)
 	}()
 
-	if data, found := s.cache.GetCachedMerchant(ctx, merchantID); found {
+	if data, found := s.Cache.GetCachedMerchant(ctx, merchantID); found {
 		logSuccess("Successfully retrieved merchant record from cache",
 			zap.Int("merchant_id", merchantID))
 		return data, nil
@@ -255,7 +255,7 @@ func (s *merchantService) FindById(ctx context.Context, merchantID int) (*db.Get
 			zap.Int("merchant_id", merchantID))
 	}
 
-	s.cache.SetCachedMerchant(ctx, merchant)
+	s.Cache.SetCachedMerchant(ctx, merchant)
 
 	logSuccess("Successfully fetched merchant",
 		zap.Int("merchant_id", merchantID))
@@ -285,7 +285,7 @@ func (s *merchantService) CreateMerchant(ctx context.Context, req *requests.Crea
 			zap.Any("request", req))
 	}
 
-	s.cache.DeleteCachedMerchant(ctx, int(merchant.MerchantID))
+	s.Cache.DeleteCachedMerchant(ctx, int(merchant.MerchantID))
 
 	logSuccess("Successfully created merchant",
 		zap.Int("merchant_id", int(merchant.MerchantID)),
@@ -327,7 +327,7 @@ func (s *merchantService) UpdateMerchant(ctx context.Context, req *requests.Upda
 			zap.Any("request", req))
 	}
 
-	s.cache.DeleteCachedMerchant(ctx, int(merchant.MerchantID))
+	s.Cache.DeleteCachedMerchant(ctx, int(merchant.MerchantID))
 
 	logSuccess("Successfully updated merchant",
 		zap.Int("merchant_id", int(merchant.MerchantID)),
@@ -357,7 +357,7 @@ func (s *merchantService) TrashedMerchant(ctx context.Context, merchantID int) (
 			zap.Int("merchant_id", merchantID))
 	}
 
-	s.cache.DeleteCachedMerchant(ctx, merchantID)
+	s.Cache.DeleteCachedMerchant(ctx, merchantID)
 
 	logSuccess("Successfully trashed merchant",
 		zap.Int("merchant_id", merchantID))
@@ -386,7 +386,7 @@ func (s *merchantService) RestoreMerchant(ctx context.Context, merchantID int) (
 			zap.Int("merchant_id", merchantID))
 	}
 
-	s.cache.DeleteCachedMerchant(ctx, merchantID)
+	s.Cache.DeleteCachedMerchant(ctx, merchantID)
 
 	logSuccess("Successfully restored merchant",
 		zap.Int("merchant_id", merchantID))
@@ -415,7 +415,7 @@ func (s *merchantService) DeleteMerchantPermanent(ctx context.Context, merchantI
 			zap.Int("merchant_id", merchantID))
 	}
 
-	s.cache.DeleteCachedMerchant(ctx, merchantID)
+	s.Cache.DeleteCachedMerchant(ctx, merchantID)
 
 	logSuccess("Successfully permanently deleted merchant",
 		zap.Int("merchant_id", merchantID))

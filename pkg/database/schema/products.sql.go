@@ -570,19 +570,13 @@ WITH
             p.deleted_at IS NULL
             AND c.name = $1
             AND (
-                $2 IS NULL
+                $2::TEXT IS NULL
                 OR p.name ILIKE '%' || $2 || '%'
                 OR p.description ILIKE '%' || $2 || '%'
             )
             AND (
-                (
-                    $3 IS NULL
-                    OR p.price >= $3
-                )
-                AND (
-                    $4 IS NULL
-                    OR p.price <= $4
-                )
+                p.price >= COALESCE(NULLIF($3::INTEGER, 0), 0)
+                AND p.price <= COALESCE(NULLIF($4::INTEGER, 0), 999999999)
             )
     )
 SELECT (
@@ -597,12 +591,12 @@ OFFSET
 `
 
 type GetProductsByCategoryNameParams struct {
-	Name    string      `json:"name"`
-	Column2 interface{} `json:"column_2"`
-	Column3 interface{} `json:"column_3"`
-	Column4 interface{} `json:"column_4"`
-	Limit   int32       `json:"limit"`
-	Offset  int32       `json:"offset"`
+	Name    string `json:"name"`
+	Column2 string `json:"column_2"`
+	Column3 int32  `json:"column_3"`
+	Column4 int32  `json:"column_4"`
+	Limit   int32  `json:"limit"`
+	Offset  int32  `json:"offset"`
 }
 
 type GetProductsByCategoryNameRow struct {
@@ -699,6 +693,7 @@ WITH
             p.product_id,
             p.merchant_id,
             p.category_id,
+            p.name,
             p.description,
             p.price,
             p.count_in_stock,
@@ -718,7 +713,7 @@ WITH
             AND (
                 p.name ILIKE '%' || COALESCE($2, '') || '%'
                 OR p.description ILIKE '%' || COALESCE($2, '') || '%'
-                OR $2 IS NULL
+                OR $2::TEXT IS NULL
             )
             AND (
                 c.category_id = NULLIF($3, 0)
@@ -732,7 +727,7 @@ WITH
 SELECT (
         SELECT COUNT(*)
         FROM filtered_products
-    ) AS total_count, fp.product_id, fp.merchant_id, fp.category_id, fp.description, fp.price, fp.count_in_stock, fp.brand, fp.weight, fp.slug_product, fp.image_product, fp.barcode, fp.created_at, fp.updated_at, fp.category_name
+    ) AS total_count, fp.product_id, fp.merchant_id, fp.category_id, fp.name, fp.description, fp.price, fp.count_in_stock, fp.brand, fp.weight, fp.slug_product, fp.image_product, fp.barcode, fp.created_at, fp.updated_at, fp.category_name
 FROM filtered_products fp
 ORDER BY fp.created_at DESC
 LIMIT $6
@@ -755,6 +750,7 @@ type GetProductsByMerchantRow struct {
 	ProductID    int32            `json:"product_id"`
 	MerchantID   int32            `json:"merchant_id"`
 	CategoryID   int32            `json:"category_id"`
+	Name         string           `json:"name"`
 	Description  *string          `json:"description"`
 	Price        int32            `json:"price"`
 	CountInStock int32            `json:"count_in_stock"`
@@ -812,6 +808,7 @@ func (q *Queries) GetProductsByMerchant(ctx context.Context, arg GetProductsByMe
 			&i.ProductID,
 			&i.MerchantID,
 			&i.CategoryID,
+			&i.Name,
 			&i.Description,
 			&i.Price,
 			&i.CountInStock,

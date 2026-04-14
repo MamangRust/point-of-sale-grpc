@@ -94,7 +94,7 @@ func NewService(deps Deps) *Service {
 			CategoryRepo:  deps.Repositories.Category,
 			Logger:        deps.Logger,
 			Observability: observability,
-			cache:         category_cache,
+			Cache:         category_cache,
 		}),
 
 		Merchant: NewMerchantService(MerchantServiceDeps{
@@ -128,7 +128,7 @@ func NewService(deps Deps) *Service {
 			ProductRepo:   deps.Repositories.Product,
 			Logger:        deps.Logger,
 			Observability: observability,
-			cache:         product_cache,
+			Cache:         product_cache,
 		}),
 
 		Transaction: NewTransactionService(TransactionServiceDeps{
